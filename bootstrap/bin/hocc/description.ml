@@ -418,11 +418,9 @@ let generate_txt conf io Spec.{algorithm; precs; symbols; prods; states; _} =
             end
         )
         |> (fun formatter ->
-          let kernel_attribs = StateNub.filtered_kernel_attribs statenub in
-          match KernelAttribs.length kernel_attribs with
+          match KernelAttribs.length statenub.kernel_attribs with
           | 0L -> formatter
           | _ -> begin
-              let kernel_attribs = StateNub.filtered_kernel_attribs statenub in
               formatter
               |> Fmt.fmt "        Conflict contributions\n"
               |> (fun formatter ->
@@ -441,7 +439,7 @@ let generate_txt conf io Spec.{algorithm; precs; symbols; prods; states; _} =
                         |> Fmt.fmt "\n"
                       ) attribs
                   )
-                ) kernel_attribs
+                ) statenub.kernel_attribs
               )
             end
         )

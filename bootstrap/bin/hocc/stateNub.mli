@@ -21,7 +21,7 @@ type t = {
   (** Union of merged in-transit conflict attributions. *)
 
   attribs: Attribs.t;
-  (** Memoized merged attribs. *)
+  (** Memoized flattened [kernel_attribs]. *)
 }
 
 include IdentifiableIntf.S with type t := t
@@ -53,10 +53,6 @@ val merge: Symbols.t -> GotoNub.t -> t -> bool * t
 (** [merge symbols gotonub t] merges the kernel represented by [gotonub] into [t]'s kernel and
     creates the closure of the merged kernel, as well as merging conflict attributions from
     [gotonub]. The boolean result indicates whether items were merged into the kernel. *)
-
-val filtered_kernel_attribs: t -> KernelAttribs.t
-(** [filtered_kernel_attribs t] returns the kernel attribs in [t], filtered to contain only attribs
-    which are relevant to the kernel follow sets. *)
 
 val compat_ielr: resolve:bool -> Symbols.t -> Prods.t -> GotoNub.t -> t -> bool
 (** [compat_ielr ~resolve symbols prods gotonub t] determines whether [gotonub] and [t] are

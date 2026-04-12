@@ -12,10 +12,10 @@ type t = {
   (** Isocore set serial number for the set containing this goto nub. *)
 
   kernel_attribs: KernelAttribs.t;
-  (** Transit conflict attributions. *)
+  (** Transit conflict attributions filtered by [goto]. *)
 
   attribs: Attribs.t;
-  (** Memoized attribs computed for [goto] in the context of [kernel_attribs]. *)
+  (** Memoized flattened [kernel_attribs]. *)
 }
 
 include IdentifiableIntf.S with type t := t
