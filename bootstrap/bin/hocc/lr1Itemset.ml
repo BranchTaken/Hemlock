@@ -148,12 +148,12 @@ let inter t0 t1 =
     match lr1item_opt0, lr1item_opt1 with
     | Some _, None
     | None, Some _ -> t
-    | Some (_, lr1item0), Some (_, lr1item1) -> begin
+    | Some (lr0item, lr1item0), Some (_, lr1item1) -> begin
         let follow = Bitset.inter Lr1Item.(lr1item0.follow) Lr1Item.(lr1item1.follow) in
         match Bitset.is_empty follow with
         | true -> t
         | false -> begin
-            let lr1item = Lr1Item.init ~lr0item:Lr1Item.(lr1item0.lr0item) ~follow in
+            let lr1item = Lr1Item.init ~lr0item ~follow in
             insert lr1item t
           end
       end
@@ -165,12 +165,12 @@ let diff t0 t1 =
     match lr1item_opt0, lr1item_opt1 with
     | Some (_, lr1item0), None -> insert lr1item0 t
     | None, Some _ -> t
-    | Some (_, lr1item0), Some (_, lr1item1) -> begin
+    | Some (lr0item, lr1item0), Some (_, lr1item1) -> begin
         let follow = Bitset.diff Lr1Item.(lr1item0.follow) Lr1Item.(lr1item1.follow) in
         match Bitset.is_empty follow with
         | true -> t
         | false -> begin
-            let lr1item = Lr1Item.init ~lr0item:Lr1Item.(lr1item0.lr0item) ~follow in
+            let lr1item = Lr1Item.init ~lr0item ~follow in
             insert lr1item t
           end
       end
