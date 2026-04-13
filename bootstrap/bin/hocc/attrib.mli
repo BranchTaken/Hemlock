@@ -9,9 +9,7 @@ type t = {
   conflict: Contrib.t;
   (** Conflict on symbol. This is a non-strict superset of attributed conflict contribution, i.e.
       the attribution may not explain the entire conflict. *)
-  isucc_lr1itemset: Lr1Itemset.t;
-  (** Immediate successor's LR(1) itemset. Empty for lane attribs (maintained only during lane
-      tracing). *)
+  isucc_lr1itemset: Lr1Itemset.t; (** Immediate successor's LR(1) itemset. *)
   contrib: Contrib.t; (** Attributed conflict contribution. *)
 }
 

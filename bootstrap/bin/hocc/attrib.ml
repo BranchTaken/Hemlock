@@ -6,21 +6,20 @@ module T = struct
     conflict_state_index: StateIndex.t;
     symbol_index: Symbol.Index.t;
     conflict: Contrib.t;
-    isucc_lr1itemset: Lr1Itemset.t; (* Only the core matters for `hash_fold`/`cmp`/`equal`. *)
+    isucc_lr1itemset: Lr1Itemset.t; (* Omitted from `hash_fold`/`cmp`/`equal`/`is_empty`. *)
     contrib: Contrib.t;
   }
 
-  let hash_fold {conflict_state_index; symbol_index; conflict; isucc_lr1itemset; contrib} state =
+  let hash_fold {conflict_state_index; symbol_index; conflict; contrib; _} state =
     state
     |> Uns.hash_fold 1L |> StateIndex.hash_fold conflict_state_index
     |> Uns.hash_fold 2L |> Symbol.Index.hash_fold symbol_index
     |> Uns.hash_fold 3L |> Contrib.hash_fold conflict
-    |> Uns.hash_fold 4L |> Lr0Itemset.hash_fold (Lr1Itemset.core isucc_lr1itemset)
-    |> Uns.hash_fold 5L |> Contrib.hash_fold contrib
+    |> Uns.hash_fold 4L |> Contrib.hash_fold contrib
 
   let cmp
-      {conflict_state_index=csi0; symbol_index=s0; conflict=x0; isucc_lr1itemset=is0; contrib=c0}
-      {conflict_state_index=csi1; symbol_index=s1; conflict=x1; isucc_lr1itemset=is1; contrib=c1} =
+      {conflict_state_index=csi0; symbol_index=s0; conflict=x0; contrib=c0; _}
+      {conflict_state_index=csi1; symbol_index=s1; conflict=x1; contrib=c1; _} =
     let open Cmp in
     match StateIndex.cmp csi0 csi1 with
     | Lt -> Lt
@@ -30,12 +29,7 @@ module T = struct
         | Eq -> begin
             match Contrib.cmp x0 x1 with
             | Lt -> Lt
-            | Eq -> begin
-                match Lr0Itemset.cmp (Lr1Itemset.core is0) (Lr1Itemset.core is1) with
-                | Lt -> Lt
-                | Eq -> Contrib.cmp c0 c1
-                | Gt -> Gt
-              end
+            | Eq -> Contrib.cmp c0 c1
             | Gt -> Gt
           end
         | Gt -> Gt
@@ -50,10 +44,10 @@ module T = struct
     Contrib.(x0 = x1)
 
   let equal
-      ({isucc_lr1itemset=is0; contrib=c0; _} as t0)
-      ({isucc_lr1itemset=is1; contrib=c1; _} as t1) =
+      ({contrib=c0; _} as t0)
+      ({contrib=c1; _} as t1) =
     assert (equal_keys t0 t1);
-    Lr0Itemset.equal (Lr1Itemset.core is0) (Lr1Itemset.core is1) && Contrib.equal c0 c1
+    Contrib.equal c0 c1
 
   let pp {conflict_state_index; symbol_index; conflict; isucc_lr1itemset; contrib} formatter =
     formatter
@@ -83,8 +77,7 @@ module T = struct
   let init ~conflict_state_index ~symbol_index ~conflict ~isucc_lr1itemset ~contrib =
     {conflict_state_index; symbol_index; conflict; isucc_lr1itemset; contrib}
 
-  let is_empty {isucc_lr1itemset; contrib; _} =
-    Lr1Itemset.is_empty isucc_lr1itemset &&
+  let is_empty {contrib; _} =
     Contrib.is_empty contrib
 
   let union
