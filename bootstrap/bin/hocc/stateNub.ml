@@ -41,9 +41,8 @@ let remerge symbols remergeable_index_map
     lr1itemsetclosure=Lr1ItemsetClosure.remerge symbols remergeable_index_map c0 c1;
     isocores_sn=is0;
     isocore_set_sn=Uns.min iss0 iss1;
-    kernel_attribs=KernelAttribs.(union (remerge1 remergeable_index_map ka0)
-      (remerge1 remergeable_index_map ka1));
-    attribs=Attribs.remerge remergeable_index_map a0 a1
+    kernel_attribs=KernelAttribs.union ka0 ka1;
+    attribs=Attribs.union a0 a1
   }
 
 let reindex state_index_map

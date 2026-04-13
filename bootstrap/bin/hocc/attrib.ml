@@ -49,12 +49,6 @@ module T = struct
     Symbol.Index.(s0 = s1) &&
     Contrib.(x0 = x1)
 
-  let remergeable_keys
-      {conflict_state_index=csi0; symbol_index=s0; _}
-      {conflict_state_index=csi1; symbol_index=s1; _} =
-    StateIndex.(csi0 = csi1) &&
-    Symbol.Index.(s0 = s1)
-
   let equal
       ({isucc_lr1itemset=is0; contrib=c0; _} as t0)
       ({isucc_lr1itemset=is1; contrib=c1; _} as t1) =
@@ -89,28 +83,15 @@ module T = struct
   let init ~conflict_state_index ~symbol_index ~conflict ~isucc_lr1itemset ~contrib =
     {conflict_state_index; symbol_index; conflict; isucc_lr1itemset; contrib}
 
-  let remerge1 remergeable_index_map ({conflict_state_index; _} as t) =
-    let conflict_state_index' = match Ordmap.get conflict_state_index remergeable_index_map with
-      | None -> conflict_state_index
-      | Some conflict_state_index' -> conflict_state_index'
-    in
-    {t with conflict_state_index=conflict_state_index'}
-
   let is_empty {isucc_lr1itemset; contrib; _} =
     Lr1Itemset.is_empty isucc_lr1itemset &&
     Contrib.is_empty contrib
 
-  let union_impl equalish_keys
+  let union
       ({isucc_lr1itemset=is0; contrib=c0; _} as t0)
       ({isucc_lr1itemset=is1; contrib=c1; _} as t1) =
-    assert (equalish_keys t0 t1);
+    assert (equal_keys t0 t1);
     {t0 with isucc_lr1itemset=(Lr1Itemset.union is0 is1); contrib=(Contrib.union c0 c1)}
-
-  let union t0 t1 =
-    union_impl equal_keys t0 t1
-
-  let union_remerged t0 t1 =
-    union_impl remergeable_keys t0 t1
 
   let inter
       ({isucc_lr1itemset=is0; contrib=c0; _} as t0)
