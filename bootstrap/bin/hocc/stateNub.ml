@@ -64,10 +64,8 @@ let isocore_set_sn {isocore_set_sn; _} =
 let merge symbols GotoNub.{goto; kernel_attribs=gotonub_ka; attribs=gotonub_a; _}
   {lr1itemsetclosure; isocores_sn; isocore_set_sn; kernel_attribs=statenub_ka; attribs=statenub_a} =
   let merged, lr1itemsetclosure = Lr1ItemsetClosure.merge symbols goto lr1itemsetclosure in
-  let kernel_attribs, attribs = match merged with
-    | false -> statenub_ka, statenub_a (* No-op merge means no change in attribs. *)
-    | true -> KernelAttribs.union gotonub_ka statenub_ka, Attribs.union gotonub_a statenub_a
-  in
+  let kernel_attribs = KernelAttribs.union gotonub_ka statenub_ka in
+  let attribs = Attribs.union gotonub_a statenub_a in
   merged, {lr1itemsetclosure; isocores_sn; isocore_set_sn; kernel_attribs; attribs}
 
 let compat_ielr ~resolve symbols prods GotoNub.{attribs=o_attribs; _} {attribs=t_attribs; _} =
