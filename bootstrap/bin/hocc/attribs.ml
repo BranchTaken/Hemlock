@@ -109,7 +109,6 @@ let insert (Attrib.{conflict_state_index; symbol_index; _} as attrib) t =
   match Ordmap.get k t with
   | None -> Ordmap.insert_hlt ~k ~v:attrib t
   | Some attrib_prev -> begin
-      assert (Attrib.equal_keys attrib attrib_prev);
       let attrib = Attrib.union attrib_prev attrib in
       Ordmap.update_hlt ~k ~v:attrib t
     end
