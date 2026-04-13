@@ -103,22 +103,16 @@ let get_hlt ~conflict_state_index ~symbol_index t =
   let k = K.init ~conflict_state_index ~symbol_index in
   Ordmap.get_hlt k t
 
-let insert_impl attrib_equalish_keys (Attrib.{conflict_state_index; symbol_index; _} as attrib) t =
+let insert (Attrib.{conflict_state_index; symbol_index; _} as attrib) t =
   assert (not (Attrib.is_empty attrib));
   let k = K.init ~conflict_state_index ~symbol_index in
   match Ordmap.get k t with
   | None -> Ordmap.insert_hlt ~k ~v:attrib t
   | Some attrib_prev -> begin
-      assert (attrib_equalish_keys attrib attrib_prev);
-      let attrib = Attrib.union_remerged attrib_prev attrib in
+      assert (Attrib.equal_keys attrib attrib_prev);
+      let attrib = Attrib.union attrib_prev attrib in
       Ordmap.update_hlt ~k ~v:attrib t
     end
-
-let insert attrib t =
-  insert_impl Attrib.equal_keys attrib t
-
-let insert_remerged attrib t =
-  insert_impl Attrib.remergeable_keys attrib t
 
 let union t0 t1 =
   Ordmap.union ~f:(fun _k attrib0 attrib1 ->
@@ -164,15 +158,6 @@ let diff t0 t1 =
         | None, None -> not_reached ()
       ) t0 t1
     end
-
-let remerge1 remergeable_index_map t =
-  Ordmap.fold ~init:empty
-    ~f:(fun remerged_t (_k, attrib) ->
-      insert_remerged (Attrib.remerge1 remergeable_index_map attrib) remerged_t
-    ) t
-
-let remerge remergeable_index_map t0 t1 =
-  remerge1 remergeable_index_map (union t0 t1)
 
 let fold_until ~init ~f t =
   Ordmap.fold_until ~init ~f:(fun accum (_k, attrib) -> f accum attrib) t

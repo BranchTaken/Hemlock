@@ -294,9 +294,9 @@ IELR(1) States
             E : 24
         Conflict contributions
             Pos ::= Pos "+" · EPair
-                18 : ">" : Reduce E ::= E "<" E
                 27 : ">" : Reduce E ::= E "+" E
                 31 : ">" : Reduce E ::= E ">" E
+                41 : ">" : Reduce E ::= E "<" E
     State 12 [12.0]
         Kernel
             [Pos ::= Pos "-" · EPair, {")", "+", "-", "max", ">", ",", EOI}]
@@ -316,9 +316,9 @@ IELR(1) States
             E : 24
         Conflict contributions
             Pos ::= Pos "-" · EPair
-                18 : ">" : Reduce E ::= E "<" E
                 27 : ">" : Reduce E ::= E "+" E
                 31 : ">" : Reduce E ::= E ">" E
+                41 : ">" : Reduce E ::= E "<" E
     State 13 [13.0]
         Kernel
             [S ::= Pos EOI ·, {"⊥"}]
@@ -370,10 +370,10 @@ IELR(1) States
             E : 6
         Conflict contributions
             Pos ::= E "min" · Pos "max" Pos
-                18 : ">" : Reduce E ::= E "<" E
                 27 : ">" : Reduce E ::= E "+" E
                 30 : ">" : Reduce E ::= E "<" E
                 31 : ">" : Reduce E ::= E ">" E
+                41 : ">" : Reduce E ::= E "<" E
     State 16 [16.0]
         Kernel
             [Pos ::= E "<" · Pos "," Pos ">", {")", "+", "-", "max", ">", ",", EOI}]
@@ -446,10 +446,10 @@ IELR(1) States
             E : 32
         Conflict contributions
             EPair ::= E "," · E
-                18 : ">" : Reduce E ::= E "<" E
                 27 : "+" : Reduce E ::= E "+" E
                 27 : ">" : Reduce E ::= E "+" E
                 31 : ">" : Reduce E ::= E ">" E
+                41 : ">" : Reduce E ::= E "<" E
     State 19 [19.0]
         Kernel
             [Pos ::= "(" Pos "," · Pos ")", {")", "+", "-", "max", ">", ",", EOI}]
@@ -637,10 +637,10 @@ IELR(1) States
             "max" : ShiftPrefix 38 prec p1
         Conflict contributions
             Pos ::= E "min" Pos · "max" Pos
-                18 : ">" : Reduce E ::= E "<" E
                 27 : ">" : Reduce E ::= E "+" E
                 30 : ">" : Reduce E ::= E "<" E
                 31 : ">" : Reduce E ::= E ">" E
+                41 : ">" : Reduce E ::= E "<" E
     State 29 [29.0]
         Kernel
             [Pos ::= Pos · "+" EPair, {"+", "-", ","}]
@@ -652,10 +652,10 @@ IELR(1) States
             "," : ShiftPrefix 39 prec p4
         Conflict contributions
             Pos ::= E "<" Pos · "," Pos ">"
-                18 : ">" : Reduce E ::= E "<" E
                 27 : ">" : Reduce E ::= E "+" E
                 30 : ">" : Reduce E ::= E "<" E
                 31 : ">" : Reduce E ::= E ">" E
+                41 : ">" : Reduce E ::= E "<" E
     State 30 [30.0]
         Kernel
             [Pos ::= E · "min" Pos "max" Pos, {"+", "-", ","}] prec p1
@@ -866,10 +866,10 @@ IELR(1) States
             E : 6
         Conflict contributions
             Pos ::= E "min" Pos "max" · Pos
-                18 : ">" : Reduce E ::= E "<" E
                 27 : ">" : Reduce E ::= E "+" E
                 30 : ">" : Reduce E ::= E "<" E
                 31 : ">" : Reduce E ::= E ">" E
+                41 : ">" : Reduce E ::= E "<" E
     State 39 [39.0]
         Kernel
             [Pos ::= E "<" Pos "," · Pos ">", {")", "+", "-", "max", ">", ",", EOI}]
@@ -896,10 +896,10 @@ IELR(1) States
             E : 6
         Conflict contributions
             Pos ::= E "<" Pos "," · Pos ">"
-                18 : ">" : Reduce E ::= E "<" E
                 27 : ">" : Reduce E ::= E "+" E
                 30 : ">" : Reduce E ::= E "<" E
                 31 : ">" : Reduce E ::= E ">" E
+                41 : ">" : Reduce E ::= E "<" E
     State 40 [40.0]
         Kernel
             [Pos ::= "(" Pos "," Pos ")" ·, {")", "+", "-", "max", ">", ",", EOI}]
@@ -960,13 +960,13 @@ IELR(1) States
             EOI : Reduce Pos ::= E "min" Pos "max" Pos prec p1
         Conflict contributions
             Pos ::= Pos · "+" EPair
-                18 : ">" : Reduce E ::= E "<" E
                 27 : ">" : Reduce E ::= E "+" E
                 31 : ">" : Reduce E ::= E ">" E
+                41 : ">" : Reduce E ::= E "<" E
             Pos ::= Pos · "-" EPair
-                18 : ">" : Reduce E ::= E "<" E
                 27 : ">" : Reduce E ::= E "+" E
                 31 : ">" : Reduce E ::= E ">" E
+                41 : ">" : Reduce E ::= E "<" E
     State 43 [43.0]
         Kernel
             [Pos ::= Pos · "+" EPair, {"+", "-", ">"}]

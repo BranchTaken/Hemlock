@@ -42,11 +42,6 @@ let empty = Ordmap.empty (module Lr0Item)
 let singleton lr0item attribs =
   Ordmap.singleton (module Lr0Item) ~k:lr0item ~v:attribs
 
-let remerge1 remergeable_index_map t =
-  Ordmap.map ~f:(fun (_lr0item, attribs) ->
-    Attribs.remerge1 remergeable_index_map attribs
-  ) t
-
 let is_empty = Ordmap.is_empty
 
 let get = Ordmap.get

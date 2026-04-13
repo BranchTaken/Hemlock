@@ -63,16 +63,6 @@ val inter: t -> t -> t
 val diff: t -> t -> t
 (** [diff t0 t1] returns the conflict attributions present in [t0] but not present in [t1]. *)
 
-val remerge1: (StateIndex.t, StateIndex.t, StateIndex.cmper_witness) Ordmap.t -> t -> t
-(** [remerge1 remergeable_index_map t] creates attribs with remergeable attribs translated according
-    to [remergeable_index_map], where keys are the original indexes, and values are the reindexed
-    indexes. *)
-
-val remerge: (StateIndex.t, StateIndex.t, StateIndex.cmper_witness) Ordmap.t -> t -> t -> t
-(** [remerge remergeable_index_map t0 t1] creates a merged set of reindexed attribs comprising
-    remergeable attribs [t0] and [t1], translated according to [remergeable_index_map], where keys
-    are the original indexes, and values are the reindexed indexes. *)
-
 val fold_until: init:'accum -> f:('accum -> Attrib.t -> 'accum * bool) -> t -> 'accum
 (** [fold ~init ~f t] folds over the attribs in [t], using [init] as the initial accumulator value,
     continuing until [f] returns [accum, true], or until folding is complete if [f] always returns
