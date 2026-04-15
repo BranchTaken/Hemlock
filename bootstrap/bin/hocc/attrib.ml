@@ -135,8 +135,43 @@ let compat_ielr_impl ~resolve symbols prods c0 ({symbol_index; _} as t1) =
         end
     end
 
-let compat_ielr ~resolve symbols prods t0 t1 =
-  compat_ielr_impl ~resolve symbols prods (contrib t0) t1
+let compat_ielr ~resolve symbols prods
+    ({isucc_lr1itemset=il0; _} as t0)
+    ({isucc_lr1itemset=il1; _} as t1) =
+  (* Test merged kernel attrib compatibility. *)
+  match compat_ielr_impl ~resolve symbols prods (contrib t0) t1 with
+  | false -> false
+  | true -> begin
+      (* Test per kernel attrib compatibility. *)
+      let core0 = Lr1Itemset.core il0 in
+      let core1 = Lr1Itemset.core il1 in
+      match Lr0Itemset.subset core0 core1, Lr0Itemset.subset core1 core0 with
+      | true, true -> begin
+          (* core0 = core1 *)
+          true
+        end
+      | true, false -> begin
+          (* core0 > core1 *)
+          compat_ielr_impl ~resolve symbols prods (contrib_implicit t0) t0
+        end
+      | false, true -> begin
+          (* core0 < core1 *)
+          compat_ielr_impl ~resolve symbols prods (contrib_implicit t1) t1
+        end
+      | false, false -> begin
+          match Lr0Itemset.disjoint core0 core1 with
+          | false -> begin
+              (* Overlapping. *)
+              compat_ielr_impl ~resolve symbols prods (contrib_implicit t0) t0
+              && compat_ielr_impl ~resolve symbols prods (contrib_implicit t1) t1
+            end
+          | true -> begin
+              (* Disjoint. *)
+              compat_ielr_impl ~resolve symbols prods (contrib_implicit t0) t0
+              && compat_ielr_impl ~resolve symbols prods (contrib_implicit t1) t1
+            end
+        end
+    end
 
 let compat_ielr_implicit ~resolve symbols prods t =
   compat_ielr_impl ~resolve symbols prods (contrib_implicit t) t

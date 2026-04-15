@@ -15,6 +15,10 @@ include Identifiable.Make(T)
 
 let equal = Ordset.equal
 
+let subset = Ordset.subset
+
+let disjoint = Ordset.disjoint
+
 let empty = Ordset.empty (module Lr0Item)
 
 let singleton lr0item =
