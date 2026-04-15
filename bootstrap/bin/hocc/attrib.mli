@@ -50,7 +50,15 @@ val diff: t -> t -> t
 (** [diff t0 t1] returns an attrib containing the contents of [t0] that are not in [t1]. *)
 
 val compat_ielr: resolve:bool -> Symbols.t -> Prods.t -> t -> t -> bool
-(** [compat_ielr ~resolve symbols prods t0 t1] determines whether [t0] and [t1] make compatible
-    contributions. If [resolve] is true, allow conflicts that cannot lead to inadequacy (i.e.
-    shift-reduce conflicts cannot lead to inadequacy if the conflict manifestation contains a shift
-    action and a single reduce action). *)
+(** [compat_ielr ~resolve symbols prods t0 t1] merges shift contribs into the contribs of [t0] and
+    [t1] if the conflict manifestation contains shift, returns true if at least one contrib is empty
+    (oblivious to merging and therefore compatible with any other contrib), performs conflict
+    resolution on the contribs if [resolve] is true, returns true iff the (optionally resolved)
+    contribs are equal. *)
+
+val compat_ielr_implicit: resolve:bool -> Symbols.t -> Prods.t -> t -> bool
+(** [compat_ielr_implicit ~resolve symbols prods t] merges shift contribs into the contribs of [t]
+    and an implicit attrib (i.e. no reduces attributed) if the conflict manifestation contains
+    shift, returns true if at least one contrib is empty (oblivious to merging and therefore
+    compatible with any other contrib), performs conflict resolution on the contribs if [resolve] is
+    true, returns true iff the (optionally resolved) contribs are equal. *)
