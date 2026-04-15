@@ -108,10 +108,16 @@ let contrib {conflict; contrib; _} =
   | false -> contrib
   | true -> Contrib.(union shift contrib)
 
-let compat_ielr ~resolve symbols prods ({symbol_index; _} as t0) t1 =
+let contrib_implicit {conflict; _} =
+  (* Merge shift into contribs if present in the conflict manifestation, since all lanes are
+   * implicated in shift actions. *)
+  match Contrib.mem_shift conflict with
+  | false -> Contrib.empty
+  | true -> Contrib.shift
+
+let compat_ielr_impl ~resolve symbols prods c0 ({symbol_index; _} as t1) =
   (* Attribs that contribute nothing to the conflict are oblivious to merging. Otherwise resolution
    * must be equal for attribs to be compatible. *)
-  let c0 = contrib t0 in
   match Contrib.is_empty c0 with
   | true -> true
   | false -> begin
@@ -128,3 +134,9 @@ let compat_ielr ~resolve symbols prods ({symbol_index; _} as t0) t1 =
             end
         end
     end
+
+let compat_ielr ~resolve symbols prods t0 t1 =
+  compat_ielr_impl ~resolve symbols prods (contrib t0) t1
+
+let compat_ielr_implicit ~resolve symbols prods t =
+  compat_ielr_impl ~resolve symbols prods (contrib_implicit t) t
