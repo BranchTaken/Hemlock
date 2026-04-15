@@ -11,6 +11,12 @@ include IdentifiableIntf.S with type t := t
 val equal: t -> t -> bool
 (** [equal t0 t1] returns true iff the contents of [t0] and [t1] are identical. *)
 
+val subset: t -> t -> bool
+(** [subset t0 t1] returns true if all items in [t1] are also in [t0]. *)
+
+val disjoint: t -> t -> bool
+(** [disjoint t0 t1] returns true if [t0] and [t1] have no items in common. *)
+
 val empty: t
 (** [empty] returns an empty LR(0) itemset. *)
 

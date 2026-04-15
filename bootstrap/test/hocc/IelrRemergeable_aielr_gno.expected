@@ -9,8 +9,8 @@ hocc: 18 conflicts in 6 states (0 ⊥, 18 shift-reduce, 0 reduce-reduce) (confli
 hocc: Gathering IELR(1) conflict attributions
 hocc: Filtering useless IELR(1) conflict attributions
 hocc: LR(1) item set compatibility: ielr
-hocc: Generating LR(1) item set closures (+^.=add/split/merge)++++++..+++...+++++++++..+++.....++++++.+..........+.++..+.+..........++..++...+.....+.....+.....^+.+..+..^.^^......^^+^.^.....^..^..
-hocc: Generating 55 LR(1) states
+hocc: Generating LR(1) item set closures (+^.=add/split/merge)++++++..+++...+++++++++..+++.....++++++.+..........+.++..+.+..........++..++...+.....+.....+.....^+.+..+.^......^^+^^^..^..^^.^^^..
+hocc: Generating 58 LR(1) states
 hocc: 0 unresolvable conflicts in 0 states
 hocc: Searching for unused precedences/tokens/non-terminals/productions
 hocc: Generating text report

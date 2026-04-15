@@ -68,7 +68,7 @@ let merge symbols GotoNub.{goto; kernel_attribs=gotonub_ka; attribs=gotonub_a; _
   let attribs = Attribs.union gotonub_a statenub_a in
   merged, {lr1itemsetclosure; isocores_sn; isocore_set_sn; kernel_attribs; attribs}
 
-let compat_ielr ~resolve symbols prods GotoNub.{attribs=o_attribs; _} {attribs=t_attribs; _} =
+let compat_ielr ~resolve symbols prods GotoNub.{attribs=g_a; _} {attribs=t_a; _} =
   Attribs.fold2_until ~init:true ~f:(fun _compat attrib_opt0 attrib_opt1 ->
     let compat = match attrib_opt0, attrib_opt1 with
       | Some attrib0, Some attrib1 -> Attrib.compat_ielr ~resolve symbols prods attrib0 attrib1
@@ -77,7 +77,7 @@ let compat_ielr ~resolve symbols prods GotoNub.{attribs=o_attribs; _} {attribs=t
       | None, None -> not_reached ()
     in
     compat, not compat
-  ) o_attribs t_attribs
+  ) g_a t_a
 
 let compat_lr GotoNub.{goto; _} {lr1itemsetclosure={kernel; _}; _} =
   Lr1Itemset.compat_lr goto kernel
