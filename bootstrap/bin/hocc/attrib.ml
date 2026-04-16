@@ -159,17 +159,9 @@ let compat_ielr ~resolve symbols prods
           compat_ielr_impl ~resolve symbols prods (contrib_implicit t1) t1
         end
       | false, false -> begin
-          match Lr0Itemset.disjoint core0 core1 with
-          | false -> begin
-              (* Overlapping. *)
-              compat_ielr_impl ~resolve symbols prods (contrib_implicit t0) t0
-              && compat_ielr_impl ~resolve symbols prods (contrib_implicit t1) t1
-            end
-          | true -> begin
-              (* Disjoint. *)
-              compat_ielr_impl ~resolve symbols prods (contrib_implicit t0) t0
-              && compat_ielr_impl ~resolve symbols prods (contrib_implicit t1) t1
-            end
+          (* Overlapping or disjoint. *)
+          compat_ielr_impl ~resolve symbols prods (contrib_implicit t0) t0
+          && compat_ielr_impl ~resolve symbols prods (contrib_implicit t1) t1
         end
     end
 
