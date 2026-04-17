@@ -3,7 +3,7 @@
  (libraries Basis Hmc))
 
 (rule
-  (deps (source_tree .))
+  (deps (universe))
   (target Version.ml)
   (action
    (with-accepted-exit-codes 0
