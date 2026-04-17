@@ -2,7 +2,7 @@
 #
 # Generate body of `Version.ml`.
 
-version=`git describe --all --long | sed 's#heads/##'`
+version=`git describe --all --long --abbrev=40 | sed 's#heads/##'`
 
 cat << EOF
 let version = "${version}"
