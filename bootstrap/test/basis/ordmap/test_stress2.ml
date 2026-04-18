@@ -5,11 +5,14 @@ open Ordmap
 
 let test () =
   (* test is n^2 time complexity, so keep n small. *)
-  let veq_u128 v0 v1 = Cmp.is_eq (U128.cmp v0 v1) in
-  let merge_u128 k v0 v1 = begin
+  let vequal_u128 _k v0 v1 = Cmp.is_eq (U128.cmp v0 v1) in
+  let vunion_u128 k v0 v1 = begin
     assert U128.(k = (bit_not v0));
-    assert (veq_u128 v0 v1);
+    assert (vequal_u128 k v0 v1);
     v0
+  end in
+  let vinter_u128 k v0 v1 = begin
+    Some (vunion_u128 k v0 v1)
   end in
   let rec test n i e ordmap = begin
     match i < n with
@@ -20,10 +23,10 @@ let test () =
         let ordmap' = remove_hlt h
             (test n (succ i) e (insert_hlt ~k:h ~v:(U128.bit_not h) ordmap)) in
         validate ordmap';
-        assert (equal veq_u128 ordmap ordmap');
-        assert (equal veq_u128 ordmap (union ~f:merge_u128 ordmap ordmap'));
-        assert (equal veq_u128 ordmap (inter ~f:merge_u128 ordmap ordmap'));
-        assert (equal veq_u128 e (diff ordmap ordmap'));
+        assert (equal ~vequal:vequal_u128 ordmap ordmap');
+        assert (equal ~vequal:vequal_u128 ordmap (union ~vunion:vunion_u128 ordmap ordmap'));
+        assert (equal ~vequal:vequal_u128 ordmap (inter ~vinter:vinter_u128 ordmap ordmap'));
+        assert (equal ~vequal:vequal_u128 e (diff ~vdiff ordmap ordmap'));
         ordmap'
       end
   end in

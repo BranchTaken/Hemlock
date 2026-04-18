@@ -82,21 +82,22 @@ include Seq.MakePoly2Fold2(SeqPoly2Fold2)
 module Seq = SeqPoly2Fold2
 
 let equal t0 t1 =
-  Map.equal Unit.( = ) t0 t1
+  Map.equal ~vequal:(fun _ _ _ -> true) t0 t1
 
 let subset t0 t1 =
-  Map.subset Unit.( = ) t0 t1
+  Map.subset ~vsubset:(fun _ _ _ -> true) t0 t1
 
 let disjoint t0 t1 =
-  Map.disjoint t0 t1
+  Map.disjoint ~vdisjoint:(fun _ _ _ -> false) t0 t1
 
 let union t0 t1 =
-  Map.union ~f:(fun _ _ _ -> ()) t0 t1
+  Map.union ~vunion:(fun _ _ _ -> ()) t0 t1
 
 let inter t0 t1 =
-  Map.inter ~f:(fun _ _ _ -> ()) t0 t1
+  Map.inter ~vinter:(fun _ _ _ -> Some ()) t0 t1
 
-let diff = Map.diff
+let diff t0 t1 =
+  Map.diff ~vdiff:(fun _ _ _ -> None) t0 t1
 
 let count ~f t =
   Map.count ~f:(fun (a, _) -> f a) t

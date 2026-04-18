@@ -24,7 +24,7 @@ include Identifiable.Make(T)
 let length = Ordmap.length
 
 let equal t0 t1 =
-  Ordmap.equal Attribs.equal t0 t1
+  Ordmap.equal ~vequal:(fun _k t0 t1 -> Attribs.equal t0 t1) t0 t1
 
 module Seq = struct
   type container = t
@@ -55,7 +55,7 @@ let insert lr0item attribs t =
   ) t
 
 let union t0 t1 =
-  Ordmap.union ~f:(fun _lr0item attribs0 attribs1 ->
+  Ordmap.union ~vunion:(fun _lr0item attribs0 attribs1 ->
     Attribs.union attribs0 attribs1
   ) t0 t1
 

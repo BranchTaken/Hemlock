@@ -113,7 +113,7 @@ module TraceVal = struct
     ) t
 
   let union t0 t1 =
-    Ordmap.union ~f:(fun _lr1item isucc_lr1itemset0 isucc_lr1itemset1 ->
+    Ordmap.union ~vunion:(fun _lr1item isucc_lr1itemset0 isucc_lr1itemset1 ->
       Lr1Itemset.union isucc_lr1itemset0 isucc_lr1itemset1
     ) t0 t1
 
@@ -358,7 +358,7 @@ let of_ipred_state state leftmost_cache ({state=isucc; _} as t) =
   t, leftmost_cache
 
 let union {traces=traces0; _} ({traces=traces1; _} as t1) =
-  {t1 with traces=Ordmap.union ~f:(fun _k v0 v1 -> TraceVal.union v0 v1) traces0 traces1}
+  {t1 with traces=Ordmap.union ~vunion:(fun _k v0 v1 -> TraceVal.union v0 v1) traces0 traces1}
 
 let merge {traces=traces0; _} ({traces=traces1; _} as t1) =
   let strict_superset, traces = Ordmap.fold ~init:(false, traces1)

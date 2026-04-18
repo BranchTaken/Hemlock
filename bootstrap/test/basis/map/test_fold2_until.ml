@@ -7,7 +7,7 @@ let test () =
   let test ks0 ks1 = begin
     let map0 = of_klist ks0 in
     let map1 = of_klist ks1 in
-    let map = union ~f:merge map0 map1 in
+    let map = union ~vunion map0 map1 in
     let kvs = to_alist map in
     (* Compute the number of elements in the triangle defined by folding n times, each time
      * terminating upon encounter of a distinct key. The size of the triangle is insensitive to fold

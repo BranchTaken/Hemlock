@@ -7,7 +7,7 @@ let test () =
   let test ks0 ks1 = begin
     let ordmap0 = of_klist ks0 in
     let ordmap1 = of_klist ks1 in
-    let ordmap = inter ~f:merge ordmap0 ordmap1 in
+    let ordmap = inter ~vinter ordmap0 ordmap1 in
     let kvs = to_alist ordmap in
     List.iter ks0 ~f:(fun k ->
       assert ((mem k ordmap) || (not (mem k ordmap1))));
@@ -19,7 +19,7 @@ let test () =
   let test_disjoint ks0 ks1 = begin
     let ordmap0 = of_klist ks0 in
     let ordmap1 = of_klist ks1 in
-    let ordmap = inter ~f:merge ordmap0 ordmap1 in
+    let ordmap = inter ~vinter ordmap0 ordmap1 in
     assert ((length ordmap) = 0L);
   end in
   let test_lists = [

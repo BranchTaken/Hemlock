@@ -25,8 +25,8 @@ let test () =
         let ordmap''' = update_hlt ~k ~v:v' ordmap'' in
         assert (mem k ordmap''');
         assert ((get_hlt k ordmap''') = v');
-        assert (not (subset veq ordmap'' ordmap'''));
-        assert (not (subset veq ordmap''' ordmap''));
+        assert (not (subset ~vsubset ordmap'' ordmap'''));
+        assert (not (subset ~vsubset ordmap''' ordmap''));
         validate ordmap''';
         (* update *)
         let v'' = k * 1000000L in

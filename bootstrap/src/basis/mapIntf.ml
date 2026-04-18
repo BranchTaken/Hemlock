@@ -144,36 +144,44 @@ module type S = sig
 
   (** {1 Map operations} *)
 
-  val equal: ('v -> 'v -> bool) -> ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t -> bool
-  (** [equal veq t0 t1] returns [true] if [t0] and [t1] contain identical key sets and identical
-      key-value mappings as determined by the key comparator and the [veq] value comparison
+  val equal: vequal:('k -> 'v -> 'v -> bool) -> ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t -> bool
+  (** [equal ~vequal t0 t1] returns [true] if [t0] and [t1] contain identical key sets and identical
+      key-value mappings as determined by the key comparator and the [~vequal] value equality
       function, [false] otherwise. O(n) time complexity. *)
 
-  val subset: ('v -> 'v -> bool) -> ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t -> bool
-  (** [subset veq t0 t1] returns [true] if all key-value mappings in [t1] are also in [t0], as
-      determined by the key comparator and the [veq] value comparison function, [false] otherwise.
-      O(n) time complexity. *)
+  val subset: vsubset:('k -> 'v -> 'v -> bool) -> ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t -> bool
+  (** [subset ~f t0 t1] returns [true] if all key-value mappings in [t1] are also in [t0], as
+      determined by the key comparator and the [~vsubset v0 v1] value comparison function for which
+      a true result indicates that all values in [v1] are also in [v0], [false] otherwise. O(n) time
+      complexity. *)
 
-  val disjoint: ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t -> bool
-  (** [disjoint t0 t1] returns [true] if [t0] and [t1] contain disjoint key sets as determined by
-      the key comparator, [false] otherwise. O(n) time complexity. *)
+  val disjoint: vdisjoint:('k -> 'v -> 'v -> bool) -> ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t -> bool
+  (** [disjoint ~vdisjoint t0 t1] returns [true] if [t0] and [t1] contain disjoint key sets as
+      determined by the key comparator and the [~vdisjoint] value disjointedness function, [false]
+      otherwise. O(n) time complexity. *)
 
-  val union: f:('k -> 'v -> 'v -> 'v) -> ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t
-  (** [union ~f t0 t1] creates a map that is the union of [t0] and [t1]; that is, a map that
+  val union: vunion:('k -> 'v -> 'v -> 'v) -> ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t
+    -> ('k, 'v, 'cmp) t
+  (** [union ~vunion t0 t1] creates a map that is the union of [t0] and [t1]; that is, a map that
       contains mappings for all keys present in [t0] or [t1], where the values for mappings in both
-      [t0] and [t1] are remapped via [~f]. O(m lg (n/m + 1)) time complexity if ordered, where m and
-      n are the input map lengths and m <= n; Θ(m+n) time complexity if unordered. *)
+      [t0] and [t1] are remapped via [~vunion]. O(m lg (n/m + 1)) time complexity if ordered, where
+      m and n are the input map lengths and m <= n; Θ(m+n) time complexity if unordered. *)
 
-  val inter: f:('k -> 'v -> 'v -> 'v) -> ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t
-  (** [inter ~f t0 t1] creates a map that is the intersection of [t0] and [t1]; that is, a map that
-      contains mappings for all keys present in both [t0] and [t1], where the values are remapped
-      via [~f]. O(m lg (n/m + 1)) time complexity if ordered, where m and n are the input map
-      lengths and m <= n; Θ(m+n) time complexity if unordered. *)
+  val inter: vinter:('k -> 'v -> 'v -> 'v option) -> ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t
+    -> ('k, 'v, 'cmp) t
+  (** [inter ~vinter t0 t1] creates a map that is the intersection of [t0] and [t1]; that is, a map
+      that contains mappings for all keys present in both [t0] and [t1], where the values for
+      mappings in both [t0] and [t1] are remapped ([Some v']) or removed ([None]) via [~vinter]. O(m
+      lg (n/m + 1)) time complexity if ordered, where m and n are the input map lengths and m <= n;
+      Θ(m+n) time complexity if unordered. *)
 
-  val diff: ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t
-  (** [diff t0 t1] creates a map that is the difference of t0 relative to t1; that is, a map that
-      contains all mappings present in [t0] but not present in [t1]. O(m lg (n/m + 1)) time
-      complexity if ordered, where m and n are the input map lengths and m <= n; Θ(m+n) time
+  val diff: vdiff:('k -> 'v -> 'v -> 'v option) -> ('k, 'v, 'cmp) t -> ('k, 'v, 'cmp) t
+    -> ('k, 'v, 'cmp) t
+  (** [diff ~vdiff t0 t1] creates a map that is the difference of t0 relative to t1; that is, a map
+      that contains all mappings present in [t0] but not present in [t1], where the values for
+      mappings in both [t0] and [t1] are remapped ([Some v']) or removed ([None]) via [~vdiff v0 v1]
+      for which the result is all values present in [v0] but not present in [v1]. O(m lg (n/m + 1))
+      time complexity if ordered, where m and n are the input map lengths and m <= n; Θ(m+n) time
       complexity if unordered. *)
 
   (** {1 Folding, mapping, filtering, and reducing} *)

@@ -207,10 +207,10 @@ let trace_gotos prods states adjs ~traced ~frontier =
           end
       ) lookahead_gotos
     )
-  ) (Ordmap.union ~f:reach_union traced frontier)
+  ) (Ordmap.union ~vunion:reach_union traced frontier)
 
 let rec trace io prods states adjs ~traced ~frontier =
-  let traced = Ordmap.union ~f:reach_union frontier traced in
+  let traced = Ordmap.union ~vunion:reach_union frontier traced in
   let frontier = trace_actions states ~traced ~frontier in
   match Ordmap.is_empty frontier with
   | false -> begin

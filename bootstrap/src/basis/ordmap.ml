@@ -545,7 +545,7 @@ let cmp vcmp t0 t1 =
     | None, None -> not_reached ()
   ) t0 t1
 
-let equal veq t0 t1 =
+let equal ~vequal t0 t1 =
   match (length t0) = (length t1) with
   | false -> false
   | true -> begin
@@ -554,8 +554,8 @@ let equal veq t0 t1 =
       *)
       fold2_until ~init:true ~f:(fun _ kv0_opt kv1_opt ->
         match kv0_opt, kv1_opt with
-        | Some (_, v0), Some (_, v1) -> begin
-            let eq = veq v0 v1 in
+        | Some (k, v0), Some (_k, v1) -> begin
+            let eq = vequal k v0 v1 in
             eq, (not eq)
           end
         | Some _, None -> false, true
@@ -672,23 +672,47 @@ let rec split_node a cmper node =
         end
     end
 
-(* Split an AVL tree into (Some (l, r)) if key a is not in the tree, None otherwise, where l and r
- * are AVL trees containing all mappings preceding/following a in the total key ordering,
- * respectively. split2_node is join2's dual. *)
-let rec split2_node a cmper node =
+let subset ~vsubset t0 t1 =
+  let rec fn cmper vsubset node0 node1 = begin
+    match node1 with
+    | Empty -> true
+    | Leaf {k; v} -> begin
+        let _, kv_of_opt, _ = split_node k cmper node0 in
+        match kv_of_opt with
+        | None -> false
+        | Some (_, v0) -> vsubset k v0 v
+      end
+    | Node {l; k; v; n=_; h=_; r} -> begin
+        let l0, kv_of_opt, r0 = split_node k cmper node0 in
+        match kv_of_opt with
+        | None -> false
+        | Some (_, v0) ->
+          (vsubset k v0 v) && (fn cmper vsubset l0 l) && (fn cmper vsubset r0 r)
+      end
+  end in
+  fn t0.cmper vsubset t0.root t1.root
+
+(* Split an AVL tree into (Some (l, r)) if key ka is not in the tree or value is disjoint according
+ * to vdisjoint, None otherwise, where l and r are AVL trees containing all mappings
+ * preceding/following a in the total key ordering, respectively. split2_node is join2's dual. *)
+let rec split2_node ka cmper kv vdisjoint node =
   let open Cmper in
   match node with
   | Empty -> Some (Empty, Empty)
-  | Leaf {k; v=_} -> begin
-      match cmper.cmp a k with
+  | Leaf {k; v} -> begin
+      match cmper.cmp ka k with
       | Lt -> Some (Empty, node)
-      | Eq -> None
+      | Eq -> begin
+          match vdisjoint k kv v with
+          | false -> Some (Empty, Empty)
+          | true -> None
+        end
       | Gt -> Some (node, Empty)
     end
   | Node {l; k; v; n=_; h=_; r} -> begin
-      match cmper.cmp a k with
+      match cmper.cmp ka k with
       | Lt -> begin
-          match split2_node a cmper l with
+          match split2_node ka cmper kv vdisjoint l with
           | None -> None
           | Some (ll, lr) -> begin
               match ll with
@@ -696,9 +720,30 @@ let rec split2_node a cmper node =
               | _ -> Some (ll, (join lr (k, v) r))
             end
         end
-      | Eq -> None
+      | Eq -> begin
+          match vdisjoint k kv v with
+          | false -> begin
+              match split2_node ka cmper kv vdisjoint l, split2_node ka cmper kv vdisjoint r with
+              | _, None
+              | None, _ -> None
+              | Some (ll, lr), Some (rl, rr) -> begin
+                  let l' = match ll, rl with
+                    | Empty, _ -> rl
+                    | _, Empty -> ll
+                    | _ -> join ll (k, v) rl
+                  in
+                  let r' = match lr, rr with
+                    | Empty, _ -> rr
+                    | _, Empty -> lr
+                    | _ -> join lr (k, v) rr
+                  in
+                  Some (l', r')
+                end
+            end
+          | true -> None
+        end
       | Gt -> begin
-          match split2_node a cmper r with
+          match split2_node ka cmper kv vdisjoint r with
           | None -> None
           | Some (rl, rr) -> begin
               match rr with
@@ -708,39 +753,19 @@ let rec split2_node a cmper node =
         end
     end
 
-let subset veq t0 t1 =
-  let rec fn cmper veq node0 node1 = begin
-    match node1 with
-    | Empty -> true
-    | Leaf {k; v} -> begin
-        let _, kv_of_opt, _ = split_node k cmper node0 in
-        match kv_of_opt with
-        | None -> false
-        | Some (_, v0) -> veq v0 v
-      end
-    | Node {l; k; v; n=_; h=_; r} -> begin
-        let l0, kv_of_opt, r0 = split_node k cmper node0 in
-        match kv_of_opt with
-        | None -> false
-        | Some (_, v0) ->
-          (veq v0 v) && (fn cmper veq l0 l) && (fn cmper veq r0 r)
-      end
-  end in
-  fn t0.cmper veq t0.root t1.root
-
-let disjoint t0 t1 =
-  let rec fn cmper node0 node1 = begin
+let disjoint ~vdisjoint t0 t1 =
+  let rec fn cmper vdisjoint node0 node1 = begin
     match node0, node1 with
     | _, Empty
     | Empty, _ -> true
     | Leaf {k; v=_}, _ -> Option.is_none (get_node k cmper node1)
-    | Node {l; k; v=_; n=_; h=_; r}, _ -> begin
-        match split2_node k cmper node1 with
+    | Node {l; k; v; n=_; h=_; r}, _ -> begin
+        match split2_node k cmper v vdisjoint node1 with
         | None -> false
-        | Some (l1, r1) -> (fn cmper l l1) && (fn cmper r r1)
+        | Some (l1, r1) -> (fn cmper vdisjoint l l1) && (fn cmper vdisjoint r r1)
       end
   end in
-  fn t0.cmper t0.root t1.root
+  fn t0.cmper vdisjoint t0.root t1.root
 
 let insert_node cmper ~k ~v node =
   let open Cmper in
@@ -951,8 +976,8 @@ let split a t =
   let l, a_opt, r = split_node a t.cmper t.root in
   {t with root=l}, a_opt, {t with root=r}
 
-let union ~f t0 t1 =
-  let rec fn cmper node0 node1 = begin
+let union ~vunion t0 t1 =
+  let rec fn cmper vunion node0 node1 = begin
     match node0, node1 with
     | _, Empty -> node0
     | Empty, _ -> node1
@@ -960,7 +985,7 @@ let union ~f t0 t1 =
         let l1, kv1_opt, r1 = split_node k cmper node1 in
         let v' = match kv1_opt with
           | None -> v
-          | Some (_, v1) -> f k v v1
+          | Some (_, v1) -> vunion k v v1
         in
         join l1 (k, v') r1
       end
@@ -968,67 +993,84 @@ let union ~f t0 t1 =
         let l1, kv1_opt, r1 = split_node k cmper node1 in
         let v' = match kv1_opt with
           | None -> v
-          | Some (_, v1) -> f k v v1
+          | Some (_, v1) -> vunion k v v1
         in
-        let l' = fn cmper l l1 in
-        let r' = fn cmper r r1 in
+        let l' = fn cmper vunion l l1 in
+        let r' = fn cmper vunion r r1 in
         join l' (k, v') r'
       end
   end in
-  let root' = fn t0.cmper t0.root t1.root in
+  let root' = fn t0.cmper vunion t0.root t1.root in
   {t0 with root=root'}
 
 let of_array m arr =
   match arr with
   | [||] -> empty m
   | _ -> Array.reduce_hlt (Array.map arr ~f:(fun (k, v) -> singleton m ~k ~v))
-    ~f:(fun ordmap0 ordmap1 -> union ~f:(fun _ _ ->
+    ~f:(fun ordmap0 ordmap1 -> union ~vunion:(fun _ _ ->
       halt "Duplicate key"
     ) ordmap0 ordmap1)
 
-let inter ~f t0 t1 =
-  let rec fn cmper node0 node1 = begin
+let inter ~vinter t0 t1 =
+  let rec fn cmper vinter node0 node1 = begin
     match node0, node1 with
     | _, Empty
     | Empty, _ -> Empty
     | Leaf {k; v}, _ -> begin
         let _, kv1_opt, _ = split_node k cmper node1 in
         match kv1_opt with
-        | Some (_, v1) -> leaf_init (k, (f k v v1))
+        | Some (_, v1) -> begin
+            match vinter k v v1 with
+            | None -> Empty
+            | Some v' -> leaf_init (k, v')
+          end
         | None -> Empty
       end
     | Node {l; k; v; n=_; h=_; r}, _ -> begin
         let l1, kv1_opt, r1 = split_node k cmper node1 in
-        let l' = fn cmper l l1 in
-        let r' = fn cmper r r1 in
+        let l' = fn cmper vinter l l1 in
+        let r' = fn cmper vinter r r1 in
         match kv1_opt with
         | Some (_, v1) -> begin
-            let v' = f k v v1 in
-            join l' (k, v') r'
+            match vinter k v v1 with
+            | None -> join2 l' r'
+            | Some v' -> join l' (k, v') r'
           end
         | None -> join2 l' r'
       end
   end in
-  let root' = fn t0.cmper t0.root t1.root in
+  let root' = fn t0.cmper vinter t0.root t1.root in
   {t0 with root=root'}
 
-let diff t0 t1 =
-  let rec fn cmper node0 node1 = begin
+let diff ~vdiff t0 t1 =
+  let rec fn cmper vdiff node0 node1 = begin
     match node0, node1 with
     | _, Empty -> node0
     | Empty, _ -> Empty
-    | _, Leaf {k; v=_} -> begin
-        let l0, _, r0 = split_node k cmper node0 in
-        join2 l0 r0
+    | _, Leaf {k; v} -> begin
+        let l0, kv0_opt, r0 = split_node k cmper node0 in
+        match kv0_opt with
+        | None -> join2 l0 r0
+        | Some (_k0, v0) -> begin
+            match vdiff k v0 v with
+            | None -> join2 l0 r0
+            | Some v' -> join l0 (k, v') r0
+          end
       end
-    | _, Node {r; k; v=_; n=_; h=_; l} -> begin
-        let l0, _, r0 = split_node k cmper node0 in
-        let l' = fn cmper l0 l in
-        let r' = fn cmper r0 r in
-        join2 l' r'
+    | _, Node {r; k; v; n=_; h=_; l} -> begin
+        let l0, kv0_opt, r0 = split_node k cmper node0 in
+        let l' = fn cmper vdiff l0 l in
+        let r' = fn cmper vdiff r0 r in
+        match kv0_opt with
+        | None -> join2 l' r'
+        | Some (_k0, v0) -> begin
+            match vdiff k v0 v with
+            | None -> join2 l' r'
+            | Some v' -> join l' (k, v') r'
+          end
       end
   end in
-  let root' = fn t0.cmper t0.root t1.root in
+  let root' = fn t0.cmper vdiff t0.root t1.root in
   {t0 with root=root'}
 
 let map ~f t =

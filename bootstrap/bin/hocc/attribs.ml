@@ -69,7 +69,7 @@ let length =
   Ordmap.length
 
 let equal t0 t1 =
-  Ordmap.equal (fun attrib0 attrib1 -> Attrib.equal attrib0 attrib1) t0 t1
+  Ordmap.equal ~vequal:(fun _k attrib0 attrib1 -> Attrib.equal attrib0 attrib1) t0 t1
 
 module Seq = struct
   type container = t
@@ -114,7 +114,7 @@ let insert (Attrib.{conflict_state_index; symbol_index; _} as attrib) t =
     end
 
 let union t0 t1 =
-  Ordmap.union ~f:(fun _k attrib0 attrib1 ->
+  Ordmap.union ~vunion:(fun _k attrib0 attrib1 ->
     Attrib.union attrib0 attrib1
   ) t0 t1
 

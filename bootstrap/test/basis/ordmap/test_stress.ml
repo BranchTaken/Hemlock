@@ -10,10 +10,10 @@ let test () =
     | false -> ordmap
     | true -> begin
         let ordmap' = remove_hlt i (test n (succ i) e (insert_hlt ~k:i ~v:(i * 100L) ordmap)) in
-        assert (equal veq ordmap ordmap');
-        assert (equal veq ordmap (union ~f:merge ordmap ordmap'));
-        assert (equal veq ordmap (inter ~f:merge ordmap ordmap'));
-        assert (equal veq e (diff ordmap ordmap'));
+        assert (equal ~vequal ordmap ordmap');
+        assert (equal ~vequal ordmap (union ~vunion ordmap ordmap'));
+        assert (equal ~vequal ordmap (inter ~vinter ordmap ordmap'));
+        assert (equal ~vequal e (diff ~vdiff ordmap ordmap'));
         validate ordmap';
         ordmap'
       end

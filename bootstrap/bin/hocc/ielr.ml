@@ -359,7 +359,8 @@ let annotations_init ~resolve io symbols prods lalr_states =
                   | false -> Ordmap.insert_hlt ~k:transit ~v:kernel_attribs unfiltered_annotations
                 ) lanectxs_closed
               |> filter_useless_annotations ~resolve symbols prods adjs
-              |> Ordmap.union ~f:(fun _transit ka0 ka1 -> KernelAttribs.union ka0 ka1) annotations
+              |> Ordmap.union ~vunion:(fun _transit ka0 ka1 -> KernelAttribs.union ka0 ka1)
+                annotations
             in
             leftmost_cache, io, annotations
           end

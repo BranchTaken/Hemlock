@@ -11,10 +11,10 @@ let test () =
     | true -> begin
         let map' = remove_hlt i
             (test n (succ i) e (insert_hlt ~k:i ~v:(i * 100L) map)) in
-        assert (equal veq map map');
-        assert (equal veq map (union ~f:merge map map'));
-        assert (equal veq map (inter ~f:merge map map'));
-        assert (equal veq e (diff map map'));
+        assert (equal ~vequal map map');
+        assert (equal ~vequal map (union ~vunion map map'));
+        assert (equal ~vequal map (inter ~vinter map map'));
+        assert (equal ~vequal e (diff ~vdiff map map'));
         validate map';
         map'
       end

@@ -12,13 +12,24 @@ let of_karray ks =
     insert_hlt ~k ~v:(k * 100L) ordmap
   )
 
-let veq v0 v1 =
+let vequal _k v0 v1 =
   Cmp.is_eq (Uns.cmp v0 v1)
 
-let merge k v0 v1 =
+let vsubset = vequal
+
+let vdisjoint _k v0 v1 =
+  Cmp.is_ne (Uns.cmp v0 v1)
+
+let vunion k v0 v1 =
   assert Uns.(k * 100L = v0);
-  assert (veq v0 v1);
+  assert (vequal k v0 v1);
   v0
+
+let vinter k v0 v1 =
+  Some (vunion k v0 v1)
+
+let vdiff _k _v0 _v1 =
+  None
 
 let pp_kv_pair pp_v (k, v) formatter =
   formatter
