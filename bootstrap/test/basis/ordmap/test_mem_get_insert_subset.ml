@@ -15,8 +15,8 @@ let test () =
         validate ordmap';
         assert (mem k ordmap');
         assert ((get_hlt k ordmap') = v);
-        assert (subset veq ordmap' ordmap);
-        assert (not (subset veq ordmap ordmap'));
+        assert (subset ~vsubset ordmap' ordmap);
+        assert (not (subset ~vsubset ordmap ordmap'));
         test ks' ordmap'
       end
   end in

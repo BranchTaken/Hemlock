@@ -86,13 +86,13 @@ let cmp t0 t1 =
   Ordmap.cmp Unit.cmp t0 t1
 
 let equal t0 t1 =
-  Ordmap.equal Unit.( = ) t0 t1
+  Ordmap.equal ~vequal:(fun _ _ _ -> true) t0 t1
 
 let subset t0 t1 =
-  Ordmap.subset Unit.( = ) t0 t1
+  Ordmap.subset ~vsubset:(fun _ _ _ -> true) t0 t1
 
 let disjoint t0 t1 =
-  Ordmap.disjoint t0 t1
+  Ordmap.disjoint ~vdisjoint:(fun _ _ _ -> false) t0 t1
 
 let insert a t =
   Ordmap.insert ~k:a ~v:() t
@@ -117,7 +117,7 @@ let split a t =
   | l, None, r -> l, None, r
 
 let union t0 t1 =
-  Ordmap.union ~f:(fun _ _ _ -> ()) t0 t1
+  Ordmap.union ~vunion:(fun _ _ _ -> ()) t0 t1
 
 let of_array m arr =
   match arr with
@@ -126,9 +126,10 @@ let of_array m arr =
     ~f:(fun ordset0 ordset1 -> union ordset0 ordset1)
 
 let inter t0 t1 =
-  Ordmap.inter ~f:(fun _ _ _ -> ()) t0 t1
+  Ordmap.inter ~vinter:(fun _ _ _ -> Some ()) t0 t1
 
-let diff = Ordmap.diff
+let diff t0 t1 =
+  Ordmap.diff ~vdiff:(fun _ _ _ -> None) t0 t1
 
 let filter ~f t =
   Ordmap.filter ~f:(fun (a, _) -> f a) t

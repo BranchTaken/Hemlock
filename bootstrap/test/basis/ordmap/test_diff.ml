@@ -7,7 +7,7 @@ let test () =
   let test ks0 ks1 = begin
     let ordmap0 = of_klist ks0 in
     let ordmap1 = of_klist ks1 in
-    let ordmap = diff ordmap0 ordmap1 in
+    let ordmap = diff ~vdiff ordmap0 ordmap1 in
     let kvs = to_alist ordmap in
     List.iter ks0 ~f:(fun k -> assert ((mem k ordmap) || (mem k ordmap1)));
     List.iter ks1 ~f:(fun k -> assert (not (mem k ordmap)));
@@ -17,7 +17,7 @@ let test () =
   let test_disjoint ks0 ks1 = begin
     let ordmap0 = of_klist ks0 in
     let ordmap1 = of_klist ks1 in
-    let ordmap = diff ordmap0 ordmap1 in
+    let ordmap = diff ~vdiff ordmap0 ordmap1 in
     assert ((length ordmap) = (length ordmap0));
   end in
   let test_lists = [

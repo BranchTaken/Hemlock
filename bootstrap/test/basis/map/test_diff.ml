@@ -7,7 +7,7 @@ let test () =
   let test ks0 ks1 = begin
     let map0 = of_klist ks0 in
     let map1 = of_klist ks1 in
-    let map = diff map0 map1 in
+    let map = diff ~vdiff map0 map1 in
     let kvs = to_alist map in
     List.iter ks0 ~f:(fun k -> assert ((mem k map) || (mem k map1)));
     List.iter ks1 ~f:(fun k -> assert (not (mem k map)));
@@ -17,7 +17,7 @@ let test () =
   let test_disjoint ks0 ks1 = begin
     let map0 = of_klist ks0 in
     let map1 = of_klist ks1 in
-    let map = diff map0 map1 in
+    let map = diff ~vdiff map0 map1 in
     assert ((length map) = (length map0));
   end in
   let test_lists = [

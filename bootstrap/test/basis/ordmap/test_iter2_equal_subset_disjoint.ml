@@ -7,10 +7,10 @@ let test () =
   let test_equal ks0 ks1 = begin
     let ordmap0 = of_klist ks0 in
     let ordmap1 = of_klist ks1 in
-    assert (equal veq ordmap0 ordmap1);
-    assert (subset veq ordmap0 ordmap1);
-    assert (subset veq ordmap1 ordmap0);
-    assert ((length ordmap0 = 0L) || (not (disjoint ordmap0 ordmap1)));
+    assert (equal ~vequal ordmap0 ordmap1);
+    assert (subset ~vsubset ordmap0 ordmap1);
+    assert (subset ~vsubset ordmap1 ordmap0);
+    assert ((length ordmap0 = 0L) || (not (disjoint ~vdisjoint ordmap0 ordmap1)));
     iter2 ~f:(fun kv0_opt kv1_opt ->
       match kv0_opt, kv1_opt with
       | Some _, Some _ -> ()
@@ -31,10 +31,10 @@ let test () =
   let test_disjoint ks0 ks1 = begin
     let ordmap0 = of_klist ks0 in
     let ordmap1 = of_klist ks1 in
-    assert (not (equal veq ordmap0 ordmap1));
-    assert (not (subset veq ordmap0 ordmap1));
-    assert ((length ordmap0 = 0L) || (not (subset veq ordmap1 ordmap0)));
-    assert (disjoint ordmap0 ordmap1);
+    assert (not (equal ~vequal ordmap0 ordmap1));
+    assert (not (subset ~vsubset ordmap0 ordmap1));
+    assert ((length ordmap0 = 0L) || (not (subset ~vsubset ordmap1 ordmap0)));
+    assert (disjoint ~vdisjoint ordmap0 ordmap1);
     iter2 ~f:(fun kv0_opt kv1_opt ->
       match kv0_opt, kv1_opt with
       | Some _, Some _ -> begin

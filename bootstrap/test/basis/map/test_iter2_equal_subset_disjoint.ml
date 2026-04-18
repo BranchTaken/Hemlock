@@ -7,10 +7,10 @@ let test () =
   let test_equal ks0 ks1 = begin
     let map0 = of_klist ks0 in
     let map1 = of_klist ks1 in
-    assert (equal veq map0 map1);
-    assert (subset veq map0 map1);
-    assert (subset veq map1 map0);
-    assert ((length map0 = 0L) || (not (disjoint map0 map1)));
+    assert (equal ~vequal map0 map1);
+    assert (subset ~vsubset map0 map1);
+    assert (subset ~vsubset map1 map0);
+    assert ((length map0 = 0L) || (not (disjoint ~vdisjoint map0 map1)));
     iter2 ~f:(fun kv0_opt kv1_opt ->
       match kv0_opt, kv1_opt with
       | Some _, Some _ -> ()
@@ -31,10 +31,10 @@ let test () =
   let test_disjoint ks0 ks1 = begin
     let map0 = of_klist ks0 in
     let map1 = of_klist ks1 in
-    assert (not (equal veq map0 map1));
-    assert (not (subset veq map0 map1));
-    assert ((length map0 = 0L) || (not (subset veq map1 map0)));
-    assert (disjoint map0 map1);
+    assert (not (equal ~vequal map0 map1));
+    assert (not (subset ~vsubset map0 map1));
+    assert ((length map0 = 0L) || (not (subset ~vsubset map1 map0)));
+    assert (disjoint ~vdisjoint map0 map1);
     iter2 ~f:(fun kv0_opt kv1_opt ->
       match kv0_opt, kv1_opt with
       | Some _, Some _ -> begin

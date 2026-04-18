@@ -359,7 +359,7 @@ module LeftmostCache = struct
           let state_kernel_cache = Ordmap.fold ~init:(Ordmap.empty (module K))
             ~f:(fun state_kernel_cache (prod_lhs_index, symbol_indexes) ->
               kernels_of_leftmost prod_lhs_index symbol_indexes lr1itemsetclosure
-              |> Ordmap.union ~f:(fun _k kernel0 kernel1 ->
+              |> Ordmap.union ~vunion:(fun _k kernel0 kernel1 ->
                 Lr1Itemset.union kernel0 kernel1) state_kernel_cache
             ) (lhs_symbol_indexes lr1itemsetclosure) in
           state_kernel_cache, Ordmap.insert_hlt ~k:state_index ~v:state_kernel_cache t

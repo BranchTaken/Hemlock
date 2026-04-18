@@ -92,13 +92,6 @@ let k__of_k_kvs k kvs =
 let k_cmp kcmp (k0, _) (k1, _) =
   kcmp k0 k1
 
-let kvcmp kcmp vcmp (k0, v0) (k1, v1) =
-  let open Cmp in
-  match kcmp k0 k1 with
-  | Lt -> Lt
-  | Eq -> vcmp v0 v1
-  | Gt -> Gt
-
 let cmper t =
   t.cmper
 
@@ -704,11 +697,18 @@ end
 include Seq.MakePoly3Fold2(SeqPoly3Fold2)
 module Seq = SeqPoly3Fold2
 
-let equal veq t0 t1 =
+let equal ~vequal t0 t1 =
   let open Cmp in
   let open Cmper in
-  let vcmp veq v0 v1 = begin
-    match veq v0 v1 with
+  let kvcmp kcmp vcmp (k0, v0) (k1, v1) = begin
+    let open Cmp in
+    match kcmp k0 k1 with
+    | Lt -> Lt
+    | Eq -> vcmp k0 v0 v1
+    | Gt -> Gt
+  end in
+  let vcmp veq k v0 v1 = begin
+    match veq k v0 v1 with
     | false -> Lt
     | true -> Eq
   end in
@@ -725,31 +725,35 @@ let equal veq t0 t1 =
   (* Check lengths first, since it's cheap and easy to do so. *)
   match (length t0) = (length t1) with
   | false -> false
-  | true -> fn (kvcmp t0.cmper.cmp (vcmp veq)) t0.root t1.root
+  | true -> fn (kvcmp t0.cmper.cmp (vcmp vequal)) t0.root t1.root
 
-let subset veq t0 t1 =
+let subset ~vsubset t0 t1 =
   fold_until ~init:true ~f:(fun _ (k, v) ->
     match get k t0 with
     | None -> false, true
     | Some v0 -> begin
-        match veq v0 v with
+        match vsubset k v0 v with
         | false -> false, true
         | true -> true, false
       end
   ) t1
 
-let disjoint t0 t1 =
+let disjoint ~vdisjoint t0 t1 =
   let small, large = match (length t0) <= (length t1) with
     | true -> t0, t1
     | false -> t1, t0
   in
-  fold_until ~init:true ~f:(fun _ (k, _) ->
+  fold_until ~init:true ~f:(fun _ (k, vsmall) ->
     match get k large with
     | None -> true, false
-    | Some _ -> false, true
+    | Some vlarge -> begin
+        match vdisjoint k vsmall vlarge with
+        | true -> true, false
+        | false -> false, true
+      end
   ) small
 
-let union ~f t0 t1 =
+let union ~vunion t0 t1 =
   (* Initialize the union with the larger of the two input maps, in order to minimize number of
    * insertions. *)
   let small, big = match Cmp.is_le (cmp (length t0) (length t1)) with
@@ -760,23 +764,31 @@ let union ~f t0 t1 =
     match kv_small_opt, kv_big_opt with
     | Some (k, v), None -> insert_hlt ~k ~v accum
     | None, Some _ -> accum
-    | Some (k, v0), Some (_, v1) -> update_hlt ~k ~v:(f k v0 v1) accum
+    | Some (k, v0), Some (_, v1) -> update_hlt ~k ~v:(vunion k v0 v1) accum
     | None, None -> not_reached ()
   ) small big
 
-let inter ~f t0 t1 =
+let inter ~vinter t0 t1 =
   fold2 ~init:(empty (cmper_m t0)) ~f:(fun accum kv0_opt kv1_opt ->
     match kv0_opt, kv1_opt with
-    | Some (k, v0), Some (_, v1) -> insert_hlt ~k ~v:(f k v0 v1) accum
+    | Some (k, v0), Some (_, v1) -> begin
+        match vinter k v0 v1 with
+        | None -> accum
+        | Some v -> insert_hlt ~k ~v accum
+      end
     | Some _, None
     | None, Some _ -> accum
     | None, None -> not_reached ()
   ) t0 t1
 
-let diff t0 t1 =
+let diff ~vdiff t0 t1 =
   fold2 ~init:t0 ~f:(fun accum kv0_opt kv1_opt ->
     match kv0_opt, kv1_opt with
-    | Some (k, _), Some _ -> remove_hlt k accum
+    | Some (k, v0), Some (_k, v1) -> begin
+        match vdiff k v0 v1 with
+        | None -> remove_hlt k accum
+        | Some v -> update_hlt ~k ~v accum
+      end
     | Some _, None
     | None, Some _ -> accum
     | None, None -> not_reached ()

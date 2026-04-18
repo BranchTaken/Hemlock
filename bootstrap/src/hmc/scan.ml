@@ -6370,7 +6370,7 @@ module Dfa = struct
 
     let edges0_of_maps maps =
       List.fold maps ~init:(Map.empty (module Codepoint))
-        ~f:(fun accum m -> Map.union m accum ~f:(fun _k _v0 _v1 -> not_reached ()))
+        ~f:(fun accum m -> Map.union m accum ~vunion:(fun _k _v0 _v1 -> not_reached ()))
 
     let node0_pct_seen_start =
       let fstring_state = Fstring_spec_fmt_seen in
