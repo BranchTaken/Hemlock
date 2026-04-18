@@ -86,43 +86,21 @@ let merge t0 t1 =
 
 (* Not used. *)
 let inter t0 t1 =
-  match is_empty t0, is_empty t1 with
-  | true, _
-  | _, true -> empty
-  | false, false -> begin
-      Ordmap.fold2 ~init:empty ~f:(fun t lr0item_attribs0_opt lr0item_attribs1_opt ->
-        match lr0item_attribs0_opt, lr0item_attribs1_opt with
-        | Some _, None
-        | None, Some _ -> t
-        | Some (lr0item, attribs0), Some (_lr0item, attribs1) -> begin
-            let attribs = Attribs.inter attribs0 attribs1 in
-            match Attribs.is_empty attribs with
-            | true -> t
-            | false -> Ordmap.insert_hlt ~k:lr0item ~v:attribs t
-          end
-        | None, None -> not_reached ()
-      ) t0 t1
-    end
+  Ordmap.inter ~vinter:(fun _lr0item attribs0 attribs1 ->
+    let attribs = Attribs.inter attribs0 attribs1 in
+    match Attribs.is_empty attribs with
+    | true -> None
+    | false -> Some attribs
+  ) t0 t1
 
 (* Not used. *)
 let diff t0 t1 =
-  match is_empty t0, is_empty t1 with
-  | true, _ -> empty
-  | _, true -> t0
-  | false, false -> begin
-      Ordmap.fold2 ~init:empty ~f:(fun t lr0item_attribs0_opt lr0item_attribs1_opt ->
-        match lr0item_attribs0_opt, lr0item_attribs1_opt with
-        | Some (lr0item, attribs), None -> Ordmap.insert_hlt ~k:lr0item ~v:attribs t
-        | None, Some _ -> t
-        | Some (lr0item, attribs0), Some (_lr0item, attribs1) -> begin
-            let attribs = Attribs.diff attribs0 attribs1 in
-            match Attribs.is_empty attribs with
-            | true -> t
-            | false -> Ordmap.insert_hlt ~k:lr0item ~v:attribs t
-          end
-        | None, None -> not_reached ()
-      ) t0 t1
-    end
+  Ordmap.diff ~vdiff:(fun _lr0item attribs0 attribs1 ->
+    let attribs = Attribs.diff attribs0 attribs1 in
+    match Attribs.is_empty attribs with
+    | true -> None
+    | false -> Some attribs
+  ) t0 t1
 
 let fold_until = Ordmap.fold_until
 
