@@ -8,8 +8,8 @@ let test () =
     let map = of_klist ks in
     let a_map, b_map = partition_map map ~f:(fun (k, v) ->
       match k % 2L = 0L with
-      | true -> First (Uns.to_string v)
-      | false -> Second (Uns.bits_to_sint v)
+      | true -> First (v |> Bitset.to_nat |> Nat.to_string)
+      | false -> Second (v |> Bitset.to_nat)
     ) in
     let a_kvs = to_alist a_map in
     let b_kvs = to_alist b_map in
@@ -18,7 +18,7 @@ let test () =
     |> Fmt.fmt " -> "
     |> (List.pp (pp_kv String.pp)) a_kvs
     |> Fmt.fmt " / "
-    |> (List.pp (pp_kv Sint.pp)) b_kvs
+    |> (List.pp (pp_kv (Nat.fmt ~alt:true ~radix:Hex))) b_kvs
     |> Fmt.fmt "\n"
     |> ignore
   end in

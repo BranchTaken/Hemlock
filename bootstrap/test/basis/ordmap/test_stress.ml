@@ -3,13 +3,17 @@ open! Basis
 open! OrdmapTest
 open Ordmap
 
+let kshift = 128L
+
 let test () =
   (* test is n^2 time complexity, so keep n small. *)
   let rec test n i e ordmap = begin
+    assert (n < kshift);
     match i < n with
     | false -> ordmap
     | true -> begin
-        let ordmap' = remove_hlt i (test n (succ i) e (insert_hlt ~k:i ~v:(i * 100L) ordmap)) in
+        let ordmap' = remove_hlt i
+            (test n (succ i) e (insert_hlt ~k:i ~v:(Bitset.singleton (i + kshift)) ordmap)) in
         assert (equal ~vequal ordmap ordmap');
         assert (equal ~vequal ordmap (union ~vunion ordmap ordmap'));
         assert (equal ~vequal ordmap (inter ~vinter ordmap ordmap'));

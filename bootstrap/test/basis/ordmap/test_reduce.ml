@@ -6,12 +6,12 @@ open Ordmap
 let test () =
   let test ks = begin
     let ordmap = of_klist ks in
-    let sum = reduce ~f:( + ) ordmap in
+    let union = reduce ~f:Bitset.union ordmap in
     File.Fmt.stdout
-    |> Fmt.fmt "reduce ~f:( + ) "
+    |> Fmt.fmt "reduce ~f:Bitset.union "
     |> (List.pp Uns.pp) ks
     |> Fmt.fmt " -> "
-    |> (Option.fmt Uns.pp) sum
+    |> (Option.fmt Bitset.pp) union
     |> Fmt.fmt "\n"
     |> ignore
   end in

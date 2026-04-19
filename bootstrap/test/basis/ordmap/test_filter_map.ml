@@ -6,16 +6,16 @@ open Ordmap
 let test () =
   let test arr = begin
     let ordmap = of_karray arr in
-    let ordmap' = filter_map ordmap ~f:(fun (k, v) ->
-      match k % 2L = 0L with
-      | true -> Some (Uns.to_string v)
+    let ordmap' = filter_map ordmap ~f:(fun (_k, v) ->
+      match (Bitset.choose_hlt v) % 2L = 0L with
+      | true -> Some (Bitset.to_nat v)
       | false -> None
     ) in
     let arr' = to_array ordmap' in
     File.Fmt.stdout
     |> (Array.pp Uns.pp) arr
     |> Fmt.fmt " -> "
-    |> (Array.pp (pp_kv_pair String.pp)) arr'
+    |> (Array.pp (pp_kv_pair (Nat.fmt ~alt:true ~radix:Hex))) arr'
     |> Fmt.fmt "\n"
     |> ignore
   end in

@@ -12,7 +12,17 @@ let test () =
     v0
   end in
   let vinter_u128 k v0 v1 = begin
-    Some (vunion_u128 k v0 v1)
+    assert U128.(k = (bit_not v0));
+    let v = U128.bit_and v0 v1 in
+    match U128.(v = zero) with
+    | true -> None
+    | false -> Some v
+  end in
+  let vdiff_u128 _k v0 v1 = begin
+    let v = U128.(v0 - v1) in
+    match U128.(v = zero) with
+    | true -> None
+    | false -> Some v
   end in
   let rec test n i e ordmap = begin
     match i < n with
@@ -26,7 +36,7 @@ let test () =
         assert (equal ~vequal:vequal_u128 ordmap ordmap');
         assert (equal ~vequal:vequal_u128 ordmap (union ~vunion:vunion_u128 ordmap ordmap'));
         assert (equal ~vequal:vequal_u128 ordmap (inter ~vinter:vinter_u128 ordmap ordmap'));
-        assert (equal ~vequal:vequal_u128 e (diff ~vdiff ordmap ordmap'));
+        assert (equal ~vequal:vequal_u128 e (diff ~vdiff:vdiff_u128 ordmap ordmap'));
         ordmap'
       end
   end in

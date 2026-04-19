@@ -3,36 +3,39 @@ open! Basis
 open! OrdmapTest
 open Ordmap
 
+let kshift = 128L
+
 let test () =
   let rec test ks ordmap = begin
     match ks with
     | [] -> ()
     | k :: ks' -> begin
+        assert (k < kshift);
         assert (not (mem k ordmap));
         assert (Option.is_none (get k ordmap));
         (* update (silently fail) *)
-        let v = k * 100L in
+        let v = Bitset.singleton k in
         let ordmap' = update ~k ~v ordmap in
         assert (not (mem k ordmap'));
         validate ordmap';
         (* upsert *)
         let ordmap'' = upsert ~k ~v ordmap' in
         assert (mem k ordmap'');
-        assert ((get_hlt k ordmap'') = v);
+        assert (Bitset.equal (get_hlt k ordmap'') v);
         validate ordmap'';
         (* update_hlt *)
-        let v' = k * 10000L in
+        let v' = Bitset.insert (k + kshift) v in
         let ordmap''' = update_hlt ~k ~v:v' ordmap'' in
         assert (mem k ordmap''');
-        assert ((get_hlt k ordmap''') = v');
+        assert (Bitset.equal (get_hlt k ordmap''') v');
         assert (not (subset ~vsubset ordmap'' ordmap'''));
-        assert (not (subset ~vsubset ordmap''' ordmap''));
+        assert (subset ~vsubset ordmap''' ordmap'');
         validate ordmap''';
         (* update *)
-        let v'' = k * 1000000L in
+        let v'' = Bitset.insert (k + (kshift * 2L)) v' in
         let ordmap'''' = update ~k ~v:v'' ordmap''' in
         assert (mem k ordmap'''');
-        assert ((get_hlt k ordmap'''') = v'');
+        assert (Bitset.equal (get_hlt k ordmap'''') v'');
         validate ordmap'''';
         test ks' ordmap''''
       end

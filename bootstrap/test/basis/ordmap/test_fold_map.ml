@@ -7,15 +7,15 @@ let test () =
   let test arr = begin
     let ordmap = of_karray arr in
     let sum, ordmap' = fold_map ordmap ~init:0L ~f:(fun accum (_k, v) ->
-      (accum + v), Uns.to_string v)
-    in
+      (accum + (vsum v)), Bitset.to_nat v
+    ) in
     let arr' = to_array ordmap' in
     File.Fmt.stdout
     |> (Array.pp Uns.pp) arr
     |> Fmt.fmt " -> "
     |> Uns.pp sum
     |> Fmt.fmt ", "
-    |> (Array.pp (pp_kv_pair String.pp)) arr'
+    |> (Array.pp (pp_kv_pair (Nat.fmt ~alt:true ~radix:Hex))) arr'
     |> Fmt.fmt "\n"
     |> ignore
   end in

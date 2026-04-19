@@ -17,8 +17,8 @@ let test () =
       assert ((mem k map0) && (mem k map1)));
   end in
   let test_disjoint ks0 ks1 = begin
-    let map0 = of_klist ks0 in
-    let map1 = of_klist ks1 in
+    let map0 = of_klist_v ks0 0L in
+    let map1 = of_klist_v ks1 1L in
     let map = inter ~vinter map0 map1 in
     assert ((length map) = 0L);
   end in
@@ -39,7 +39,37 @@ let test () =
     ([0L], [1L; 2L]);
     ([0L; 1L], [2L; 3L]);
     ([0L; 1L], [2L; 3L; 4L]);
-    ([0L; 1L; 2L], [3L; 4L; 5L])
+    ([0L; 1L; 2L], [3L; 4L; 5L]);
+
+    ([0L], [0L]);
+    ([0L], [0L; 1L]);
+    ([0L], [0L; 1L; 2L]);
+    ([0L], [0L; 1L; 2L; 3L]);
+    ([0L], [0L; 1L; 2L; 3L; 4L]);
+
+    ([0L; 1L], [0L]);
+    ([0L; 1L], [0L; 1L]);
+    ([0L; 1L], [0L; 1L; 2L]);
+    ([0L; 1L], [0L; 1L; 2L; 3L]);
+    ([0L; 1L], [0L; 1L; 2L; 3L; 4L]);
+
+    ([0L; 1L; 2L], [0L]);
+    ([0L; 1L; 2L], [0L; 1L]);
+    ([0L; 1L; 2L], [0L; 1L; 2L]);
+    ([0L; 1L; 2L], [0L; 1L; 2L; 3L]);
+    ([0L; 1L; 2L], [0L; 1L; 2L; 3L; 4L]);
+
+    ([0L; 1L; 2L; 3L], [0L]);
+    ([0L; 1L; 2L; 3L], [0L; 1L]);
+    ([0L; 1L; 2L; 3L], [0L; 1L; 2L]);
+    ([0L; 1L; 2L; 3L], [0L; 1L; 2L; 3L]);
+    ([0L; 1L; 2L; 3L], [0L; 1L; 2L; 3L; 4L]);
+
+    ([0L; 1L; 2L; 3L; 4L], [0L]);
+    ([0L; 1L; 2L; 3L; 4L], [0L; 1L]);
+    ([0L; 1L; 2L; 3L; 4L], [0L; 1L; 2L]);
+    ([0L; 1L; 2L; 3L; 4L], [0L; 1L; 2L; 3L]);
+    ([0L; 1L; 2L; 3L; 4L], [0L; 1L; 2L; 3L; 4L]);
   ] in
   List.iteri test_lists ~f:(fun i ks0 ->
     List.iteri test_lists ~f:(fun j ks1 ->

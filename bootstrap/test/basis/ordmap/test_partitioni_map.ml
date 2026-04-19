@@ -8,8 +8,8 @@ let test () =
     let ordmap = of_karray arr in
     let a_ordmap, b_ordmap = partitioni_map ordmap ~f:(fun i (_, v) ->
       match i % 2L = 0L with
-      | true -> First (Uns.to_string v)
-      | false -> Second (Uns.bits_to_sint v)
+      | true -> First (v |> Bitset.to_nat |> Nat.to_string)
+      | false -> Second (v |> Bitset.to_nat)
     ) in
     let a_arr = to_array a_ordmap in
     let b_arr = to_array b_ordmap in
@@ -18,7 +18,7 @@ let test () =
     |> Fmt.fmt " -> "
     |> (Array.pp (pp_kv_pair String.pp)) a_arr
     |> Fmt.fmt " / "
-    |> (Array.pp (pp_kv_pair Sint.pp)) b_arr
+    |> (Array.pp (pp_kv_pair (Nat.fmt ~alt:true ~radix:Hex))) b_arr
     |> Fmt.fmt "\n"
     |> ignore
   end in

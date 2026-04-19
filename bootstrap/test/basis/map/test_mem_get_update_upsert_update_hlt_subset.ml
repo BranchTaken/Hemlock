@@ -3,6 +3,8 @@ open! Basis
 open MapTest
 open Map
 
+let kshift = 128L
+
 let test () =
   let rec test ks map = begin
     match ks with
@@ -11,28 +13,28 @@ let test () =
         assert (not (mem k map));
         assert (Option.is_none (get k map));
         (* update (silently fail) *)
-        let v = k * 100L in
+        let v = Bitset.singleton k in
         let map' = update ~k ~v map in
         assert (not (mem k map'));
         validate map';
         (* upsert *)
         let map'' = upsert ~k ~v map' in
         assert (mem k map'');
-        assert ((get_hlt k map'') = v);
+        assert (Bitset.equal (get_hlt k map'') v);
         validate map'';
         (* update_hlt *)
-        let v' = k * 10000L in
+        let v' = Bitset.insert (k + kshift) v in
         let map''' = update_hlt ~k ~v:v' map'' in
         assert (mem k map''');
-        assert ((get_hlt k map''') = v');
+        assert (Bitset.equal (get_hlt k map''') v');
         assert (not (subset ~vsubset map'' map'''));
-        assert (not (subset ~vsubset map''' map''));
+        assert (subset ~vsubset map''' map'');
         validate map''';
         (* update *)
-        let v'' = k * 1000000L in
+        let v'' = Bitset.insert (k + (kshift * 2L)) v' in
         let map'''' = update ~k ~v:v'' map''' in
         assert (mem k map'''');
-        assert ((get_hlt k map'''') = v'');
+        assert (Bitset.equal (get_hlt k map'''') v'');
         validate map'''';
         test ks' map''''
       end

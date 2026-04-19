@@ -6,16 +6,16 @@ open Map
 let test () =
   let test ks = begin
     let map = of_klist ks in
-    let map' = filter_map map ~f:(fun (k, v) ->
-      match k % 2L = 0L with
-      | true -> Some (Uns.to_string v)
+    let map' = filter_map map ~f:(fun (_k, v) ->
+      match (Bitset.choose_hlt v) % 2L = 0L with
+      | true -> Some (Bitset.to_nat v)
       | false -> None
     ) in
     let kvs = to_alist map' in
     File.Fmt.stdout
     |> (List.pp Uns.pp) ks
     |> Fmt.fmt " -> "
-    |> (List.pp (pp_kv String.pp)) kvs
+    |> (List.pp (pp_kv (Nat.fmt ~alt:true ~radix:Hex))) kvs
     |> Fmt.fmt "\n"
     |> ignore
   end in

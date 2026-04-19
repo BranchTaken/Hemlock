@@ -12,9 +12,9 @@ let test () =
     File.Fmt.stdout
     |> (Array.pp Uns.pp) arr
     |> Fmt.fmt " -> "
-    |> (Array.pp (pp_kv_pair Uns.pp)) t_arr
+    |> (Array.pp (pp_kv_pair Bitset.pp)) t_arr
     |> Fmt.fmt " / "
-    |> (Array.pp (pp_kv_pair Uns.pp)) f_arr
+    |> (Array.pp (pp_kv_pair Bitset.pp)) f_arr
     |> Fmt.fmt "\n"
     |> ignore
   end in

@@ -6,12 +6,12 @@ open Map
 let test () =
   let test ks = begin
     let map = of_klist ks in
-    let sum = reduce ~f:( + ) map in
+    let sum = reduce ~f:Bitset.union map in
     File.Fmt.stdout
-    |> Fmt.fmt "reduce ~f:( + ) "
+    |> Fmt.fmt "reduce ~f:Bitset.union "
     |> (List.pp Uns.pp) ks
     |> Fmt.fmt " -> "
-    |> (Option.fmt Uns.pp) sum
+    |> (Option.fmt Bitset.pp) sum
     |> Fmt.fmt "\n"
     |> ignore
   end in
