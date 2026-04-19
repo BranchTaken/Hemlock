@@ -143,39 +143,45 @@ let merge t0 t1 =
     strict_superset || lr1item_strict_superset, t
   ) t0
 
+let of_items items =
+  let core = Ordmap.fold ~init:Lr0Itemset.empty ~f:(fun core (lr0item, _lr1item) ->
+    Lr0Itemset.insert lr0item core
+  ) items in
+  {items; core}
+
 let inter t0 t1 =
-  Ordmap.fold2 ~init:empty ~f:(fun t lr1item_opt0 lr1item_opt1 ->
-    match lr1item_opt0, lr1item_opt1 with
-    | Some _, None
-    | None, Some _ -> t
-    | Some (lr0item, lr1item0), Some (_, lr1item1) -> begin
+  match is_empty t0, is_empty t1 with
+  | true, _
+  | _, true -> empty
+  | false, false -> begin
+      Ordmap.inter ~vinter:(fun lr0item lr1item0 lr1item1 ->
         let follow = Bitset.inter Lr1Item.(lr1item0.follow) Lr1Item.(lr1item1.follow) in
         match Bitset.is_empty follow with
-        | true -> t
+        | true -> None
         | false -> begin
             let lr1item = Lr1Item.init ~lr0item ~follow in
-            insert lr1item t
+            Some lr1item
           end
-      end
-    | None, None -> not_reached ()
-  ) t0.items t1.items
+      ) t0.items t1.items
+      |> of_items
+    end
 
 let diff t0 t1 =
-  Ordmap.fold2 ~init:empty ~f:(fun t lr1item_opt0 lr1item_opt1 ->
-    match lr1item_opt0, lr1item_opt1 with
-    | Some (_, lr1item0), None -> insert lr1item0 t
-    | None, Some _ -> t
-    | Some (lr0item, lr1item0), Some (_, lr1item1) -> begin
+  match is_empty t0, is_empty t1 with
+  | true, _ -> empty
+  | _, true -> t0
+  | false, false -> begin
+      Ordmap.diff ~vdiff:(fun lr0item lr1item0 lr1item1 ->
         let follow = Bitset.diff Lr1Item.(lr1item0.follow) Lr1Item.(lr1item1.follow) in
         match Bitset.is_empty follow with
-        | true -> t
+        | true -> None
         | false -> begin
             let lr1item = Lr1Item.init ~lr0item ~follow in
-            insert lr1item t
+            Some lr1item
           end
-      end
-    | None, None -> not_reached ()
-  ) t0.items t1.items
+      ) t0.items t1.items
+      |> of_items
+    end
 
 let core {core; _} =
   core
