@@ -120,43 +120,21 @@ let union t0 t1 =
 
 (* Not used. *)
 let inter t0 t1 =
-  match is_empty t0, is_empty t1 with
-  | true, _
-  | _, true -> empty
-  | false, false -> begin
-      Ordmap.fold2 ~init:empty ~f:(fun t k_attrib0_opt k_attrib1_opt ->
-        match k_attrib0_opt, k_attrib1_opt with
-        | Some _, None
-        | None, Some _ -> t
-        | Some (k, attrib0), Some (_k, attrib1) -> begin
-            let attrib = Attrib.inter attrib0 attrib1 in
-            match Attrib.is_empty attrib with
-            | true -> t
-            | false -> Ordmap.insert_hlt ~k ~v:attrib t
-          end
-        | None, None -> not_reached ()
-      ) t0 t1
-    end
+  Ordmap.inter ~vinter:(fun _k attrib0 attrib1 ->
+    let attrib = Attrib.inter attrib0 attrib1 in
+    match Attrib.is_empty attrib with
+    | true -> None
+    | false -> Some attrib
+  ) t0 t1
 
 (* Not used. *)
 let diff t0 t1 =
-  match is_empty t0, is_empty t1 with
-  | true, _ -> empty
-  | _, true -> t0
-  | false, false -> begin
-      Ordmap.fold2 ~init:empty ~f:(fun t k_attrib0_opt k_attrib1_opt ->
-        match k_attrib0_opt, k_attrib1_opt with
-        | Some (k, attrib), None -> Ordmap.insert_hlt ~k ~v:attrib t
-        | None, Some _ -> t
-        | Some (k, attrib0), Some (_k, attrib1) -> begin
-            let attrib = Attrib.diff attrib0 attrib1 in
-            match Attrib.is_empty attrib with
-            | true -> t
-            | false -> Ordmap.insert_hlt ~k ~v:attrib t
-          end
-        | None, None -> not_reached ()
-      ) t0 t1
-    end
+  Ordmap.diff ~vdiff:(fun _k attrib0 attrib1 ->
+    let attrib = Attrib.diff attrib0 attrib1 in
+    match Attrib.is_empty attrib with
+    | true -> None
+    | false -> Some attrib
+  ) t0 t1
 
 let fold_until ~init ~f t =
   Ordmap.fold_until ~init ~f:(fun accum (_k, attrib) -> f accum attrib) t
