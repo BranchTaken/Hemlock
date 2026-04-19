@@ -10,11 +10,11 @@ let test () =
     | k :: ks' -> begin
         assert (not (mem k map));
         assert (Option.is_none (get k map));
-        let v = k * 100L in
+        let v = Bitset.singleton k in
         let map' = insert ~k ~v map in
         validate map';
         assert (mem k map');
-        assert ((get_hlt k map') = v);
+        assert (Bitset.equal (get_hlt k map') v);
         assert (subset ~vsubset map' map);
         assert (not (subset ~vsubset map map'));
         test ks' map'

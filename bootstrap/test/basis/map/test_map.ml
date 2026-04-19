@@ -6,12 +6,12 @@ open Map
 let test () =
   let test ks = begin
     let m = of_klist ks in
-    let m' = map m ~f:(fun (_k, v) -> Uns.to_string v) in
+    let m' = map m ~f:(fun (_k, v) -> Bitset.to_nat v) in
     let kvs = to_alist m' in
     File.Fmt.stdout
     |> (List.pp Uns.pp) ks
     |> Fmt.fmt " -> "
-    |> (List.pp (pp_kv String.pp)) kvs
+    |> (List.pp (pp_kv (Nat.fmt ~alt:true ~radix:Hex))) kvs
     |> Fmt.fmt "\n"
     |> ignore
   end in

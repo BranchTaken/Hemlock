@@ -6,14 +6,16 @@ open Map
 let test () =
   let test ks = begin
     let m = of_klist ks in
-    let sum, m' = fold_map m ~init:0L ~f:(fun accum (_k, v) -> (accum + v), Uns.to_string v) in
+    let sum, m' = fold_map m ~init:0L ~f:(fun accum (_k, v) ->
+      (accum + (vsum v)), Bitset.to_nat v
+    ) in
     let kvs = to_alist m' in
     File.Fmt.stdout
     |> (List.pp Uns.pp) ks
     |> Fmt.fmt " -> "
     |> Uns.pp sum
     |> Fmt.fmt ", "
-    |> (List.pp (pp_kv String.pp)) kvs
+    |> (List.pp (pp_kv Nat.pp)) kvs
     |> Fmt.fmt "\n"
     |> ignore
   end in

@@ -8,14 +8,14 @@ let test () =
     let ordmap = of_karray arr in
     let ordmap' = filteri_map ordmap ~f:(fun i (_, v) ->
       match i % 2L = 0L with
-      | true -> Some (Uns.to_string v)
+      | true -> Some (Bitset.to_nat v)
       | false -> None
     ) in
     let arr' = to_array ordmap' in
     File.Fmt.stdout
     |> (Array.pp Uns.pp) arr
     |> Fmt.fmt " -> "
-    |> (Array.pp (pp_kv_pair String.pp)) arr'
+    |> (Array.pp (pp_kv_pair (Nat.fmt ~alt:true ~radix:Hex))) arr'
     |> Fmt.fmt "\n"
     |> ignore
   end in

@@ -3,6 +3,8 @@ open! Basis
 open MapTest
 open Map
 
+let kshift = 128L
+
 let test () =
   (* test is n^2 time complexity, so keep n small. *)
   let rec test n i e map = begin
@@ -10,7 +12,7 @@ let test () =
     | false -> map
     | true -> begin
         let map' = remove_hlt i
-            (test n (succ i) e (insert_hlt ~k:i ~v:(i * 100L) map)) in
+            (test n (succ i) e (insert_hlt ~k:i ~v:(Bitset.singleton (i + kshift)) map)) in
         assert (equal ~vequal map map');
         assert (equal ~vequal map (union ~vunion map map'));
         assert (equal ~vequal map (inter ~vinter map map'));

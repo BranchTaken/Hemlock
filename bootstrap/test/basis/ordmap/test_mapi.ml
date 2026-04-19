@@ -7,7 +7,7 @@ let test () =
   let test arr = begin
     let ordmap = of_karray arr in
     let ordmap' = mapi ordmap ~f:(fun i (_k, v) ->
-      String.Fmt.empty |> Uns.pp i |> Fmt.fmt ":" |> Uns.pp v |> Fmt.to_string
+      String.Fmt.empty |> Uns.pp i |> Fmt.fmt ":" |> Bitset.pp v |> Fmt.to_string
     ) in
     let arr' = to_array ordmap' in
     File.Fmt.stdout

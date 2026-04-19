@@ -7,8 +7,8 @@ let test () =
   let test arr = begin
     let ordmap = of_karray arr in
     let sum, ordmap' = foldi_map ordmap ~init:0L ~f:(fun i accum (_k, v) ->
-      (accum + v),
-      String.Fmt.empty |> Uns.pp i |> Fmt.fmt ":" |> Uns.pp v |> Fmt.to_string
+      (accum + (vsum v)),
+      String.Fmt.empty |> Uns.pp i |> Fmt.fmt ":" |> Bitset.pp v |> Fmt.to_string
     ) in
     let arr' = to_array ordmap' in
     File.Fmt.stdout

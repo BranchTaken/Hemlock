@@ -12,7 +12,7 @@ let test () =
         |> Fmt.fmt "fmt (of_klist "
         |> (List.pp Uns.pp) l
         |> Fmt.fmt ") -> "
-        |> fmt Uns.pp ordmap
+        |> fmt Bitset.pp ordmap
         |> Fmt.fmt "\n"
         |> ignore;
         fn lists'

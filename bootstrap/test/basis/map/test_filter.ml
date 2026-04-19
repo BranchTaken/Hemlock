@@ -11,7 +11,7 @@ let test () =
     File.Fmt.stdout
     |> (List.pp Uns.pp) ks
     |> Fmt.fmt " -> "
-    |> (List.pp (pp_kv Uns.pp)) kvs
+    |> (List.pp (pp_kv Bitset.pp)) kvs
     |> Fmt.fmt "\n"
     |> ignore
   end in

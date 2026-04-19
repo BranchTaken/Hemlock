@@ -12,7 +12,7 @@ let test () =
         |> Fmt.fmt "hash_fold (of_klist "
         |> (List.pp Uns.pp) l
         |> Fmt.fmt ") -> "
-        |> Hash.pp (Hash.t_of_state (hash_fold Uns.hash_fold ordmap Hash.State.empty))
+        |> Hash.pp (Hash.t_of_state (hash_fold Bitset.hash_fold ordmap Hash.State.empty))
         |> Fmt.fmt "\n"
         |> ignore;
         fn lists'

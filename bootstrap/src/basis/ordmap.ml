@@ -652,7 +652,7 @@ let rec split_node a cmper node =
   | Leaf {k; v} -> begin
       match cmper.cmp a k with
       | Lt -> Empty, None, node
-      | Eq -> Empty, (Some (k, v)), Empty
+      | Eq -> Empty, Some (k, v), Empty
       | Gt -> node, None, Empty
     end
   | Node {l; k; v; n=_; h=_; r} -> begin
@@ -663,7 +663,7 @@ let rec split_node a cmper node =
           | Empty, None -> Empty, None, node
           | _, _ -> ll, kv_opt, (join lr (k, v) r)
         end
-      | Eq -> l, (Some (k, v)), r
+      | Eq -> l, Some (k, v), r
       | Gt -> begin
           let rl, kv_opt, rr = split_node a cmper r in
           match kv_opt, rr with
@@ -692,10 +692,11 @@ let subset ~vsubset t0 t1 =
   end in
   fn t0.cmper vsubset t0.root t1.root
 
-(* Split an AVL tree into (Some (l, r)) if key ka is not in the tree or value is disjoint according
- * to vdisjoint, None otherwise, where l and r are AVL trees containing all mappings
- * preceding/following a in the total key ordering, respectively. split2_node is join2's dual. *)
-let rec split2_node ka cmper kv vdisjoint node =
+(* Split an AVL tree into (Some (l, r)) if key ka is not in the tree or if ka is present with
+ * disjoint value according to vdisjoint, None otherwise, where r and l are AVL trees containing all
+ * mappings preceding/following a in the total key ordering, respectively. split2_node is join2's
+ * dual. *)
+let rec split2_node ka cmper va vdisjoint node =
   let open Cmper in
   match node with
   | Empty -> Some (Empty, Empty)
@@ -703,16 +704,16 @@ let rec split2_node ka cmper kv vdisjoint node =
       match cmper.cmp ka k with
       | Lt -> Some (Empty, node)
       | Eq -> begin
-          match vdisjoint k kv v with
-          | false -> Some (Empty, Empty)
-          | true -> None
+          match vdisjoint k va v with
+          | false -> None
+          | true -> Some (Empty, Empty)
         end
       | Gt -> Some (node, Empty)
     end
   | Node {l; k; v; n=_; h=_; r} -> begin
       match cmper.cmp ka k with
       | Lt -> begin
-          match split2_node ka cmper kv vdisjoint l with
+          match split2_node ka cmper va vdisjoint l with
           | None -> None
           | Some (ll, lr) -> begin
               match ll with
@@ -721,29 +722,12 @@ let rec split2_node ka cmper kv vdisjoint node =
             end
         end
       | Eq -> begin
-          match vdisjoint k kv v with
-          | false -> begin
-              match split2_node ka cmper kv vdisjoint l, split2_node ka cmper kv vdisjoint r with
-              | _, None
-              | None, _ -> None
-              | Some (ll, lr), Some (rl, rr) -> begin
-                  let l' = match ll, rl with
-                    | Empty, _ -> rl
-                    | _, Empty -> ll
-                    | _ -> join ll (k, v) rl
-                  in
-                  let r' = match lr, rr with
-                    | Empty, _ -> rr
-                    | _, Empty -> lr
-                    | _ -> join lr (k, v) rr
-                  in
-                  Some (l', r')
-                end
-            end
-          | true -> None
+          match vdisjoint k va v with
+          | false -> None
+          | true -> Some (l, r)
         end
       | Gt -> begin
-          match split2_node ka cmper kv vdisjoint r with
+          match split2_node ka cmper va vdisjoint r with
           | None -> None
           | Some (rl, rr) -> begin
               match rr with
@@ -758,7 +742,11 @@ let disjoint ~vdisjoint t0 t1 =
     match node0, node1 with
     | _, Empty
     | Empty, _ -> true
-    | Leaf {k; v=_}, _ -> Option.is_none (get_node k cmper node1)
+    | Leaf {k; v=v0}, _ -> begin
+        match get_node k cmper node1 with
+        | None -> true
+        | Some v1 -> vdisjoint k v0 v1
+      end
     | Node {l; k; v; n=_; h=_; r}, _ -> begin
         match split2_node k cmper v vdisjoint node1 with
         | None -> false

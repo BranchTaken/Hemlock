@@ -12,9 +12,9 @@ let test () =
     File.Fmt.stdout
     |> (List.pp Uns.pp) ks
     |> Fmt.fmt " -> "
-    |> (List.pp (pp_kv Uns.pp)) t_kvs
+    |> (List.pp (pp_kv Bitset.pp)) t_kvs
     |> Fmt.fmt " / "
-    |> (List.pp (pp_kv Uns.pp)) f_kvs
+    |> (List.pp (pp_kv Bitset.pp)) f_kvs
     |> Fmt.fmt "\n"
     |> ignore
   end in
