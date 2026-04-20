@@ -327,7 +327,7 @@ let annotations_init ~resolve io symbols prods lalr_states =
   (* Gather transit attribs for all conflict states. *)
   let io =
     io.log
-    |> Fmt.fmt "hocc: Gathering IELR(1) conflict attributions"
+    |> Fmt.fmt "hocc: Gathering IELR(1) conflict state attributions (/=none/some)"
     |> Io.with_log io
   in
   let leftmost_cache = Lr1ItemsetClosure.LeftmostCache.empty in

@@ -235,30 +235,56 @@ let remergeable_statenubs states remergeables statenub0 statenub1 =
   inner states remergeables ~frontiers_next:[] ~frontiers_current
 
 let remergeable_search io isocores states =
+  let remergeables = Remergeables.empty in
+  (* Initialize the work list with indices of all states in non-singleton isocore sets. *)
+  let worklst, worklst_length, max_mergeable =
+    Isocores.fold_isocore_sets ~init:([], 0L, 0L)
+      ~f:(fun (worklst, worklst_length, max_mergeable) isocore_set ->
+        match Ordset.length isocore_set with
+        | 0L -> not_reached ()
+        | 1L -> worklst, worklst_length, max_mergeable
+        | _ -> begin
+            let worklst =
+              Ordset.fold ~init:worklst ~f:(fun worklst index -> index :: worklst) isocore_set in
+            let isocore_set_length = Ordset.length isocore_set in
+            let worklst_length = worklst_length + isocore_set_length in
+            let max_mergeable = max_mergeable + (pred isocore_set_length) in
+            worklst, worklst_length, max_mergeable
+          end
+      ) isocores
+  in
   let io =
     io.log
-    |> Fmt.fmt "hocc: Searching for remergeable state subgraphs"
+    |> Fmt.fmt "hocc: Searching for remergeable state subgraphs (mergeable/max[worklst]) 0/"
+    |> Uns.pp max_mergeable
+    |> Fmt.fmt "[" |> Uns.pp worklst_length |> Fmt.fmt "]"
     |> Io.with_log io
   in
-  let remergeables = Remergeables.empty in
-  let io, remergeables =
-    (* Initialize the work list with indices of all states in non-singleton isocore sets. *)
-    Isocores.fold_isocore_sets ~init:[] ~f:(fun state_indexes isocore_set ->
-      match Ordset.length isocore_set with
-      | 0L -> not_reached ()
-      | 1L -> state_indexes
-      | _ -> Ordset.fold ~init:state_indexes ~f:(fun workq index -> index :: workq) isocore_set
-    ) isocores
+  let io, nmergeable, remergeables =
+    worklst
     (* Reverse the work list so that remerging tends to follow the same order as splits occurred. *)
     |> List.rev
-    |> List.fold ~init:(io, remergeables)
-      ~f:(fun (io, remergeables) index0 ->
+    |> List.foldi_until ~init:(io, 0L, remergeables)
+      ~f:(fun i (io, nmergeable, remergeables) index0 ->
+        let io = match i <> 0L && (worklst_length - i) % 1000L = 0L with
+          | false -> io
+          | true -> begin
+              let io =
+                io.log
+                |> Fmt.fmt " "
+                |> Uns.pp nmergeable |> Fmt.fmt "/" |> Uns.pp max_mergeable
+                |> Fmt.fmt "[" |> Uns.pp (worklst_length - i) |> Fmt.fmt "]"
+                |> Io.with_log io
+              in
+              io
+            end
+        in
         let State.{statenub=statenub0; _} = Array.get index0 states in
         let StateNub.{isocore_set_sn=issn0; _} = statenub0 in
         let core = Lr1Itemset.core StateNub.(statenub0.lr1itemsetclosure).kernel in
         let isocore_set = Isocores.get_isocore_set_hlt core isocores in
-        Ordset.fold_until ~init:(io, remergeables)
-          ~f:(fun (io, remergeables) index1 ->
+        let nmergeable, remergeables = Ordset.fold_until ~init:(nmergeable, remergeables)
+          ~f:(fun (nmergeable, remergeables) index1 ->
             let State.{statenub=statenub1; _} = Array.get index1 states in
             let StateNub.{isocore_set_sn=issn1; _} = statenub1 in
             (* Eliminate redundant/self pairs via `>`. Furthermore, use issn for comparison rather
@@ -271,41 +297,41 @@ let remergeable_search io isocores states =
              *   (3,0), (3,1), (3,2)
              *   (4,0), (4,1), (4,2), (4,3) *)
             match issn0 > issn1 with
-            | false -> (io, remergeables), true
+            | false -> (nmergeable, remergeables), true
             | true -> begin
-                let io, remergeables = match Remergeables.rel statenub0 statenub1 remergeables with
+                let nmergeable, remergeables =
+                  match Remergeables.rel statenub0 statenub1 remergeables with
                   | Distinct
-                  | Mergeable -> io, remergeables
+                  | Mergeable -> nmergeable, remergeables
                   | Unknown -> begin
                       let remergeables, remergeable =
                         remergeable_statenubs states remergeables statenub0 statenub1 in
+                      let subgraph_size = Remergeables.subgraph_size remergeables in
                       match remergeable with
-                      | NotRemergeable spines -> begin
-                          let io =
-                            io.log
-                            |> Fmt.fmt "."
-                            |> Io.with_log io
-                          in
-                          io, Remergeables.distinct spines remergeables
-                        end
-                      | Remergeable -> begin
-                          let io =
-                            io.log
-                            |> Fmt.fmt "+"
-                            |> Uns.pp (Remergeables.subgraph_size remergeables)
-                            |> Io.with_log io
-                          in
-                          io, Remergeables.mergeable remergeables
-                        end
+                      | NotRemergeable spines ->
+                        nmergeable, Remergeables.distinct spines remergeables
+                      | Remergeable ->
+                        nmergeable + subgraph_size, Remergeables.mergeable remergeables
                     end
                 in
-                (io, remergeables), false
+                (nmergeable, remergeables), false
               end
-          ) isocore_set
+          ) isocore_set in
+        (io, nmergeable, remergeables), nmergeable = max_mergeable
       )
   in
   let io =
     io.log
+    |> (fun formatter ->
+      match worklst_length = 0L with
+      | true -> formatter
+      | false -> begin
+          formatter
+          |> Fmt.fmt " "
+          |> Uns.pp nmergeable |> Fmt.fmt "/" |> Uns.pp max_mergeable
+          |> Fmt.fmt "[0]"
+        end
+    )
     |> Fmt.fmt "\n"
     |> Io.with_log io
   in
@@ -317,11 +343,7 @@ let remerge_states io symbols isocores states =
   let nremergeable = Ordmap.length remergeable_index_map in
   match nremergeable with
   | 0L -> begin
-      let io =
-        io.log
-        |> Fmt.fmt "hocc: 0 remergeable states\n"
-        |> Io.with_log io
-      in
+      let io = io.log |> Fmt.fmt "hocc: 0 remergeable states\n" |> Io.with_log io in
       io, isocores, states
     end
   | _ -> begin
@@ -381,10 +403,6 @@ let remerge_states io symbols isocores states =
           Ordset.insert reindexed_state reindexed_states
         ) remaining_state_indexes
         |> Ordset.to_array in
-      let io =
-        io.log
-        |> Fmt.fmt "\n"
-        |> Io.with_log io
-      in
+      let io = io.log |> Fmt.fmt "\n" |> Io.with_log io in
       io, reindexed_isocores, reindexed_states
     end

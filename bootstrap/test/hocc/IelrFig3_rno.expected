@@ -3,14 +3,14 @@ hocc: Generating IELR(1) specification
 hocc: 3 precedences, 4 tokens, 5 non-terminals (1 start), 10 productions
 hocc: Generating LALR(1) specification as IELR(1) prerequisite
 hocc: LR(1) item set compatibility: lalr
-hocc: Generating LR(1) item set closures (+^.=add/split/merge)+++++++.+++++++++++
+hocc: Generating LR(1) item set closures (workq/total) 0/19
 hocc: Generating 19 LR(1) states
 hocc: 1 conflict in 1 state (0 ⊥, 0 shift-reduce, 1 reduce-reduce) (conflict resolution disabled)
-hocc: Gathering IELR(1) conflict attributions
+hocc: Gathering IELR(1) conflict state attributions (/=none/some)
 hocc: LR(1) item set compatibility: ielr
-hocc: Generating LR(1) item set closures (+^.=add/split/merge)+++++++^++++++++^+++
+hocc: Generating LR(1) item set closures (workq/total) 0/21
 hocc: Generating 21 LR(1) states
-hocc: Tracing automaton...+.+.+
+hocc: Tracing automaton (.+=actions[+gotos])...+.+.+
 hocc: 0 unreachable states
 hocc: 2 conflicts in 2 states (0 ⊥, 0 shift-reduce, 2 reduce-reduce) (conflict resolution disabled)
 hocc: Searching for unused precedences/tokens/non-terminals/productions

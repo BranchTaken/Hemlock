@@ -3,17 +3,17 @@ hocc: Generating IELR(1) specification
 hocc: 6 precedences, 13 tokens, 5 non-terminals (1 start), 15 productions
 hocc: Generating LALR(1) specification as IELR(1) prerequisite
 hocc: LR(1) item set compatibility: lalr
-hocc: Generating LR(1) item set closures (+^.=add/split/merge)++++++..+++...+++++++++..+++.....++++++.+..........+.++..+.+..........++..++...+.....+.....+.....+.+..+.........................+
+hocc: Generating LR(1) item set closures (workq/total) 0/45
 hocc: Generating 45 LR(1) states
 hocc: 18 conflicts in 6 states (0 ⊥, 18 shift-reduce, 0 reduce-reduce) (conflict resolution disabled)
-hocc: Gathering IELR(1) conflict attributions
+hocc: Gathering IELR(1) conflict state attributions (/=none/some)
 hocc: LR(1) item set compatibility: ielr
-hocc: Generating LR(1) item set closures (+^.=add/split/merge)++++++..+++...+++++++++..+++.....++++++.+..........+.++..+.+..........++..++...+.....+.....+.....^+.+..+.^......^^+^^^..^..^^.^^^..
+hocc: Generating LR(1) item set closures (workq/total) 0/58
 hocc: Generating 58 LR(1) states
-hocc: Searching for remergeable state subgraphs+12+1
+hocc: Searching for remergeable state subgraphs (mergeable/max[worklst]) 0/13[25] 13/13[0]
 hocc: Remerging 13 LR(1) states
 hocc: Reindexing 45 LR(1) states
-hocc: Tracing automaton.+..+.+.+..+.+++
+hocc: Tracing automaton (.+=actions[+gotos]).+..+.+.+..+.+++
 hocc: 0 unreachable states
 hocc: 0 unresolvable conflicts in 0 states
 hocc: Searching for unused precedences/tokens/non-terminals/productions
