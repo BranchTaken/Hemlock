@@ -214,19 +214,11 @@ let rec trace io prods states adjs ~traced ~frontier =
   let frontier = trace_actions states ~traced ~frontier in
   match Ordmap.is_empty frontier with
   | false -> begin
-      let io =
-        io.log
-        |> Fmt.fmt "."
-        |> Io.with_log io
-      in
+      let io = io.log |> Fmt.fmt "." |> Io.with_log io in
       trace io prods states adjs ~traced ~frontier
     end
   | true -> begin
-      let io =
-        io.log
-        |> Fmt.fmt "+"
-        |> Io.with_log io
-      in
+      let io = io.log |> Fmt.fmt "+" |> Io.with_log io in
       let frontier = trace_gotos prods states adjs ~traced ~frontier in
       match Ordmap.is_empty frontier with
       | true -> io, traced
@@ -245,18 +237,10 @@ let reachable io prods states adjs =
   trace io prods states adjs ~traced:(Ordmap.empty (module State.Index)) ~frontier
 
 let gc_states io prods isocores states =
-  let io =
-    io.log
-    |> Fmt.fmt "hocc: Tracing automaton"
-    |> Io.with_log io
-  in
+  let io = io.log |> Fmt.fmt "hocc: Tracing automaton (.+=actions[+gotos])" |> Io.with_log io in
   let adjs = Adjs.init states in
   let io, reachable = reachable io prods states adjs in
-  let io =
-    io.log
-    |> Fmt.fmt "\n"
-    |> Io.with_log io
-  in
+  let io = io.log |> Fmt.fmt "\n" |> Io.with_log io in
   let unreachable_state_indexes = Array.fold ~init:(Ordset.empty (module State.Index))
     ~f:(fun unreachable state ->
       let index = State.index state in
@@ -318,10 +302,6 @@ let gc_states io prods isocores states =
             end
         ) states
         |> Ordset.to_array in
-      let io =
-        io.log
-        |> Fmt.fmt "\n"
-        |> Io.with_log io
-      in
+      let io = io.log |> Fmt.fmt "\n" |> Io.with_log io in
       io, reindexed_isocores, reindexed_states
     end

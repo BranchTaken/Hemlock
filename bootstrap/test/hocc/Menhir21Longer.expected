@@ -2,9 +2,9 @@ hocc: Parsing "./Menhir21Longer.hmh"
 hocc: Generating PGM LR(1) specification
 hocc: 0 precedences, 11 tokens, 8 non-terminals (1 start), 13 productions
 hocc: LR(1) item set compatibility: weak
-hocc: Generating LR(1) item set closures (+^.=add/split/merge)+++++++++++++++++++.++++++++..+............++++
+hocc: Generating LR(1) item set closures (workq/total) 0/33
 hocc: Generating 33 LR(1) states
-hocc: Tracing automaton....+.+.+.++.++
+hocc: Tracing automaton (.+=actions[+gotos])....+.+.+.++.++
 hocc: 0 unreachable states
 hocc: 0 conflicts in 0 states
 hocc: Searching for unused precedences/tokens/non-terminals/productions

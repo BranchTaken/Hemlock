@@ -869,7 +869,14 @@ let rec isocores_init algorithm ~resolve io precs symbols prods callbacks =
   let rec close_gotonubs io symbols prods ~gotonub_of_statenub_goto isocores ~workq
       ~reported_isocores_length = begin
     match Workq.is_empty workq with
-    | true -> io, isocores
+    | true -> begin
+        let io =
+          io.log
+          |> Fmt.fmt " 0/" |> Uns.pp (Isocores.length isocores)
+          |> Io.with_log io
+        in
+        io, isocores
+      end
     | false -> begin
         let index, workq' = Workq.pop workq in
         let StateNub.{lr1itemsetclosure; _} as statenub = Isocores.statenub index isocores in
@@ -877,46 +884,34 @@ let rec isocores_init algorithm ~resolve io precs symbols prods callbacks =
             ~init:(io, isocores, workq', reported_isocores_length)
             ~f:(fun (io, isocores, workq, reported_isocores_length) (_symbol_index, goto) ->
               let gotonub = gotonub_of_statenub_goto statenub goto in
-              let io, isocores, workq = match Isocores.get gotonub isocores with
+              let isocores, workq = match Isocores.get gotonub isocores with
                 | None -> begin
-                    let io =
-                      io.log
-                      |> Fmt.fmt (match (Isocores.mem (Lr1Itemset.core goto) isocores) with
-                        | false -> "+"
-                        | true -> "^"
-                      )
-                      |> Io.with_log io
-                    in
                     let index, isocores' = Isocores.insert symbols gotonub isocores in
                     let workq' = Workq.push_back index workq in
-                    io, isocores', workq'
+                    isocores', workq'
                   end
                 | Some merge_index -> begin
                     match Isocores.merge symbols gotonub merge_index isocores with
-                    | false, _ -> io, isocores, workq
+                    | false, _ -> isocores, workq
                     | true, isocores' -> begin
-                        let io = io.log |> Fmt.fmt "." |> Io.with_log io in
                         let workq' = match Workq.mem merge_index workq with
                           | true -> workq
                           | false -> Workq.push merge_index workq
                         in
-                        io, isocores', workq'
+                        isocores', workq'
                       end
                   end
               in
               let isocores_length = Isocores.length isocores in
               let io, reported_isocores_length =
-                match (isocores_length % 100L) = 0L && isocores_length > reported_isocores_length
+                match (isocores_length % 1000L) = 0L && isocores_length > reported_isocores_length
                 with
                 | false -> io, reported_isocores_length
                 | true -> begin
                     let io =
                       io.log
-                      |> Fmt.fmt "["
-                      |> Uns.pp (Workq.length workq)
-                      |> Fmt.fmt "/"
-                      |> Uns.pp isocores_length
-                      |> Fmt.fmt "]"
+                      |> Fmt.fmt " "
+                      |> Uns.pp (Workq.length workq) |> Fmt.fmt "/" |> Uns.pp isocores_length
                       |> Io.with_log io
                     in
                     io, isocores_length
@@ -952,7 +947,7 @@ let rec isocores_init algorithm ~resolve io precs symbols prods callbacks =
   let isocores, workq = init symbols ~compat in
   let io =
     io.log
-    |> Fmt.fmt "hocc: Generating LR(1) item set closures (+^.=add/split/merge)"
+    |> Fmt.fmt "hocc: Generating LR(1) item set closures (workq/total)"
     |> Io.with_log io
   in
   let io, isocores =

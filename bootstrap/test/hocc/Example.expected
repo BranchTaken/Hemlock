@@ -3,11 +3,11 @@ hocc: Parsing "./Example.hmh"
 hocc: Generating APLR(1) specification
 hocc: 2 precedences, 8 tokens, 5 non-terminals (1 start), 9 productions
 hocc: LR(1) item set compatibility: lr
-hocc: Generating LR(1) item set closures (+^.=add/split/merge)+++++++++++++
+hocc: Generating LR(1) item set closures (workq/total) 0/14
 hocc: Generating 14 LR(1) states
-hocc: Searching for remergeable state subgraphs
+hocc: Searching for remergeable state subgraphs (mergeable/max[worklst]) 0/0[0]
 hocc: 0 remergeable states
-hocc: Tracing automaton.+.+.++
+hocc: Tracing automaton (.+=actions[+gotos]).+.+.++
 hocc: 0 unreachable states
 hocc: 0 unresolvable conflicts in 0 states
 hocc: Searching for unused precedences/tokens/non-terminals/productions

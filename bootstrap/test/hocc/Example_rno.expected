@@ -2,11 +2,11 @@ hocc: Parsing "./Example_rno.hmh"
 hocc: Generating APLR(1) specification
 hocc: 2 precedences, 8 tokens, 5 non-terminals (1 start), 9 productions
 hocc: LR(1) item set compatibility: lr
-hocc: Generating LR(1) item set closures (+^.=add/split/merge)+++++++++++++
+hocc: Generating LR(1) item set closures (workq/total) 0/14
 hocc: Generating 14 LR(1) states
 hocc: State subgraph remerging disabled due to unresolvable conflicts
 hocc: Explicitly enable remerging (-remerge yes) to override
-hocc: Tracing automaton.+.+.++
+hocc: Tracing automaton (.+=actions[+gotos]).+.+.++
 hocc: 0 unreachable states
 hocc: 8 conflicts in 2 states (0 ⊥, 8 shift-reduce, 0 reduce-reduce) (conflict resolution disabled)
 hocc: Searching for unused precedences/tokens/non-terminals/productions
