@@ -108,7 +108,6 @@ let actions symbols isocores ~gotonub_of_statenub_goto
           match Symbol.is_token symbol with
           | false -> actions
           | true -> begin
-
               let goto = Ordmap.get_hlt symbol_index token_gotos in
               let gotonub = gotonub_of_statenub_goto statenub goto in
               let goto_state_index = Isocores.get_hlt gotonub isocores in
