@@ -103,47 +103,34 @@ let added {added; _} =
 let fold ~init ~f {kernel; added; _} =
   Lr1Itemset.fold ~init:(Lr1Itemset.fold ~init ~f kernel) ~f (Lazy.force added)
 
-let goto symbol t =
-  fold ~init:Lr1Itemset.empty
-    ~f:(fun lr1itemset Lr1Item.{lr0item={prod={rhs_indexes; _} as prod; dot}; follow} ->
-      match Uns.(dot < Array.length rhs_indexes) &&
-            Uns.(Array.get dot rhs_indexes = Symbol.(symbol.index)) with
-      | false -> lr1itemset
+let gotos_impl symbols symbol_is t =
+  fold ~init:(Ordmap.empty (module Symbol.Index))
+    ~f:(fun gotos Lr1Item.{lr0item={prod={rhs_indexes; _} as prod; dot}; follow} ->
+      match Uns.(dot < Array.length rhs_indexes) with
+      | false -> gotos
       | true -> begin
-          let lr0item = Lr0Item.init ~prod ~dot:(succ dot) in
-          let lr1item = Lr1Item.init ~lr0item ~follow in
-          assert (Lr1Item.is_kernel_item lr1item);
-          Lr1Itemset.insert lr1item lr1itemset
+          let symbol_index = Array.get dot rhs_indexes in
+          let symbol = Symbols.symbol_of_symbol_index symbol_index symbols in
+          match symbol_is symbol with
+          | false -> gotos
+          | true -> begin
+              let lr0item = Lr0Item.init ~prod ~dot:(succ dot) in
+              let lr1item = Lr1Item.init ~lr0item ~follow in
+              assert (Lr1Item.is_kernel_item lr1item);
+              Ordmap.amend symbol_index ~f:(fun goto_opt ->
+                match goto_opt with
+                | None -> Some (Lr1Itemset.singleton lr1item)
+                | Some goto -> Some (Lr1Itemset.insert lr1item goto)
+              ) gotos
+            end
         end
     ) t
 
 let token_gotos symbols t =
-  fold ~init:(Ordmap.empty (module Symbol.Index))
-    ~f:(fun gotos Lr1Item.{lr0item={prod={rhs_indexes; _}; dot}; _} ->
-      match Uns.(dot < Array.length rhs_indexes) with
-      | false -> gotos
-      | true -> begin
-          let symbol_index = Array.get dot rhs_indexes in
-          let symbol = Symbols.symbol_of_symbol_index symbol_index symbols in
-          match Symbol.is_token symbol && not (Ordmap.mem symbol_index gotos) with
-          | false -> gotos
-          | true -> Ordmap.insert_hlt ~k:symbol_index ~v:(goto symbol t) gotos
-        end
-    ) t
+  gotos_impl symbols Symbol.is_token t
 
 let nonterm_gotos symbols t =
-  fold ~init:(Ordmap.empty (module Symbol.Index))
-    ~f:(fun gotos Lr1Item.{lr0item={prod={rhs_indexes; _}; dot}; _} ->
-      match Uns.(dot < Array.length rhs_indexes) with
-      | false -> gotos
-      | true -> begin
-          let symbol_index = Array.get dot rhs_indexes in
-          let symbol = Symbols.symbol_of_symbol_index symbol_index symbols in
-          match Symbol.is_nonterm symbol && not (Ordmap.mem symbol_index gotos) with
-          | false -> gotos
-          | true -> Ordmap.insert_hlt ~k:symbol_index ~v:(goto symbol t) gotos
-        end
-    ) t
+  gotos_impl symbols Symbol.is_nonterm t
 
 let fold_next symbols ~init ~f t =
   Ordmap.fold ~init:(Ordmap.fold ~init ~f (token_gotos symbols t)) ~f (nonterm_gotos symbols t)
