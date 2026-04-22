@@ -265,7 +265,7 @@ let remergeable_search io isocores states =
     (* Reverse the work list so that remerging tends to follow the same order as splits occurred. *)
     |> List.rev
     |> List.foldi_until ~init:(io, 0L, remergeables)
-      ~f:(fun i (io, nmergeable, remergeables) index0 ->
+      ~f:(fun i (io, nmergeable, remergeables) statenub0 ->
         let io = match i <> 0L && (worklst_length - i) % 1000L = 0L with
           | false -> io
           | true -> begin
@@ -279,13 +279,11 @@ let remergeable_search io isocores states =
               io
             end
         in
-        let State.{statenub=statenub0; _} = Array.get index0 states in
         let StateNub.{isocore_set_sn=issn0; _} = statenub0 in
         let core = Lr1Itemset.core StateNub.(statenub0.lr1itemsetclosure).kernel in
         let isocore_set = Isocores.get_isocore_set_hlt core isocores in
         let nmergeable, remergeables = Ordset.fold_until ~init:(nmergeable, remergeables)
-          ~f:(fun (nmergeable, remergeables) index1 ->
-            let State.{statenub=statenub1; _} = Array.get index1 states in
+          ~f:(fun (nmergeable, remergeables) statenub1 ->
             let StateNub.{isocore_set_sn=issn1; _} = statenub1 in
             (* Eliminate redundant/self pairs via `>`. Furthermore, use issn for comparison rather
              * than state index so that the order of merge attempts follows the same order as splits

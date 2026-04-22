@@ -110,7 +110,7 @@ let actions symbols isocores ~gotonub_of_statenub_goto
           | true -> begin
               let goto = Ordmap.get_hlt symbol_index token_gotos in
               let gotonub = gotonub_of_statenub_goto statenub goto in
-              let goto_state_index = Isocores.get_hlt gotonub isocores in
+              let goto_state_index = Isocores.get_hlt gotonub isocores |> StateNub.index in
               let action = match Lr1Itemset.is_accept goto with
                 | false -> Action.ShiftPrefix goto_state_index
                 | true -> Action.ShiftAccept goto_state_index
@@ -279,7 +279,8 @@ let init ~resolve symbols prods isocores ~gotonub_of_statenub_goto
     Lr1ItemsetClosure.nonterm_gotos symbols lr1itemsetclosure
     |> Ordmap.fold ~init:(Ordmap.empty (module Symbol.Index)) ~f:(fun gotos (nonterm_index, goto) ->
       let gotonub = gotonub_of_statenub_goto statenub goto in
-      Ordmap.insert_hlt ~k:nonterm_index ~v:(Isocores.get_hlt gotonub isocores) gotos
+      Ordmap.insert_hlt ~k:nonterm_index ~v:(Isocores.get_hlt gotonub isocores |> StateNub.index)
+        gotos
     )
   in
   {statenub; actions; gotos}
