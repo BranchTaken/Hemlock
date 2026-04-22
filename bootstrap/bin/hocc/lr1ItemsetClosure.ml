@@ -133,7 +133,7 @@ let nonterm_gotos symbols t =
   gotos_impl symbols Symbol.is_nonterm t
 
 let fold_next symbols ~init ~f t =
-  Ordmap.fold ~init:(Ordmap.fold ~init ~f (token_gotos symbols t)) ~f (nonterm_gotos symbols t)
+  Ordmap.fold ~init ~f (gotos_impl symbols (fun _symbol -> true) t)
 
 let fold_until ~init ~f {kernel; added; _} =
   let accum, until = Lr1Itemset.fold_until ~init:(init, false) ~f:(fun (accum, _) lr1item ->
