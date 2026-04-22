@@ -33,8 +33,7 @@ let reach_union _state_index reach0 reach1 =
   match reach0, reach1 with
   | Shift, _
   | _, Shift -> Shift
-  | Follows actions0, Follows actions1 ->
-    Follows (Ordset.union actions0 actions1)
+  | Follows actions0, Follows actions1 -> Follows (Ordset.union actions0 actions1)
 
 (* `cache` contains `d=1` result in element 0, `d=2` result in element 1, etc. *)
 let rec reachable_preds_of_state_index adjs ~traced state_index d cache =
@@ -166,7 +165,7 @@ let trace_actions states ~traced ~frontier =
     ) reached_actions
   ) frontier
 
-let trace_gotos prods states adjs ~traced ~frontier =
+let trace_gotos prods states adjs ~traced =
   Ordmap.fold ~init:(Ordmap.empty (module State.Index)) ~f:(fun frontier (state_index, reach) ->
     let reached_actions = reached_actions states state_index reach in
     let reached_lookaheads = Ordmap.fold ~init:(Ordset.empty (module Symbol.Index))
@@ -207,7 +206,7 @@ let trace_gotos prods states adjs ~traced ~frontier =
           end
       ) lookahead_gotos
     )
-  ) (Ordmap.union ~vunion:reach_union traced frontier)
+  ) traced
 
 let rec trace io prods states adjs ~traced ~frontier =
   let traced = Ordmap.union ~vunion:reach_union frontier traced in
@@ -219,7 +218,7 @@ let rec trace io prods states adjs ~traced ~frontier =
     end
   | true -> begin
       let io = io.log |> Fmt.fmt "+" |> Io.with_log io in
-      let frontier = trace_gotos prods states adjs ~traced ~frontier in
+      let frontier = trace_gotos prods states adjs ~traced in
       match Ordmap.is_empty frontier with
       | true -> io, traced
       | false -> trace io prods states adjs ~traced ~frontier
