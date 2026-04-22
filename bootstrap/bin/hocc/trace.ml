@@ -241,15 +241,15 @@ let gc_states io prods isocores states =
   let adjs = Adjs.init states in
   let io, reachable = reachable io prods states adjs in
   let io = io.log |> Fmt.fmt "\n" |> Io.with_log io in
-  let unreachable_state_indexes = Array.fold ~init:(Ordset.empty (module State.Index))
-    ~f:(fun unreachable state ->
-      let index = State.index state in
+  let unreachable_statenubs = Array.fold ~init:(Ordset.empty (module StateNub))
+    ~f:(fun unreachable State.{statenub; _} ->
+      let index = StateNub.index statenub in
       match Ordmap.mem index reachable with
       | true -> unreachable
-      | false -> Ordset.insert index unreachable
+      | false -> Ordset.insert statenub unreachable
     ) states in
   let nreachable = Ordmap.length reachable in
-  let nunreachable = Ordset.length unreachable_state_indexes in
+  let nunreachable = Ordset.length unreachable_statenubs in
   assert (Uns.(nreachable + nunreachable = Array.length states));
   let io =
     io.log
@@ -282,9 +282,9 @@ let gc_states io prods isocores states =
           ) in
       (* Create a new set of reindexed isocores. *)
       let reindexed_isocores =
-        Ordset.fold ~init:isocores ~f:(fun remaining_isocores index ->
-          Isocores.remove_hlt index remaining_isocores
-        ) unreachable_state_indexes
+        Ordset.fold ~init:isocores ~f:(fun isocores statenub ->
+          Isocores.remove_hlt statenub isocores
+        ) unreachable_statenubs
         |> Isocores.reindex state_index_map in
       (* Create a new set of reindexed states. *)
       let reindexed_states =

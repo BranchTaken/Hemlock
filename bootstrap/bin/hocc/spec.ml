@@ -890,10 +890,11 @@ let rec isocores_init algorithm ~resolve io precs symbols prods callbacks =
                     let workq' = Workq.push_back index workq in
                     isocores', workq'
                   end
-                | Some merge_index -> begin
-                    match Isocores.merge symbols gotonub merge_index isocores with
+                | Some merge_statenub -> begin
+                    match Isocores.merge symbols gotonub merge_statenub isocores with
                     | false, _ -> isocores, workq
                     | true, isocores' -> begin
+                        let merge_index = StateNub.index merge_statenub in
                         let workq' = match Workq.mem merge_index workq with
                           | true -> workq
                           | false -> Workq.push merge_index workq

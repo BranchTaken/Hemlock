@@ -376,8 +376,8 @@ let gen_gotonub_of_statenub_goto ~resolve io symbols prods lalr_isocores lalr_st
   let transit_of_statenub_goto statenub goto = begin
     let statenub_core = (Lr1Itemset.core StateNub.(statenub.lr1itemsetclosure.kernel)) in
     let goto_core = Lr1Itemset.core goto in
-    let src = Isocores.get_core_hlt statenub_core lalr_isocores in
-    let dst = Isocores.get_core_hlt goto_core lalr_isocores in
+    let src = Isocores.get_core_hlt statenub_core lalr_isocores |> StateNub.index in
+    let dst = Isocores.get_core_hlt goto_core lalr_isocores |> StateNub.index in
     Transit.init ~src ~dst
   end in
   let isocores_sn_of_transit Transit.{dst; _} =
