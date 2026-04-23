@@ -1,18 +1,25 @@
 open! Basis
 open! Basis.Rudiments
 
-type t = (Prod.Index.t, Prod.t, Prod.Index.cmper_witness) Ordmap.t
+type t = Prod.t array
 
-let empty = Ordmap.empty (module Prod.Index)
+module Builder = struct
+  type outer = t
+  type t = (Prod.Index.t, Prod.t, Prod.Index.cmper_witness) Ordmap.t
 
-let length = Ordmap.length
+  let empty = Ordmap.empty (module Prod.Index)
 
-let insert ~lhs_index ~rhs_indexes ~prec ~stmt ~callback t =
-  let index = length t in
-  let prod = Prod.init ~index ~lhs_index ~rhs_indexes ~prec ~stmt ~callback in
-  prod, Ordmap.insert_hlt ~k:index ~v:prod t
+  let insert ~lhs_index ~rhs_indexes ~prec ~stmt ~callback t =
+    let index = Ordmap.length t in
+    let prod = Prod.init ~index ~lhs_index ~rhs_indexes ~prec ~stmt ~callback in
+    prod, Ordmap.insert_hlt ~k:index ~v:prod t
 
-let prod_of_prod_index = Ordmap.get_hlt
+  let build t =
+    Array.init (0L =:< Ordmap.length t) ~f:(fun index -> Ordmap.get_hlt index t)
+end
 
-let fold ~init ~f t =
-  Ordmap.fold ~init ~f:(fun accum (_, prod) -> f accum prod) t
+let length = Array.length
+
+let prod_of_prod_index = Array.get
+
+let fold = Array.fold

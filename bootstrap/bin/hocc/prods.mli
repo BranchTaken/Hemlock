@@ -6,13 +6,21 @@ open! Basis.Rudiments
 
 type t
 
-val empty: t
-(** [empty] returns an empty set of productions. *)
+module Builder : sig
+  type outer = t
+  type t
 
-val insert: lhs_index:Symbol.Index.t -> rhs_indexes:Symbol.Index.t array -> prec:Prec.t option
-  -> stmt:Parse.nonterm_prod option -> callback:Callback.t -> t -> Prod.t * t
-(** [insert ~lhs_index ~rhs_indexes ~prec ~stmt ~callback t] creates a [Prod.t] with unique index
-    and returns both the production and a new [t] with the production inserted. *)
+  val empty: t
+  (** [empty] returns an empty productions builder. *)
+
+  val insert: lhs_index:Symbol.Index.t -> rhs_indexes:Symbol.Index.t array -> prec:Prec.t option
+    -> stmt:Parse.nonterm_prod option -> callback:Callback.t -> t -> Prod.t * t
+  (** [insert ~lhs_index ~rhs_indexes ~prec ~stmt ~callback t] creates a [Prod.t] with unique index
+      and returns both the production and a new [t] with the production inserted. *)
+
+  val build: t -> outer
+  (** [build t] builds a [Prods.t]. *)
+end
 
 val length: t -> uns
 (** [length t] returns the number of productions in [t]. *)
