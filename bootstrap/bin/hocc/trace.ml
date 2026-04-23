@@ -35,48 +35,31 @@ let reach_union _state_index reach0 reach1 =
   | _, Shift -> Shift
   | Follows actions0, Follows actions1 -> Follows (Ordset.union actions0 actions1)
 
-(* `cache` contains `d=1` result in element 0, `d=2` result in element 1, etc. *)
 let rec reachable_preds_of_state_index adjs ~traced state_index d cache =
-  match d with
-  | 0L -> Ordset.singleton (module State.Index) state_index, cache
-  | _ -> begin
-      match d <= (Array.length cache) with
-      | true -> Array.get (pred d) cache, cache
-      | false -> begin
-          match d with
-          | 0L -> not_reached ()
-          | 1L -> begin
-              let reachable_preds =
-                Adjs.ipreds_of_state_index state_index adjs
-                |> Array.fold ~init:(Ordset.empty (module State.Index))
-                  ~f:(fun reachable_preds state_index ->
-                    match Ordmap.mem state_index traced with
-                    | false -> reachable_preds
-                    | true -> Ordset.insert state_index reachable_preds
-                  ) in
-              let cache = [|reachable_preds|] in
-              reachable_preds, cache
-            end
-          | _ -> begin
-              let reachable_preds_prev, cache =
-                reachable_preds_of_state_index adjs ~traced state_index (pred d) cache in
-              let reachable_preds = Ordset.fold ~init:(Ordset.empty (module State.Index))
+  match d < (Array.length cache) with
+  | true -> Array.get d cache, cache
+  | false -> begin
+      let reachable_preds, cache = match d with
+        | 0L -> Ordset.singleton (module State.Index) state_index, cache
+        | _ -> begin
+            let reachable_preds_prev, cache =
+              reachable_preds_of_state_index adjs ~traced state_index (pred d) cache in
+            let reachable_preds =
+              reachable_preds_prev
+              |> Ordset.fold ~init:(Ordset.empty (module State.Index))
                 ~f:(fun reachable_preds pred_state_index ->
                   Adjs.ipreds_of_state_index pred_state_index adjs
-                  |> Array.filter ~f:(fun state_index ->
-                    Ordmap.mem state_index traced
+                  |> Array.fold ~init:reachable_preds ~f:(fun reachable_preds state_index ->
+                    Ordset.insert state_index reachable_preds
                   )
-                  |> Ordset.of_array (module State.Index)
-                  |> Ordset.union reachable_preds
-                ) reachable_preds_prev in
-              let cache = Array.init (0L =:< d) ~f:(fun i ->
-                match i < (Array.length cache) with
-                | true -> Array.get i cache
-                | false -> reachable_preds
-              ) in
-              reachable_preds, cache
-            end
-        end
+                )
+              |> Ordset.filter ~f:(fun state_index -> Ordmap.mem state_index traced)
+            in
+            reachable_preds, cache
+          end
+      in
+      let cache = Array.append reachable_preds cache in
+      reachable_preds, cache
     end
 
 (* Compute a pred->lookahead->gotos map based on backward traversal through traced states. *)
