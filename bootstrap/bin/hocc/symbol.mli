@@ -32,7 +32,7 @@ type t = {
   start: bool;
   (** True if start symbol. Always false for tokens. *)
 
-  prods: (Prod.t, Prod.cmper_witness) Ordset.t;
+  prods: Prod.t array;
   (** Productions associated with non-terminal. Always empty for tokens. *)
 
   first: Bitset.t;

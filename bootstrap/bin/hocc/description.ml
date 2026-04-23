@@ -300,7 +300,7 @@ let generate_txt conf io Spec.{algorithm; precs; symbols; prods; states; _} =
             |> Fmt.fmt "\n"
             |> Fmt.fmt "        Productions\n"
             |> (fun formatter ->
-              Ordset.fold ~init:formatter
+              Array.fold ~init:formatter
                 ~f:(fun formatter prod ->
                   formatter
                   |> Fmt.fmt "            "

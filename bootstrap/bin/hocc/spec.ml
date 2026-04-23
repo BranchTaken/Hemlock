@@ -696,7 +696,7 @@ let symbols_init io precs symbols_builder hmh =
     (* Iterate to a fixed point, given a per prod folding function. *)
     let close_impl symbols_builder ~fold_prod = begin
       let fold_prods symbols_builder ~fold_prod symbol = begin
-        Ordset.fold ~init:(symbols_builder, symbol, false)
+        Array.fold ~init:(symbols_builder, symbol, false)
           ~f:(fun (symbols_builder, symbol, merged) prod ->
             match fold_prod symbols_builder symbol prod with
             | symbols_builder', false -> symbols_builder', symbol, merged
@@ -879,8 +879,8 @@ let rec isocores_init algorithm ~resolve io precs symbols prods callbacks =
           match Symbol.is_synthetic symbol with
           | false -> accum
           | true -> begin
-              assert (Uns.(=) (Ordset.length symbol.prods) 1L);
-              let prod = Ordset.choose_hlt symbol.prods in (* There can be only one. ⚔ *)
+              assert (Uns.(=) (Array.length symbol.prods) 1L);
+              let prod = Array.get 0L symbol.prods in (* There can be only one. ⚔ *)
               let dot = 0L in
               let lr0item = Lr0Item.init ~prod ~dot in
               let lr1item = Lr1Item.init ~lr0item ~follow:symbol.follow in

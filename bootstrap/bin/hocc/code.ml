@@ -1438,10 +1438,10 @@ let expand_hm_symbols symbols ~indentation formatter =
           |> Fmt.fmt " ~start:" |> Bool.pp start
           |> Fmt.fmt "\n" |> indent |> Fmt.fmt "  ~prods:("
           |> (fun formatter ->
-            match Ordset.length prods with
+            match Array.length prods with
             | 0L -> formatter |> Fmt.fmt "Ordset.empty Prod"
             | 1L -> begin
-                let Prod.{index; _} = Ordset.choose_hlt prods in
+                let Prod.{index; _} = Array.get 0L prods in
                 formatter
                 |> Fmt.fmt "Ordset.singleton Prod (Array.get "
                 |> Prod.Index.pp index
@@ -1453,7 +1453,7 @@ let expand_hm_symbols symbols ~indentation formatter =
                 |> List.fmt ~alt:true ~width:indentation (fun Prod.{index; _} formatter ->
                   formatter
                   |> Fmt.fmt "Array.get " |> Prod.Index.pp index |> Fmt.fmt " prods"
-                ) (Ordset.to_list prods)
+                ) (Array.to_list prods)
               end
           )
           |> Fmt.fmt ")"
@@ -3387,10 +3387,10 @@ let expand_ml_symbols symbols ~indentation formatter =
           |> Fmt.fmt " ~start:" |> Bool.pp start
           |> Fmt.fmt "\n" |> indent |> Fmt.fmt "  ~prods:("
           |> (fun formatter ->
-            match Ordset.length prods with
+            match Array.length prods with
             | 0L -> formatter |> Fmt.fmt "Ordset.empty (module Prod)"
             | 1L -> begin
-                let Prod.{index; _} = Ordset.choose_hlt prods in
+                let Prod.{index; _} = Array.get 0L prods in
                 formatter
                 |> Fmt.fmt "Ordset.singleton (module Prod) (Array.get "
                 |> ml_uns_pp index
@@ -3402,7 +3402,7 @@ let expand_ml_symbols symbols ~indentation formatter =
                 |> List.fmt ~alt:true ~width:indentation (fun Prod.{index; _} formatter ->
                   formatter
                   |> Fmt.fmt "Array.get " |> ml_uns_pp index |> Fmt.fmt " prods;"
-                ) (Ordset.to_list prods)
+                ) (Array.to_list prods)
               end
           )
           |> Fmt.fmt ")"

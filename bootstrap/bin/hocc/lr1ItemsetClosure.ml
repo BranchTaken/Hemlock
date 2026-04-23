@@ -49,7 +49,7 @@ let added_impl symbols kernel =
                 let lhs = rhs_symbol in
                 let follow' = Lr1Item.first ~symbol_of_symbol_index
                     (Lr1Item.init ~lr0item:(Lr0Item.init ~prod ~dot:(succ dot)) ~follow) in
-                let lr1itemset', added' = Ordset.fold ~init:(lr1itemset', added)
+                let lr1itemset', added' = Array.fold ~init:(lr1itemset', added)
                   ~f:(fun (lr1itemset, added) prod ->
                     let lr0item = Lr0Item.init ~prod ~dot:0L in
                     let lr1item = Lr1Item.init ~lr0item ~follow:follow' in

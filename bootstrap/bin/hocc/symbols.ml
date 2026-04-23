@@ -170,15 +170,15 @@ let src_fmt (Symbol.{name; prec; alias; start; prods; _} as symbol) t formatter 
         | Some prec -> formatter |> Fmt.fmt " " |> Prec.pp_hr prec
       )
       |> Fmt.fmt " ::="
-      |> Fmt.fmt (match Ordset.length prods with
+      |> Fmt.fmt (match Array.length prods with
         | 1L -> ""
         | _ -> "\n"
       )
       |> (fun formatter ->
         let symbol_prec = prec in
-        Ordset.fold ~init:formatter ~f:(fun formatter Prod.{rhs_indexes; prec; _} ->
+        Array.fold ~init:formatter ~f:(fun formatter Prod.{rhs_indexes; prec; _} ->
           formatter
-          |> Fmt.fmt (match Ordset.length prods with
+          |> Fmt.fmt (match Array.length prods with
             | 1L -> ""
             | _ -> "      |"
           )
