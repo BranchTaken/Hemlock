@@ -19,11 +19,11 @@ val pp_hr: Symbols.t -> t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
 val init: lr0item:Lr0Item.t -> follow:Bitset.t -> t
 (** [init ~lr0item ~follow] creates an LR(1) item. *)
 
-val first: Symbols.t -> t -> Bitset.t
-(** [first symbols t] computes the first set of [t]. The first set is not memoized because it is
-    only needed during closure computation in [Lr1ItemsetClosure] (the [init] and [merge]
-    functions), whereas many items may be created as goto set elements, but only compatible goto
-    sets are merged. *)
+val first: symbol_of_symbol_index:(Symbol.Index.t -> Symbol.t) -> t -> Bitset.t
+(** [first ~symbol_of_symbol_index t] computes the first set of [t]. The first set is not memoized
+    because it is only needed during closure computation in [Lr1ItemsetClosure] (the [init] and
+    [merge] functions), whereas many items may be created as goto set elements, but only compatible
+    goto sets are merged. *)
 
 val is_kernel_item: t -> bool
 (** [is_kernel_item t] returns true iff [t] would be a valid kernel item. Kernel items must have

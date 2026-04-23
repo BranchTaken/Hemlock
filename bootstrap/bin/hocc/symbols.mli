@@ -3,78 +3,86 @@
 open Basis
 open! Basis.Rudiments
 
-(* Ephemeral symbol information. Symbols have to be processed in two passes due to their mutually
- * recursive form. `info` captures only the name->metadata required of the first pass. *)
-type info = {
-  index: Symbol.Index.t;
-  (** Unique symbol index. *)
-
-  name: string;
-  (** Symbol name. *)
-
-  alias: string option;
-  (** Optional token alias. *)
-
-  stype: SymbolType.t;
-  (** Symbol type, e.g. implicit for [token SOME_TOKEN], or explicit "Zint.t" for [token INT of
-      Zint.t]. *)
-}
-
 type t
 
-val empty: t
-(** [empty] returns an empty set of symbols. *)
+module Builder : sig
+  type outer = t
+  type t
 
-val insert_token: name:string -> stype:SymbolType.t -> prec:Prec.t option
-  -> stmt:Parse.nonterm_token option -> alias:string option -> t -> t
-(** [insert_token ~name ~stype ~prec ~stmt ~alias t] creates a token [Symbol.t] with unique index
-    and returns a new [t] with the symbol inserted. *)
+  (* Ephemeral symbol information. Symbols have to be processed in two passes due to their mutually
+   * recursive form. `info` captures only the name->metadata required of the first pass. *)
+  type info = {
+    index: Symbol.Index.t;
+    (** Unique symbol index. *)
 
-val insert_nonterm_info: name:string -> stype:SymbolType.t -> t -> t
-(** [insert_nonterm_info ~name ~stype t] creates a non-terminal [info] and returns a new [t] with
-    the info inserted. This is a precursor to a subsequent [insert_nonterm] call. *)
+    name: string;
+    (** Symbol name. *)
 
-val insert_nonterm: name:string -> prec:Prec.t option -> stmt:Parse.nonterm_nonterm option
-  -> start:bool -> prods:(Prod.t, Prod.cmper_witness) Ordset.t -> t -> t
-(** [insert_token ~name ~prec ~stmt ~start ~prods t] creates a non-terminal [Symbol.t] with unique
-    index and returns a new [t] with the symbol inserted. *)
+    alias: string option;
+    (** Optional token alias. *)
 
-val update_symbol: Symbol.t -> t -> t
-(** [update_symbol symbol t] returns a new [t] containing [symbol] rather than an incremental
-    precursor of [symbol]. This function is used when incrementally computing symbols' first and
-    follow sets. *)
+    stype: SymbolType.t;
+    (** Symbol type, e.g. implicit for [token SOME_TOKEN], or explicit "Zint.t" for [token INT of
+        Zint.t]. *)
+  }
 
-val info_of_name: string -> t -> info option
-(** [info_of_name name t] returns [Some info] if a symbol with the specified [name] exists, [None]
-    otherwise. *)
+  val empty: t
+  (** [empty] returns an empty symbols builder. *)
 
-val info_of_name_hlt: string -> t -> info
-(** [info_of_name name t] returns [Some info] if a symbol with the specified [name] exists, halts
-    otherwise. *)
+  val insert_token: name:string -> stype:SymbolType.t -> prec:Prec.t option
+    -> stmt:Parse.nonterm_token option -> alias:string option -> t -> t
+  (** [insert_token ~name ~stype ~prec ~stmt ~alias t] creates a token [Symbol.t] with unique index
+      and returns a new [t] with the symbol inserted. *)
 
-val info_of_alias: string -> t -> info option
-(** [info_of_alias alias t] returns [Some info] if a symbol with the specified [alias] exists,
-    [None] otherwise. Note that names and aliases are in separate namespaces. *)
+  val insert_nonterm_info: name:string -> stype:SymbolType.t -> t -> t
+  (** [insert_nonterm_info ~name ~stype t] creates a non-terminal [info] and returns a new [t] with
+      the info inserted. This is a precursor to a subsequent [insert_nonterm] call. *)
 
-val info_of_alias_hlt: string -> t -> info
-(** [info_of_alias alias t] returns [Some info] if a symbol with the specified [alias] exists, halts
-    otherwise. Note that names and aliases are in separate namespaces. *)
+  val insert_nonterm: name:string -> prec:Prec.t option -> stmt:Parse.nonterm_nonterm option
+    -> start:bool -> prods:(Prod.t, Prod.cmper_witness) Ordset.t -> t -> t
+  (** [insert_token ~name ~prec ~stmt ~start ~prods t] creates a non-terminal [Symbol.t] with unique
+      index and returns a new [t] with the symbol inserted. *)
 
-val symbol_index_of_name: string -> t -> Symbol.Index.t option
-(** [symbol_index_of_name name t] returns [Some index] if a symbol with the specified [name] exists,
-    [None] otherwise. *)
+  val update_symbol: Symbol.t -> t -> t
+  (** [update_symbol symbol t] returns a new [t] containing [symbol] rather than an incremental
+      precursor of [symbol]. This function is used when incrementally computing symbols' first and
+      follow sets. *)
+
+  val info_of_name: string -> t -> info option
+  (** [info_of_name name t] returns [Some info] if a symbol with the specified [name] exists, [None]
+      otherwise. *)
+
+  val info_of_name_hlt: string -> t -> info
+  (** [info_of_name name t] returns [Some info] if a symbol with the specified [name] exists, halts
+      otherwise. *)
+
+  val info_of_alias: string -> t -> info option
+  (** [info_of_alias alias t] returns [Some info] if a symbol with the specified [alias] exists,
+      [None] otherwise. Note that names and aliases are in separate namespaces. *)
+
+  val symbol_index_of_name: string -> t -> Symbol.Index.t option
+  (** [symbol_index_of_name name t] returns [Some index] if a symbol with the specified [name]
+      exists, [None] otherwise. *)
+
+  val symbol_index_of_alias: string -> t -> Symbol.Index.t option
+  (** [symbol_index_of_alias alias t] returns [Some index] if a symbol with the specified [alias]
+      exists, [None] otherwise. *)
+
+  val symbol_of_symbol_index: Symbol.Index.t -> t -> Symbol.t
+  (** [symbol_of_symbol_index index t] returns [Some symbol] if a symbol with the specified [index]
+      exists, halts otherwise. *)
+
+  val nonterms_fold: init:'accum -> f:('accum -> Symbol.t -> 'accum) -> t -> 'accum
+  (** [nonterms_fold ~init ~f t] iteratively applies [f] to the non-terminals in [t], in increasing
+      index order. *)
+
+  val build: t -> outer
+  (** [build t] builds a [Symbols.t]. *)
+end
 
 val symbol_of_name: string -> t -> Symbol.t option
 (** [symbol_index_of_name name t] returns [Some index] if a symbol with the specified [name] exists,
     halts otherwise. *)
-
-val symbol_index_of_alias: string -> t -> Symbol.Index.t option
-(** [symbol_index_of_alias alias t] returns [Some index] if a symbol with the specified [alias]
-    exists, [None] otherwise. *)
-
-val symbol_of_alias: string -> t -> Symbol.t option
-(** [symbol_index_of_alias alias t] returns [Some index] if a symbol with the specified [alias]
-    exists, halts otherwise. *)
 
 val symbol_of_symbol_index: Symbol.Index.t -> t -> Symbol.t
 (** [symbol_of_symbol_index index t] returns [Some symbol] if a symbol with the specified [index]

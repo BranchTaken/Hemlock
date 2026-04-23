@@ -1,127 +1,143 @@
 open Basis
 open! Basis.Rudiments
 
-type info = {
-  index: Symbol.Index.t;
-  name: string;
-  alias: string option;
-  stype: SymbolType.t;
-}
-
 type t = {
-  infos: (string, info, String.cmper_witness) Map.t;
-  names: (string, Symbol.Index.t, String.cmper_witness) Map.t;
-  aliases: (string, Symbol.Index.t, String.cmper_witness) Map.t;
-  symbols: (Symbol.Index.t, Symbol.t, Symbol.Index.cmper_witness) Ordmap.t;
-  tokens: (Symbol.Index.t, Symbol.t, Symbol.Index.cmper_witness) Ordmap.t;
-  nonterms: (Symbol.Index.t, Symbol.t, Symbol.Index.cmper_witness) Ordmap.t;
+  names: (string, Symbol.t, String.cmper_witness) Map.t;
+  symbols: Symbol.t array;
+  tokens: Symbol.t array;
+  nonterms: Symbol.t array;
 }
 
-let empty =
-  let infos, names, aliases, symbols = List.fold
-      ~init:(Map.empty (module String), Map.empty (module String), Map.empty (module String),
-        Ordmap.empty (module Symbol.Index))
-      ~f:(fun (infos, names, aliases, symbols) (Symbol.{index; name; stype; alias; _} as token) ->
-        let info = {index; name; alias; stype} in
-        let infos' = Map.insert_hlt ~k:name ~v:info infos in
-        let names' = Map.insert_hlt ~k:name ~v:index names in
-        let aliases' = Map.insert_hlt ~k:(Option.value_hlt alias) ~v:index aliases in
-        let symbols' = Ordmap.insert_hlt ~k:index ~v:token symbols in
-        (infos', names', aliases', symbols')
-      ) [Symbol.epsilon; Symbol.pseudo_end]
-  in
-  {infos; names; aliases; symbols; tokens=symbols; nonterms=Ordmap.empty (module Symbol.Index)}
+module Builder = struct
+  type outer = t
 
-let info_of_name name {infos; _} =
-  Map.get name infos
+  type info = {
+    index: Symbol.Index.t;
+    name: string;
+    alias: string option;
+    stype: SymbolType.t;
+  }
 
-let info_of_name_hlt name t =
-  Option.value_hlt (info_of_name name t)
+  type t = {
+    infos: (string, info, String.cmper_witness) Map.t;
+    names: (string, Symbol.Index.t, String.cmper_witness) Map.t;
+    aliases: (string, Symbol.Index.t, String.cmper_witness) Map.t;
+    symbols: (Symbol.Index.t, Symbol.t, Symbol.Index.cmper_witness) Ordmap.t;
+    tokens: (Symbol.Index.t, Symbol.t, Symbol.Index.cmper_witness) Ordmap.t;
+    nonterms: (Symbol.Index.t, Symbol.t, Symbol.Index.cmper_witness) Ordmap.t;
+  }
 
-let info_of_alias alias ({aliases; tokens; _} as t) =
-  match Map.get alias aliases with
-  | None -> None
-  | Some symbol_index -> info_of_name Symbol.((Ordmap.get_hlt symbol_index tokens).name) t
+  let empty =
+    let infos, names, aliases, symbols = List.fold
+        ~init:(Map.empty (module String), Map.empty (module String), Map.empty (module String),
+          Ordmap.empty (module Symbol.Index))
+        ~f:(fun (infos, names, aliases, symbols) (Symbol.{index; name; stype; alias; _} as token) ->
+          let info = {index; name; alias; stype} in
+          let infos' = Map.insert_hlt ~k:name ~v:info infos in
+          let names' = Map.insert_hlt ~k:name ~v:index names in
+          let aliases' = Map.insert_hlt ~k:(Option.value_hlt alias) ~v:index aliases in
+          let symbols' = Ordmap.insert_hlt ~k:index ~v:token symbols in
+          (infos', names', aliases', symbols')
+        ) [Symbol.epsilon; Symbol.pseudo_end]
+    in
+    {infos; names; aliases; symbols; tokens=symbols; nonterms=Ordmap.empty (module Symbol.Index)}
 
-let info_of_alias_hlt alias t =
-  Option.value_hlt (info_of_alias alias t)
+  let info_of_name name {infos; _} =
+    Map.get name infos
 
-let insert_token ~name ~stype ~prec ~stmt ~alias
-    ({infos; names; aliases; symbols; tokens; _} as t) =
-  let index = Map.length infos in
-  let info = {index; name; alias; stype} in
-  let token = Symbol.init_token ~index ~name ~stype ~prec ~stmt ~alias in
-  let infos' = Map.insert_hlt ~k:name ~v:info infos in
-  let names' = Map.insert_hlt ~k:name ~v:index names in
-  let aliases' = match alias with
-    | None -> aliases
-    | Some alias -> Map.insert_hlt ~k:alias ~v:index aliases
-  in
-  let symbols' = Ordmap.insert_hlt ~k:index ~v:token symbols in
-  let tokens' = Ordmap.insert_hlt ~k:index ~v:token tokens in
-  {t with infos=infos'; names=names'; aliases=aliases'; symbols=symbols'; tokens=tokens'}
+  let info_of_name_hlt name t =
+    Option.value_hlt (info_of_name name t)
 
-let insert_nonterm_info ~name ~stype ({infos; _} as t) =
-  let index = Map.length infos in
-  let info = {index; name; alias=None; stype} in
-  let infos' = Map.insert_hlt ~k:name ~v:info infos in
-  {t with infos=infos'}
+  let info_of_alias alias ({aliases; tokens; _} as t) =
+    match Map.get alias aliases with
+    | None -> None
+    | Some symbol_index -> info_of_name Symbol.((Ordmap.get_hlt symbol_index tokens).name) t
 
-let insert_nonterm ~name ~prec ~stmt ~start ~prods ({names; symbols; nonterms; _} as t) =
-  let {index; stype; _} = info_of_name_hlt name t in
-  let nonterm = Symbol.init_nonterm ~index ~name ~stype ~prec ~stmt ~start ~prods in
-  let names' = Map.insert_hlt ~k:name ~v:index names in
-  let symbols' = Ordmap.insert_hlt ~k:index ~v:nonterm symbols in
-  let nonterms' = Ordmap.insert_hlt ~k:index ~v:nonterm nonterms in
-  {t with names=names'; symbols=symbols'; nonterms=nonterms'}
+  let insert_token ~name ~stype ~prec ~stmt ~alias
+      ({infos; names; aliases; symbols; tokens; _} as t) =
+    let index = Map.length infos in
+    let info = {index; name; alias; stype} in
+    let token = Symbol.init_token ~index ~name ~stype ~prec ~stmt ~alias in
+    let infos' = Map.insert_hlt ~k:name ~v:info infos in
+    let names' = Map.insert_hlt ~k:name ~v:index names in
+    let aliases' = match alias with
+      | None -> aliases
+      | Some alias -> Map.insert_hlt ~k:alias ~v:index aliases
+    in
+    let symbols' = Ordmap.insert_hlt ~k:index ~v:token symbols in
+    let tokens' = Ordmap.insert_hlt ~k:index ~v:token tokens in
+    {t with infos=infos'; names=names'; aliases=aliases'; symbols=symbols'; tokens=tokens'}
 
-let update_symbol (Symbol.{index; _} as symbol) ({symbols; tokens; nonterms; _} as t) =
-  let symbols' = Ordmap.update_hlt ~k:index ~v:symbol symbols in
-  let tokens', nonterms' = match Symbol.is_token symbol with
-    | true -> Ordmap.update_hlt ~k:index ~v:symbol tokens, nonterms
-    | false -> tokens, Ordmap.update_hlt ~k:index ~v:symbol nonterms
-  in
-  {t with symbols=symbols'; tokens=tokens'; nonterms=nonterms'}
+  let insert_nonterm_info ~name ~stype ({infos; _} as t) =
+    let index = Map.length infos in
+    let info = {index; name; alias=None; stype} in
+    let infos' = Map.insert_hlt ~k:name ~v:info infos in
+    {t with infos=infos'}
 
-let symbol_index_of_name name {names; _} =
+  let insert_nonterm ~name ~prec ~stmt ~start ~prods ({names; symbols; nonterms; _} as t) =
+    let {index; stype; _} = info_of_name_hlt name t in
+    let nonterm = Symbol.init_nonterm ~index ~name ~stype ~prec ~stmt ~start ~prods in
+    let names' = Map.insert_hlt ~k:name ~v:index names in
+    let symbols' = Ordmap.insert_hlt ~k:index ~v:nonterm symbols in
+    let nonterms' = Ordmap.insert_hlt ~k:index ~v:nonterm nonterms in
+    {t with names=names'; symbols=symbols'; nonterms=nonterms'}
+
+  let update_symbol (Symbol.{index; _} as symbol) ({symbols; tokens; nonterms; _} as t) =
+    let symbols' = Ordmap.update_hlt ~k:index ~v:symbol symbols in
+    let tokens', nonterms' = match Symbol.is_token symbol with
+      | true -> Ordmap.update_hlt ~k:index ~v:symbol tokens, nonterms
+      | false -> tokens, Ordmap.update_hlt ~k:index ~v:symbol nonterms
+    in
+    {t with symbols=symbols'; tokens=tokens'; nonterms=nonterms'}
+
+  let symbol_index_of_name name {names; _} =
+    Map.get name names
+
+  let symbol_index_of_alias alias {aliases; _} =
+    Map.get alias aliases
+
+  let symbol_of_symbol_index index {symbols; _} =
+    Ordmap.get_hlt index symbols
+
+  let nonterms_fold ~init ~f {nonterms; _} =
+    Ordmap.fold ~init ~f:(fun accum (_symbol_index, symbol) -> f accum symbol) nonterms
+
+  let build {names; symbols; tokens; nonterms; _} =
+    let names' = Map.fold ~init:(Map.empty (module String)) ~f:(fun names' (name, symbol_index) ->
+      let symbol = Ordmap.get_hlt symbol_index symbols in
+      Map.insert_hlt ~k:name ~v:symbol names'
+    ) names in
+    let symbols' =
+      Array.init (0L =:< Ordmap.length symbols) ~f:(fun index -> Ordmap.get_hlt index symbols) in
+    let tokens' = Ordmap.to_array tokens |> Array.map ~f:(fun (_symbol_index, symbol) -> symbol) in
+    let nonterms' =
+      Ordmap.to_array nonterms |> Array.map ~f:(fun (_symbol_index, symbol) -> symbol) in
+    {names=names'; symbols=symbols'; tokens=tokens'; nonterms=nonterms'}
+end
+
+let symbol_of_name name {names; _} =
   Map.get name names
 
-let symbol_of_name name ({symbols; _} as t) =
-  match symbol_index_of_name name t with
-  | None -> None
-  | Some symbol_index -> Some (Ordmap.get_hlt symbol_index symbols)
-
-let symbol_index_of_alias alias {aliases; _} =
-  Map.get alias aliases
-
-let symbol_of_alias alias ({symbols; _} as t) =
-  match symbol_index_of_alias alias t with
-  | None -> None
-  | Some symbol_index -> Some (Ordmap.get_hlt symbol_index symbols)
-
 let symbol_of_symbol_index index {symbols; _} =
-  Ordmap.get_hlt index symbols
+  Array.get index symbols
 
 let symbols_length {symbols; _} =
-  Ordmap.length symbols
+  Array.length symbols
 
 let tokens_length {tokens; _} =
-  Ordmap.length tokens
+  Array.length tokens
 
 let nonterms_length {nonterms; _} =
-  Ordmap.length nonterms
-
-let fold_impl ~init ~f symbols =
-  Ordmap.fold ~init ~f:(fun accum (_, symbol) -> f accum symbol) symbols
+  Array.length nonterms
 
 let symbols_fold ~init ~f {symbols; _} =
-  fold_impl ~init ~f symbols
+  Array.fold ~init ~f symbols
 
 let tokens_fold ~init ~f {tokens; _} =
-  fold_impl ~init ~f tokens
+  Array.fold ~init ~f tokens
 
 let nonterms_fold ~init ~f {nonterms; _} =
-  fold_impl ~init ~f nonterms
+  Array.fold ~init ~f nonterms
 
 let src_fmt (Symbol.{name; prec; alias; start; prods; _} as symbol) t formatter =
   match Symbol.is_token symbol with
