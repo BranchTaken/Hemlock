@@ -167,7 +167,7 @@ let rec qualify_symbol_type symbol_type_qualifier symbol_type =
   | SymbolTypeQualifierEpsilon -> symbol_type
 
 let tokens_init io precs hmh =
-  let fold_token io precs symbols token = begin
+  let fold_token io precs symbols_builder token = begin
     match token with
     | Parse.Token {cident=CIDENT {token=cident}; token_alias; symbol_type0; prec_ref; _}
       -> begin
@@ -197,7 +197,7 @@ let tokens_init io precs hmh =
               end
             | PrecRefEpsilon -> None
           in
-          let () = match Symbols.symbol_index_of_name name symbols with
+          let () = match Symbols.Builder.symbol_index_of_name name symbols_builder with
             | None -> ()
             | Some _ -> begin
                 let io =
@@ -212,7 +212,7 @@ let tokens_init io precs hmh =
           let alias = match token_alias with
             | TokenAlias {alias=ISTRING {token=a}} -> begin
                 let alias_name = string_of_alias_token a in
-                let () = match Symbols.symbol_index_of_alias alias_name symbols with
+                let () = match Symbols.Builder.symbol_index_of_alias alias_name symbols_builder with
                   | None -> ()
                   | Some _ -> begin
                       let io =
@@ -228,38 +228,40 @@ let tokens_init io precs hmh =
               end
             | TokenAliasEpsilon -> None
           in
-          let symbols = Symbols.insert_token ~name ~stype ~prec ~stmt:(Some token) ~alias symbols in
-          io, symbols
+          let symbols_builder =
+            Symbols.Builder.insert_token ~name ~stype ~prec ~stmt:(Some token) ~alias
+              symbols_builder in
+          io, symbols_builder
         end
   end in
-  let fold_stmt io precs symbols stmt = begin
+  let fold_stmt io precs symbols_builder stmt = begin
     match stmt with
-    | Parse.StmtToken {token} -> fold_token io precs symbols token
-    | _ -> io, symbols
+    | Parse.StmtToken {token} -> fold_token io precs symbols_builder token
+    | _ -> io, symbols_builder
   end in
-  let rec fold_stmts_tl io precs symbols stmts_tl = begin
+  let rec fold_stmts_tl io precs symbols_builder stmts_tl = begin
     match stmts_tl with
     | Parse.StmtsTl {stmt; stmts_tl; _} -> begin
-        let io, symbols = fold_stmt io precs symbols stmt in
-        fold_stmts_tl io precs symbols stmts_tl
+        let io, symbols_builder = fold_stmt io precs symbols_builder stmt in
+        fold_stmts_tl io precs symbols_builder stmts_tl
       end
-    | StmtsTlEpsilon -> io, symbols
+    | StmtsTlEpsilon -> io, symbols_builder
   end in
-  let fold_stmts io precs symbols stmts = begin
+  let fold_stmts io precs symbols_builder stmts = begin
     match stmts with
     | Parse.Stmts {stmt; stmts_tl} -> begin
-        let io, symbols = fold_stmt io precs symbols stmt in
-        fold_stmts_tl io precs symbols stmts_tl
+        let io, symbols_builder = fold_stmt io precs symbols_builder stmt in
+        fold_stmts_tl io precs symbols_builder stmts_tl
       end
   end in
-  let io, symbols = match hmh with Parse.Hmh {hocc_=Hocc {stmts; _}; _} ->
-    fold_stmts io precs Symbols.empty stmts
+  let io, symbols_builder = match hmh with Parse.Hmh {hocc_=Hocc {stmts; _}; _} ->
+    fold_stmts io precs Symbols.Builder.empty stmts
   in
-  io, symbols
+  io, symbols_builder
 
-let symbol_infos_init io symbols hmh =
-  let insert_symbol_info name stype name_token symbols = begin
-    match Symbols.info_of_name name symbols with
+let symbol_infos_init io symbols_builder hmh =
+  let insert_symbol_info name stype name_token symbols_builder = begin
+    match Symbols.Builder.info_of_name name symbols_builder with
     | Some _ -> begin
         let io =
           io.err
@@ -269,9 +271,9 @@ let symbol_infos_init io symbols hmh =
         in
         Io.fatal io
       end
-    | None -> Symbols.insert_nonterm_info ~name ~stype symbols
+    | None -> Symbols.Builder.insert_nonterm_info ~name ~stype symbols_builder
   end in
-  let fold_nonterm io symbols nonterm = begin
+  let fold_nonterm io symbols_builder nonterm = begin
     let name, stype = match nonterm with
       | Parse.NontermProds {cident=CIDENT {token=nonterm_cident}; _} ->
         string_of_token nonterm_cident, SymbolType.implicit
@@ -286,47 +288,47 @@ let symbol_infos_init io symbols hmh =
     match nonterm with
     | NontermProds {nonterm_type; cident=CIDENT {token=cident}; _}
     | NontermReductions {nonterm_type; cident=CIDENT {token=cident}; _} -> begin
-        let symbols = insert_symbol_info name stype cident symbols in
-        let io, symbols = match nonterm_type with
-          | NontermTypeNonterm -> io, symbols
+        let symbols_builder = insert_symbol_info name stype cident symbols_builder in
+        let io, symbols_builder = match nonterm_type with
+          | NontermTypeNonterm -> io, symbols_builder
           | NontermTypeStart -> begin
               (* Synthesize start symbol wrapper. *)
               let name' = synthetic_name_of_start_name name in
               let stype' = SymbolType.synthetic_wrapper stype in
-              let symbols = insert_symbol_info name' stype' cident symbols in
-              io, symbols
+              let symbols_builder = insert_symbol_info name' stype' cident symbols_builder in
+              io, symbols_builder
             end
         in
-        io, symbols
+        io, symbols_builder
       end
   end in
-  let fold_stmt io symbols stmt = begin
+  let fold_stmt io symbols_builder stmt = begin
     match stmt with
-    | Parse.StmtNonterm {nonterm} -> fold_nonterm io symbols nonterm
-    | _ -> io, symbols
+    | Parse.StmtNonterm {nonterm} -> fold_nonterm io symbols_builder nonterm
+    | _ -> io, symbols_builder
   end in
-  let rec fold_stmts_tl io symbols stmts_tl = begin
+  let rec fold_stmts_tl io symbols_builder stmts_tl = begin
     match stmts_tl with
     | Parse.StmtsTl {stmt; stmts_tl; _} -> begin
-        let io, symbols = fold_stmt io symbols stmt in
-        fold_stmts_tl io symbols stmts_tl
+        let io, symbols_builder = fold_stmt io symbols_builder stmt in
+        fold_stmts_tl io symbols_builder stmts_tl
       end
-    | StmtsTlEpsilon -> io, symbols
+    | StmtsTlEpsilon -> io, symbols_builder
   end in
-  let fold_stmts io symbols stmts = begin
+  let fold_stmts io symbols_builder stmts = begin
     match stmts with
     | Parse.Stmts {stmt; stmts_tl} -> begin
-        let io, symbols = fold_stmt io symbols stmt in
-        fold_stmts_tl io symbols stmts_tl
+        let io, symbols_builder = fold_stmt io symbols_builder stmt in
+        fold_stmts_tl io symbols_builder stmts_tl
       end
   end in
-  let io, symbols = match hmh with Parse.Hmh {hocc_=Hocc {stmts; _}; _} ->
-    fold_stmts io symbols stmts
+  let io, symbols_builder = match hmh with Parse.Hmh {hocc_=Hocc {stmts; _}; _} ->
+    fold_stmts io symbols_builder stmts
   in
-  io, symbols
+  io, symbols_builder
 
-let symbols_init io precs symbols hmh =
-  let fold_prod_param io symbols prod_params prod_param = begin
+let symbols_init io precs symbols_builder hmh =
+  let fold_prod_param io symbols_builder prod_params prod_param = begin
     match prod_param with
     | Parse.ProdParamBinding {prod_param_symbol; _}
     | ProdParamPattern {prod_param_symbol; _}
@@ -335,7 +337,7 @@ let symbols_init io precs symbols hmh =
         let io, symbol_name, stype = match prod_param_symbol with
           | ProdParamSymbolCident {cident=CIDENT {token=cident}} -> begin
               let symbol_name = string_of_token cident in
-              match Symbols.info_of_name symbol_name symbols with
+              match Symbols.Builder.info_of_name symbol_name symbols_builder with
               | None -> begin
                   let io =
                     io.err
@@ -345,7 +347,7 @@ let symbols_init io precs symbols hmh =
                   in
                   Io.fatal io
                 end
-              | Some Symbols.{name; alias; stype; _} -> begin
+              | Some Symbols.Builder.{name; alias; stype; _} -> begin
                   let io = match alias with
                     | Some alias -> begin
                         io.log
@@ -362,7 +364,7 @@ let symbols_init io precs symbols hmh =
             end
           | ProdParamSymbolAlias {alias=ISTRING {token=alias}} -> begin
               let alias_name = string_of_alias_token alias in
-              match Symbols.info_of_alias alias_name symbols with
+              match Symbols.Builder.info_of_alias alias_name symbols_builder with
               | None -> begin
                   let io =
                     io.err
@@ -372,7 +374,7 @@ let symbols_init io precs symbols hmh =
                   in
                   Io.fatal io
                 end
-              | Some Symbols.{name; stype; _} -> io, name, stype
+              | Some Symbols.Builder.{name; stype; _} -> io, name, stype
             end
         in
         let pattern = match prod_param with
@@ -405,36 +407,36 @@ let symbols_init io precs symbols hmh =
         io, param :: prod_params
       end
   end in
-  let rec fold_prod_params_tl io symbols prod_params
+  let rec fold_prod_params_tl io symbols_builder prod_params
       prod_params_tl = begin
     match prod_params_tl with
     | Parse.ProdParamsTlProdParam {prod_param; prod_params_tl} -> begin
-        let io, prod_params = fold_prod_param io symbols prod_params prod_param in
-        fold_prod_params_tl io symbols prod_params prod_params_tl
+        let io, prod_params = fold_prod_param io symbols_builder prod_params prod_param in
+        fold_prod_params_tl io symbols_builder prod_params prod_params_tl
       end
     | ProdParamsTlPrecRef {prec_ref} -> begin
         let io, rhs = Callback.Params.init io (Array.of_list_rev prod_params) in
         io, rhs, prec_ref
       end
   end in
-  let fold_prod_pattern io symbols prod_pattern = begin
+  let fold_prod_pattern io symbols_builder prod_pattern = begin
     match prod_pattern with
     | Parse.ProdPatternParams {prod_params=ProdParamsProdParam {prod_param; prod_params_tl}}
       -> begin
-          let io, prod_params = fold_prod_param io symbols [] prod_param in
-          fold_prod_params_tl io symbols prod_params prod_params_tl
+          let io, prod_params = fold_prod_param io symbols_builder [] prod_param in
+          fold_prod_params_tl io symbols_builder prod_params prod_params_tl
         end
     | ProdPatternEpsilon {prec_ref; _} -> begin
         let io, rhs = Callback.Params.init io [||] in
         io, rhs, prec_ref
       end
   end in
-  let fold_prod io precs symbols prods_builder callbacks ~nonterm_info ~nonterm_prec ~code
+  let fold_prod io precs symbols_builder prods_builder callbacks ~nonterm_info ~nonterm_prec ~code
       nonterm_prods_set prod = begin
     match prod with
     | Parse.Prod {prod_pattern} -> begin
-        let lhs_index = Symbols.(nonterm_info.index) in
-        let io, rhs, prec_ref = fold_prod_pattern io symbols prod_pattern in
+        let lhs_index = Symbols.Builder.(nonterm_info.index) in
+        let io, rhs, prec_ref = fold_prod_pattern io symbols_builder prod_pattern in
         let io = match code with
           | Some _ -> io
           | None -> begin
@@ -461,7 +463,8 @@ let symbols_init io precs symbols hmh =
             end
         in
         let rhs_indexes = Callback.Params.map ~f:(fun Callback.Param.{symbol_name; _} ->
-          match Symbols.info_of_name_hlt symbol_name symbols with Symbols.{index; _} -> index
+          match Symbols.Builder.info_of_name_hlt symbol_name symbols_builder with
+            Symbols.Builder.{index; _} -> index
         ) rhs in
         let prec = match prec_ref with
           | PrecRefUident {uident} -> begin
@@ -501,32 +504,32 @@ let symbols_init io precs symbols hmh =
         io, nonterm_prods_set, prods_builder, callbacks, prod
       end
   end in
-  let rec fold_prods_tl io precs symbols prods_builder callbacks ~nonterm_info ~nonterm_prec ~code
-      nonterm_prods_set prods_tl = begin
+  let rec fold_prods_tl io precs symbols_builder prods_builder callbacks ~nonterm_info ~nonterm_prec
+      ~code nonterm_prods_set prods_tl = begin
     match prods_tl with
     | Parse.ProdsTlProd {prod; prods_tl} -> begin
         let io, nonterm_prods_set, prods_builder, callbacks, _prod =
-          fold_prod io precs symbols prods_builder callbacks ~nonterm_info ~nonterm_prec ~code
-            nonterm_prods_set prod in
-        fold_prods_tl io precs symbols prods_builder callbacks ~nonterm_info ~nonterm_prec ~code
-          nonterm_prods_set prods_tl
+          fold_prod io precs symbols_builder prods_builder callbacks ~nonterm_info ~nonterm_prec
+            ~code nonterm_prods_set prod in
+        fold_prods_tl io precs symbols_builder prods_builder callbacks ~nonterm_info ~nonterm_prec
+          ~code nonterm_prods_set prods_tl
       end
     | ProdsTlEpsilon -> io, nonterm_prods_set, prods_builder, callbacks
   end in
-  let fold_prods io precs symbols prods_builder callbacks ~nonterm_info ~nonterm_prec
+  let fold_prods io precs symbols_builder prods_builder callbacks ~nonterm_info ~nonterm_prec
       parse_prods = begin
     match parse_prods with
     | Parse.ProdsProd {prod; prods_tl} -> begin
         let code = None in
         let nonterm_prods_set = Ordset.empty (module Prod) in
         let io, nonterm_prods_set, prods_builder, callbacks, _prod =
-          fold_prod io precs symbols prods_builder callbacks ~nonterm_info ~nonterm_prec ~code
-            nonterm_prods_set prod in
-        fold_prods_tl io precs symbols prods_builder callbacks ~nonterm_info ~nonterm_prec ~code
-          nonterm_prods_set prods_tl
+          fold_prod io precs symbols_builder prods_builder callbacks ~nonterm_info ~nonterm_prec
+            ~code nonterm_prods_set prod in
+        fold_prods_tl io precs symbols_builder prods_builder callbacks ~nonterm_info ~nonterm_prec
+          ~code nonterm_prods_set prods_tl
       end
   end in
-  let fold_reduction io precs symbols prods_builder callbacks ~nonterm_info ~nonterm_prec
+  let fold_reduction io precs symbols_builder prods_builder callbacks ~nonterm_info ~nonterm_prec
       nonterm_prods_set reduction = begin
     match reduction with
     | Parse.Reduction {prods=parse_prods; code; _} -> begin
@@ -536,12 +539,12 @@ let symbols_init io precs symbols hmh =
         | ProdsProd {prod=parse_prod; prods_tl} -> begin
             let reduction_prods = Ordset.empty (module Prod) in
             let io, reduction_prods_merge, prods_builder, callbacks, Prod.({callback={rhs; _}; _}) =
-              fold_prod io precs symbols prods_builder callbacks ~nonterm_info ~nonterm_prec
+              fold_prod io precs symbols_builder prods_builder callbacks ~nonterm_info ~nonterm_prec
                 ~code:(Some code) reduction_prods parse_prod in
             let reduction_prods = Ordset.union reduction_prods_merge reduction_prods in
             let io, reduction_prods_merge, prods_builder, callbacks =
-              fold_prods_tl io precs symbols prods_builder callbacks ~nonterm_info ~nonterm_prec
-                ~code:(Some code) reduction_prods prods_tl in
+              fold_prods_tl io precs symbols_builder prods_builder callbacks ~nonterm_info
+                ~nonterm_prec ~code:(Some code) reduction_prods prods_tl in
             let reduction_prods = Ordset.union reduction_prods_merge reduction_prods in
             let bindings = Callback.Params.bindings rhs in
             let () = Ordset.iter ~f:(fun Prod.({callback={rhs=rhs1; _}; _} as prod1) ->
@@ -566,31 +569,31 @@ let symbols_init io precs symbols hmh =
           end
       end
   end in
-  let rec fold_reductions_tl io precs symbols prods_builder callbacks ~nonterm_info ~nonterm_prec
-      nonterm_prods_set reductions_tl = begin
+  let rec fold_reductions_tl io precs symbols_builder prods_builder callbacks ~nonterm_info
+      ~nonterm_prec nonterm_prods_set reductions_tl = begin
     match reductions_tl with
     | Parse.ReductionsTlReduction {reduction; reductions_tl} -> begin
         let io, nonterm_prods_set, prods_builder, callbacks =
-          fold_reduction io precs symbols prods_builder callbacks ~nonterm_info ~nonterm_prec
-            nonterm_prods_set reduction in
-        fold_reductions_tl io precs symbols prods_builder callbacks ~nonterm_info ~nonterm_prec
-          nonterm_prods_set reductions_tl
+          fold_reduction io precs symbols_builder prods_builder callbacks ~nonterm_info
+            ~nonterm_prec nonterm_prods_set reduction in
+        fold_reductions_tl io precs symbols_builder prods_builder callbacks ~nonterm_info
+          ~nonterm_prec nonterm_prods_set reductions_tl
       end
     | ReductionsTlEpsilon -> io, nonterm_prods_set, prods_builder, callbacks
   end in
-  let fold_reductions io precs symbols prods_builder callbacks ~nonterm_info ~nonterm_prec
+  let fold_reductions io precs symbols_builder prods_builder callbacks ~nonterm_info ~nonterm_prec
       parse_reductions = begin
     match parse_reductions with
     | Parse.ReductionsReduction {reduction; reductions_tl} -> begin
         let nonterm_prods_set = Ordset.empty (module Prod) in
         let io, nonterm_prods_set, prods_builder, callbacks =
-          fold_reduction io precs symbols prods_builder callbacks ~nonterm_info ~nonterm_prec
-            nonterm_prods_set reduction in
-        fold_reductions_tl io precs symbols prods_builder callbacks ~nonterm_info ~nonterm_prec
-          nonterm_prods_set reductions_tl
+          fold_reduction io precs symbols_builder prods_builder callbacks ~nonterm_info
+            ~nonterm_prec nonterm_prods_set reduction in
+        fold_reductions_tl io precs symbols_builder prods_builder callbacks ~nonterm_info
+          ~nonterm_prec nonterm_prods_set reductions_tl
       end
   end in
-  let fold_nonterm io precs symbols prods_builder callbacks nonterm = begin
+  let fold_nonterm io precs symbols_builder prods_builder callbacks nonterm = begin
     let start, name, prec = match nonterm with
       | Parse.NontermProds {nonterm_type; cident=CIDENT {token=cident}; prec_ref; _}
       | NontermReductions {nonterm_type; cident=CIDENT {token=cident}; prec_ref; _} -> begin
@@ -619,25 +622,30 @@ let symbols_init io precs symbols hmh =
           start, name, prec
         end
     in
-    let (Symbols.{index; stype; _} as nonterm_info) = Symbols.info_of_name_hlt name symbols in
+    let (Symbols.Builder.{index; stype; _} as nonterm_info)
+      = Symbols.Builder.info_of_name_hlt name symbols_builder in
     let nonterm_prec = prec in
     let io, nonterm_prods, prods_builder, callbacks = match nonterm with
-      | NontermProds {prods=parse_prods; _} ->
-        fold_prods io precs symbols prods_builder callbacks ~nonterm_info ~nonterm_prec parse_prods
+      | NontermProds {prods=parse_prods; _} -> begin
+          fold_prods io precs symbols_builder prods_builder callbacks ~nonterm_info ~nonterm_prec
+            parse_prods
+        end
       | NontermReductions {reductions; _} -> begin
-          fold_reductions io precs symbols prods_builder callbacks ~nonterm_info ~nonterm_prec
-            reductions
+          fold_reductions io precs symbols_builder  prods_builder callbacks ~nonterm_info
+            ~nonterm_prec reductions
         end
     in
-    let symbols =
-      Symbols.insert_nonterm ~name ~prec ~stmt:(Some nonterm) ~start ~prods:nonterm_prods symbols in
-    let io, symbols, prods_builder, callbacks = match start with
-      | false -> io, symbols, prods_builder, callbacks
+    let symbols_builder =
+      Symbols.Builder.insert_nonterm ~name ~prec ~stmt:(Some nonterm) ~start ~prods:nonterm_prods
+        symbols_builder in
+    let io, symbols_builder, prods_builder, callbacks = match start with
+      | false -> io, symbols_builder, prods_builder, callbacks
       | true -> begin
           (* Synthesize wrapper for start symbol. *)
           let name' = name ^ "'" in
-          let Symbols.{index=index'; _} = Symbols.info_of_name_hlt name' symbols in
-          let lhs = Symbols.{
+          let Symbols.Builder.{index=index'; _}
+            = Symbols.Builder.info_of_name_hlt name' symbols_builder in
+          let lhs = Symbols.Builder.{
             index=index';
             name=name';
             alias=None;
@@ -651,121 +659,134 @@ let symbols_init io precs symbols hmh =
           |] in
           let callback, callbacks = Callbacks.insert ~lhs ~rhs ~code:None callbacks in
           let prod, prods_builder = Prods.Builder.insert ~lhs_index:index'
-            ~rhs_indexes:[|index; pe_index|] ~prec:None ~stmt:None ~callback prods_builder in
+              ~rhs_indexes:[|index; pe_index|] ~prec:None ~stmt:None ~callback prods_builder in
           let nonterm_prods = Ordset.singleton (module Prod) prod in
-          let symbols = Symbols.insert_nonterm ~name:name' ~prec:None ~stmt:None ~start
-              ~prods:nonterm_prods symbols in
-          io, symbols, prods_builder, callbacks
+          let symbols_builder = Symbols.Builder.insert_nonterm ~name:name' ~prec:None ~stmt:None
+              ~start ~prods:nonterm_prods symbols_builder in
+          io, symbols_builder, prods_builder, callbacks
         end
     in
-    io, symbols, prods_builder, callbacks
+    io, symbols_builder, prods_builder, callbacks
   end in
-  let fold_stmt io precs symbols prods_builder callbacks stmt = begin
+  let fold_stmt io precs symbols_builder prods_builder callbacks stmt = begin
     match stmt with
-    | Parse.StmtNonterm {nonterm} -> fold_nonterm io precs symbols prods_builder callbacks nonterm
-    | _ -> io, symbols, prods_builder, callbacks
+    | Parse.StmtNonterm {nonterm} ->
+      fold_nonterm io precs symbols_builder prods_builder callbacks nonterm
+    | _ -> io, symbols_builder, prods_builder, callbacks
   end in
-  let rec fold_stmts_tl io precs symbols prods_builder callbacks stmts_tl = begin
+  let rec fold_stmts_tl io precs symbols_builder prods_builder callbacks stmts_tl = begin
     match stmts_tl with
     | Parse.StmtsTl {stmt; stmts_tl; _} -> begin
-        let io, symbols, prods_builder, callbacks =
-          fold_stmt io precs symbols prods_builder callbacks stmt in
-        fold_stmts_tl io precs symbols prods_builder callbacks stmts_tl
+        let io, symbols_builder, prods_builder, callbacks =
+          fold_stmt io precs symbols_builder prods_builder callbacks stmt in
+        fold_stmts_tl io precs symbols_builder prods_builder callbacks stmts_tl
       end
-    | StmtsTlEpsilon -> io, symbols, prods_builder, callbacks
+    | StmtsTlEpsilon -> io, symbols_builder, prods_builder, callbacks
   end in
-  let fold_stmts io precs symbols prods_builder callbacks stmts = begin
+  let fold_stmts io precs symbols_builder prods_builder callbacks stmts = begin
     match stmts with
     | Parse.Stmts {stmt; stmts_tl} -> begin
-        let io, symbols, prods_builder, callbacks =
-          fold_stmt io precs symbols prods_builder callbacks stmt in
-        fold_stmts_tl io precs symbols prods_builder callbacks stmts_tl
+        let io, symbols_builder, prods_builder, callbacks =
+          fold_stmt io precs symbols_builder prods_builder callbacks stmt in
+        fold_stmts_tl io precs symbols_builder prods_builder callbacks stmts_tl
       end
   end in
   (* Compute first/follow sets for all symbols. *)
-  let close_symbols symbols = begin
+  let close_symbols symbols_builder = begin
     (* Iterate to a fixed point, given a per prod folding function. *)
-    let close_impl symbols ~fold_prod = begin
-      let fold_prods symbols ~fold_prod symbol = begin
-        Ordset.fold ~init:(symbols, symbol, false) ~f:(fun (symbols, symbol, merged) prod ->
-          match fold_prod symbols symbol prod with
-          | symbols', false -> symbols', symbol, merged
-          | symbols', true ->
-            symbols', Symbols.symbol_of_symbol_index Symbol.(symbol.index) symbols', true
-        ) Symbol.(symbol.prods)
+    let close_impl symbols_builder ~fold_prod = begin
+      let fold_prods symbols_builder ~fold_prod symbol = begin
+        Ordset.fold ~init:(symbols_builder, symbol, false)
+          ~f:(fun (symbols_builder, symbol, merged) prod ->
+            match fold_prod symbols_builder symbol prod with
+            | symbols_builder', false -> symbols_builder', symbol, merged
+            | symbols_builder', true -> begin
+                symbols_builder',
+                Symbols.Builder.symbol_of_symbol_index Symbol.(symbol.index) symbols_builder',
+                true
+              end
+          ) Symbol.(symbol.prods)
       end in
-      let fold_nonterms symbols ~fold_prod = begin
-        Symbols.nonterms_fold ~init:(symbols, false) ~f:(fun (symbols, merged) symbol ->
-          match fold_prods symbols ~fold_prod symbol with
-          | _, _, false -> symbols, merged
-          | symbols', _, true -> symbols', true
-        ) symbols
+      let fold_nonterms symbols_builder ~fold_prod = begin
+        Symbols.Builder.nonterms_fold ~init:(symbols_builder, false)
+          ~f:(fun (symbols_builder, merged) symbol ->
+            match fold_prods symbols_builder ~fold_prod symbol with
+            | _, _, false -> symbols_builder, merged
+            | symbols_builder', _, true -> symbols_builder', true
+          ) symbols_builder
       end in
-      let rec f symbols ~fold_prod = begin
-        match fold_nonterms symbols ~fold_prod with
-        | _, false -> symbols
-        | symbols', true -> f symbols' ~fold_prod
+      let rec f symbols_builder ~fold_prod = begin
+        match fold_nonterms symbols_builder ~fold_prod with
+        | _, false -> symbols_builder
+        | symbols_builder', true -> f symbols_builder' ~fold_prod
       end in
-      f symbols ~fold_prod
+      f symbols_builder ~fold_prod
     end in
-    let close_first symbols = begin
-      let fold_prod symbols symbol prod = begin
+    let close_first symbols_builder = begin
+      let fold_prod symbols_builder symbol prod = begin
         let lr0item = Lr0Item.init ~prod ~dot:0L in
         let lr1item = Lr1Item.init ~lr0item
             ~follow:(Bitset.singleton Symbol.(epsilon.index)) in
-        let rhs_first = Lr1Item.first symbols lr1item in
+        let symbol_of_symbol_index = (fun symbol_index ->
+          Symbols.Builder.symbol_of_symbol_index symbol_index symbols_builder
+        ) in
+        let rhs_first = Lr1Item.first ~symbol_of_symbol_index lr1item in
         (* Merge the RHS's first set into symbol's first set. *)
         match Symbol.first_has_diff rhs_first symbol with
-        | false -> symbols, false
+        | false -> symbols_builder, false
         | true -> begin
             let symbol' = Symbol.first_union rhs_first symbol in
-            let symbols' = Symbols.update_symbol symbol' symbols in
-            symbols', true
+            let symbols_builder' = Symbols.Builder.update_symbol symbol' symbols_builder in
+            symbols_builder', true
           end
       end in
-      close_impl symbols ~fold_prod
+      close_impl symbols_builder ~fold_prod
     end in
-    let close_follow symbols = begin
-      let fold_prod symbols symbol prod = begin
+    let close_follow symbols_builder = begin
+      let fold_prod symbols_builder symbol prod = begin
         match Array.length Prod.(prod.rhs_indexes) with
-        | 0L -> symbols, false
+        | 0L -> symbols_builder, false
         | _rhs_length -> begin
             Array.Slice.foldi (Array.Slice.init prod.rhs_indexes)
-              ~init:(symbols, false) ~f:(fun i (symbols, merged) b_index ->
+              ~init:(symbols_builder, false) ~f:(fun i (symbols_builder, merged) b_index ->
               (* A ::= αBβ *)
-              let b = Symbols.symbol_of_symbol_index b_index symbols in
+              let b = Symbols.Builder.symbol_of_symbol_index b_index symbols_builder in
               let lr0item = Lr0Item.init ~prod ~dot:(succ i) in
               let lr1item = Lr1Item.init ~lr0item
                   ~follow:(Bitset.singleton Symbol.(epsilon.index)) in
-              let first_beta = Lr1Item.first symbols lr1item in
+              let symbol_of_symbol_index = (fun symbol_index ->
+                Symbols.Builder.symbol_of_symbol_index symbol_index symbols_builder
+              ) in
+              let first_beta = Lr1Item.first ~symbol_of_symbol_index lr1item in
               let first_beta_sans_epsilon = Bitset.remove Symbol.epsilon.index first_beta in
               (* Merge β's first set (sans "ε") into B's follow set. *)
-              let symbols', b', merged' =
+              let symbols_builder', b', merged' =
                 match Symbol.follow_has_diff first_beta_sans_epsilon b with
-                | false -> symbols, b, merged
+                | false -> symbols_builder, b, merged
                 | true -> begin
                     let b' = Symbol.follow_union first_beta_sans_epsilon b in
-                    let symbols' = Symbols.update_symbol b' symbols in
-                    symbols', b', true
+                    let symbols_builder' = Symbols.Builder.update_symbol b' symbols_builder in
+                    symbols_builder', b', true
                   end
               in
               (* If β's first set contains "ε", merge A's follow set into B's follow set. *)
-              let symbols', merged' = match Bitset.mem Symbol.epsilon.index first_beta &&
-                                            Symbol.follow_has_diff Symbol.(symbol.follow) b' with
-              | false -> symbols', merged'
-              | true -> begin
-                  let b' = Symbol.follow_union symbol.follow b' in
-                  let symbols' = Symbols.update_symbol b' symbols in
-                  symbols', true
-                end
+              let symbols_builder', merged' =
+                match Bitset.mem Symbol.epsilon.index first_beta &&
+                      Symbol.follow_has_diff Symbol.(symbol.follow) b' with
+                | false -> symbols_builder', merged'
+                | true -> begin
+                    let b' = Symbol.follow_union symbol.follow b' in
+                    let symbols_builder' = Symbols.Builder.update_symbol b' symbols_builder in
+                    symbols_builder', true
+                  end
               in
-              symbols', merged'
+              symbols_builder', merged'
             )
           end
       end in
-      close_impl symbols ~fold_prod
+      close_impl symbols_builder ~fold_prod
     end in
-    symbols
+    symbols_builder
     |> close_first
     |> close_follow
   end in
@@ -779,13 +800,14 @@ let symbols_init io precs symbols hmh =
    * AST traversal. *)
   let callbacks = Callbacks.empty in
   let prods_builder = Prods.Builder.empty in
-  let io, symbols, prods_builder, callbacks =
+  let io, symbols_builder, prods_builder, callbacks =
     match hmh with Parse.Hmh {hocc_=Hocc {stmts; _}; _} ->
-      fold_stmts io precs symbols prods_builder callbacks stmts
+      fold_stmts io precs symbols_builder prods_builder callbacks stmts
   in
   let prods = Prods.Builder.build prods_builder in
   (* Close on symbols' first/follow sets. *)
-  let symbols = close_symbols symbols in
+  let symbols_builder = close_symbols symbols_builder in
+  let symbols = Symbols.Builder.build symbols_builder in
   let nprecs = Precs.length precs in
   let ntokens = Symbols.tokens_length symbols in
   let nnonterms = Symbols.nonterms_length symbols in
@@ -990,9 +1012,9 @@ and states_init io ~resolve symbols prods isocores ~gotonub_of_statenub_goto =
 
 and hmh_extract io hmh =
   let io, precs = precs_init io hmh in
-  let io, symbols = tokens_init io precs hmh in
-  let io, symbols = symbol_infos_init io symbols hmh in
-  let io, symbols, prods, callbacks = symbols_init io precs symbols hmh in
+  let io, symbols_builder = tokens_init io precs hmh in
+  let io, symbols_builder = symbol_infos_init io symbols_builder hmh in
+  let io, symbols, prods, callbacks = symbols_init io precs symbols_builder hmh in
   io, precs, symbols, prods, callbacks
 
 and log_conflicts io ~resolve states =

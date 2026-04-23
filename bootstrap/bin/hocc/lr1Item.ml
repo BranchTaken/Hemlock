@@ -60,7 +60,7 @@ let init ~lr0item ~follow =
  * until a preceding symbol's first set does not contain "ε". Similarly, if all symbols contain "ε",
  * merge the follow set (excluding "ε"). Merge "ε" if all symbols' first sets and the follow set
  * contain "ε". *)
-let first symbols {lr0item; follow} =
+let first ~symbol_of_symbol_index {lr0item; follow} =
   let append_symbol_set first merge_epsilon symbol_set = begin
     let symbol_set_sans_epsilon = Bitset.remove Symbol.epsilon.index symbol_set in
     let first' = Bitset.union symbol_set_sans_epsilon first in
@@ -77,7 +77,7 @@ let first symbols {lr0item; follow} =
   let first, merge_epsilon = Array.Slice.fold_until
       ~init:(Bitset.empty, true)
       ~f:(fun (first, merge_epsilon) symbol_index ->
-        let symbol = Symbols.symbol_of_symbol_index symbol_index symbols in
+        let symbol = symbol_of_symbol_index symbol_index in
         let first', merge_epsilon' = append_symbol_set first merge_epsilon Symbol.(symbol.first) in
         (first', merge_epsilon'), not merge_epsilon'
       ) rhs_slice

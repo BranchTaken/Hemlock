@@ -26,7 +26,7 @@ include T
 include Identifiable.Make(T)
 
 let added_impl symbols kernel =
-  let rec f symbols lr1itemset added = begin
+  let rec f ~symbol_of_symbol_index lr1itemset added = begin
     match Lr1Itemset.choose lr1itemset with
     | None -> added
     | Some (Lr1Item.{lr0item={prod={rhs_indexes; _} as prod; dot}; follow} as lr1item) -> begin
@@ -34,20 +34,20 @@ let added_impl symbols kernel =
         match Uns.(dot < Array.length rhs_indexes) with
         | false -> begin
             (* X ::= a· *)
-            f symbols lr1itemset' added
+            f ~symbol_of_symbol_index lr1itemset' added
           end
         | true -> begin
             let rhs_symbol_index = Array.get dot rhs_indexes in
-            let rhs_symbol = Symbols.symbol_of_symbol_index rhs_symbol_index symbols in
+            let rhs_symbol = symbol_of_symbol_index rhs_symbol_index in
             match Symbol.is_nonterm rhs_symbol with
             | false -> begin
                 (* X ::= a·b *)
-                f symbols lr1itemset' added
+                f ~symbol_of_symbol_index lr1itemset' added
               end
             | true -> begin
                 (* X ::= a·Ab *)
                 let lhs = rhs_symbol in
-                let follow' = Lr1Item.first symbols
+                let follow' = Lr1Item.first ~symbol_of_symbol_index
                     (Lr1Item.init ~lr0item:(Lr0Item.init ~prod ~dot:(succ dot)) ~follow) in
                 let lr1itemset', added' = Ordset.fold ~init:(lr1itemset', added)
                   ~f:(fun (lr1itemset, added) prod ->
@@ -61,12 +61,15 @@ let added_impl symbols kernel =
                         lr1itemset', added'
                       end
                   ) lhs.prods in
-                f symbols lr1itemset' added'
+                f ~symbol_of_symbol_index lr1itemset' added'
               end
           end
       end
   end in
-  f symbols kernel Lr1Itemset.empty
+  let symbol_of_symbol_index = (fun symbol_index ->
+    Symbols.symbol_of_symbol_index symbol_index symbols
+  ) in
+  f ~symbol_of_symbol_index kernel Lr1Itemset.empty
 
 let merge symbols lr1itemset t =
   (* Merge the kernel represented by `lr1itemset` into `t`'s kernel, then update the lazy closure

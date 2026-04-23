@@ -7,7 +7,7 @@ type t
 val empty: t
 (** [empty] returns an empty set of reduction callbacks. *)
 
-val insert: lhs:Symbols.info -> rhs:Callback.Params.t -> code:Parse.nonterm_code option -> t
+val insert: lhs:Symbols.Builder.info -> rhs:Callback.Params.t -> code:Parse.nonterm_code option -> t
   -> Callback.t * t
 (** [insert ~lhs ~rhs ~code t] creates a [Callback.t] with unique index and returns both the
     reduction callback and a new [t] with the reduction callback inserted. *)
