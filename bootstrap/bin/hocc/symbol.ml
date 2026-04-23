@@ -20,7 +20,7 @@ module T = struct
     stmt: stmt option;
     alias: string option;
     start: bool;
-    prods: (Prod.t, Prod.cmper_witness) Ordset.t;
+    prods: Prod.t array;
     first: Bitset.t;
     follow: Bitset.t;
   }
@@ -40,16 +40,16 @@ module T = struct
     |> Fmt.fmt "; stmt=" |> (Option.pp pp_stmt) stmt
     |> Fmt.fmt "; alias=" |> (Option.pp String.pp) alias
     |> Fmt.fmt "; start=" |> Bool.pp start
-    |> Fmt.fmt "; prods=" |> Ordset.pp prods
+    |> Fmt.fmt "; prods=" |> (Array.pp Prod.pp) prods
     |> Fmt.fmt "; first=" |> Bitset.pp first
     |> Fmt.fmt "; follow=" |> Bitset.pp follow
     |> Fmt.fmt "}"
 
   let pp_hr {name; alias; prods; _} formatter =
-    let pretty, pretty_name = match Ordset.is_empty prods, alias with
-      | _, None
-      | false, Some _ -> false, name
-      | true, Some alias -> true, alias
+    let pretty, pretty_name = match prods, alias with
+      | [||], Some alias -> true, alias
+      | _, Some _
+      | _, None -> false, name
     in
     formatter
     |> Fmt.fmt (String.to_string ~pretty pretty_name)
@@ -63,7 +63,7 @@ let init_token ~index ~name ~stype ~prec ~stmt ~alias =
     | Some stmt -> Some (Token stmt)
   in
   let start = false in
-  let prods = Ordset.empty (module Prod) in
+  let prods = [||] in
   (* Tokens are in their own `first` sets. *)
   let first = Bitset.singleton index in
   let follow = Bitset.empty in
@@ -82,9 +82,10 @@ let init_nonterm ~index ~name ~stype ~prec ~stmt ~start ~prods =
     | None -> None
     | Some stmt -> Some (Nonterm stmt)
   in
+  let prods = Ordset.to_array prods in
   let alias = None in
   (* Insert "ε" into the `first` set if there is an epsilon production. *)
-  let has_epsilon_prod = Ordset.fold_until ~init:false ~f:(fun _has_epsilon_prod prod ->
+  let has_epsilon_prod = Array.fold_until ~init:false ~f:(fun _has_epsilon_prod prod ->
     let is_epsilon = Prod.is_epsilon prod in
     is_epsilon, is_epsilon
   ) prods in
@@ -100,7 +101,7 @@ let init_nonterm ~index ~name ~stype ~prec ~stmt ~start ~prods =
   {index; name; stype; prec; stmt; alias; start; prods; first; follow}
 
 let is_token {prods; _} =
-  Ordset.is_empty prods
+  Array.is_empty prods
 
 let is_nonterm t =
   not (is_token t)
