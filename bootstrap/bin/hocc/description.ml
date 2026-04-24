@@ -428,17 +428,37 @@ let generate_txt conf io Spec.{algorithm; precs; symbols; prods; states; _} =
                   |> Fmt.fmt "            " |> pp_lr0item kernel_lr0item
                   |> Fmt.fmt "\n"
                   |> (fun formatter ->
-                    Attribs.fold ~init:formatter
-                      ~f:(fun formatter Attrib.{conflict_state_index; symbol_index; contrib; _} ->
-                        formatter
-                        |> Fmt.fmt "                "
-                        |> pp_state_index conflict_state_index
-                        |> Fmt.fmt " : "
-                        |> pp_symbol_index symbol_index
-                        |> Fmt.fmt " : "
-                        |> pp_contrib contrib
-                        |> Fmt.fmt "\n"
+                    Attribs.fold ~init:(Ordmap.empty (module Symbol.Index))
+                      ~f:(fun sym_attribs (Attrib.{symbol_index; _} as attrib) ->
+                        Ordmap.amend symbol_index ~f:(fun attribs_opt ->
+                          match attribs_opt with
+                          | None -> Some (Attribs.singleton attrib)
+                          | Some attribs -> Some (Attribs.insert attrib attribs)
+                        ) sym_attribs
                       ) attribs
+                    |> Ordmap.fold ~init:formatter ~f:(fun formatter (symbol_index, attribs) ->
+                      let sep, pad = match Attribs.length attribs with
+                        | 0L -> not_reached ()
+                        | 1L -> " ", ""
+                        | _ -> "\n", "                    "
+                      in
+                      formatter
+                      |> Fmt.fmt "                "
+                      |> pp_symbol_index symbol_index
+                      |> Fmt.fmt " :"
+                      |> Fmt.fmt sep
+                      |> (fun formatter ->
+                        Attribs.fold ~init:formatter
+                          ~f:(fun formatter Attrib.{conflict_state_index; contrib; _} ->
+                            formatter
+                            |> Fmt.fmt pad
+                            |> pp_state_index conflict_state_index
+                            |> Fmt.fmt " : "
+                            |> pp_contrib contrib
+                            |> Fmt.fmt "\n"
+                          ) attribs
+                      )
+                    )
                   )
                 ) statenub.kernel_attribs
               )

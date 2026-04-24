@@ -152,7 +152,7 @@ IELR(1) States
             Wn : 17
         Conflict contributions
             Yn ::= Tt · Wn
-                15 : Dt : Reduce Vn ::= epsilon
+                Dt : 15 : Reduce Vn ::= epsilon
     State 6 [6.0]
         Kernel
             [Yn ::= Ut · Xn, {Dt, Et}]
@@ -199,7 +199,7 @@ IELR(1) States
             Wn : 17
         Conflict contributions
             Zn ::= Tt · Ut
-                15 : Dt : Reduce Zn ::= Tt Ut
+                Dt : 15 : Reduce Zn ::= Tt Ut
     State 11 [10.0]
         Kernel
             [Xn ::= Bt Yn · Et, {At, Dt, Et, EOI}]
@@ -241,7 +241,7 @@ IELR(1) States
             Vn : 24
         Conflict contributions
             Wn ::= Ut · Vn
-                15 : Dt : Reduce Vn ::= epsilon
+                Dt : 15 : Reduce Vn ::= epsilon
     State 17 [16.0]
         Kernel
             [Yn ::= Tt Wn ·, {Dt, Et}]
@@ -285,7 +285,7 @@ IELR(1) States
             Vn : 24
         Conflict contributions
             Zn ::= Tt Ut ·
-                15 : Dt : Reduce Zn ::= Tt Ut
+                Dt : 15 : Reduce Zn ::= Tt Ut
     State 22 [20.0]
         Kernel
             [Xn ::= Bt Yn Et ·, {At, Dt, Et, EOI}]

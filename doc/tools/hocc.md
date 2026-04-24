@@ -931,22 +931,26 @@ IELR(1) States
             AddOp : 10
         Conflict contributions
             Expr ::= Expr · MulOp Expr
-                12 : "*" : Reduce Expr ::= Expr MulOp Expr
-                12 : "/" : Reduce Expr ::= Expr MulOp Expr
-                12 : "+" : Reduce Expr ::= Expr MulOp Expr
-                12 : "-" : Reduce Expr ::= Expr MulOp Expr
-                13 : "+" : Reduce Expr ::= Expr AddOp Expr
-                13 : "-" : Reduce Expr ::= Expr AddOp Expr
+                "*" : 12 : Reduce Expr ::= Expr MulOp Expr
+                "/" : 12 : Reduce Expr ::= Expr MulOp Expr
+                "+" :
+                    12 : Reduce Expr ::= Expr MulOp Expr
+                    13 : Reduce Expr ::= Expr AddOp Expr
+                "-" :
+                    12 : Reduce Expr ::= Expr MulOp Expr
+                    13 : Reduce Expr ::= Expr AddOp Expr
             Expr ::= Expr · AddOp Expr
-                12 : "*" : Reduce Expr ::= Expr MulOp Expr
-                12 : "/" : Reduce Expr ::= Expr MulOp Expr
-                12 : "+" : Reduce Expr ::= Expr MulOp Expr
-                12 : "-" : Reduce Expr ::= Expr MulOp Expr
-                13 : "+" : Reduce Expr ::= Expr AddOp Expr
-                13 : "-" : Reduce Expr ::= Expr AddOp Expr
+                "*" : 12 : Reduce Expr ::= Expr MulOp Expr
+                "/" : 12 : Reduce Expr ::= Expr MulOp Expr
+                "+" :
+                    12 : Reduce Expr ::= Expr MulOp Expr
+                    13 : Reduce Expr ::= Expr AddOp Expr
+                "-" :
+                    12 : Reduce Expr ::= Expr MulOp Expr
+                    13 : Reduce Expr ::= Expr AddOp Expr
             Expr ::= Expr AddOp Expr ·
-                13 : "+" : Reduce Expr ::= Expr AddOp Expr
-                13 : "-" : Reduce Expr ::= Expr AddOp Expr
+                "+" : 13 : Reduce Expr ::= Expr AddOp Expr
+                "-" : 13 : Reduce Expr ::= Expr AddOp Expr
 ```
 
 Of note:
