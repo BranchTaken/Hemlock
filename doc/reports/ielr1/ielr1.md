@@ -454,7 +454,7 @@ inadequacies. Following are lightly edited excerpts from [LALR(1)](G2_lalr1.txt)
 |     Wn : 16₀                            |   |     Wn : 16₀                          |
 | Conflict contributions                  |   | Conflict contributions                |
 |     Yn ::= Tt · Wn                      |   |     Zn ::= Tt · Ut                    |
-|         15 : Dt : Reduce Vn ::= epsilon |   |         15 : Dt : Reduce Zn ::= Tt Ut |
+|         Dt : 15 : Reduce Vn ::= epsilon |   |         Dt : 15 : Reduce Zn ::= Tt Ut |
 |_________________________________________|   |_______________________________________|
                     |                                             |
                     |                                             |
@@ -472,7 +472,7 @@ inadequacies. Following are lightly edited excerpts from [LALR(1)](G2_lalr1.txt)
 |     Vn : 22₀                            |   |     Vn : 22₀                          |
 | Conflict contributions                  |   | Conflict contributions                |
 |     [Wn ::= Ut · Vn, {Dt}]              |   |     [Zn ::= Tt Ut ·, {Dt}]            |
-|         15 : Dt : Reduce Vn ::= epsilon |   |         15 : Dt : Reduce Zn ::= Tt Ut |
+|         Dt : 15 : Reduce Vn ::= epsilon |   |         Dt : 15 : Reduce Zn ::= Tt Ut |
 |_________________________________________|   |_______________________________________|
 ```
 

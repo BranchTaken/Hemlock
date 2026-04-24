@@ -106,7 +106,7 @@ IELR(1) States
             D : 11
         Conflict contributions
             A ::= Ta · C D E
-                14 : Ta : Reduce E ::= epsilon
+                Ta : 14 : Reduce E ::= epsilon
     State 5 [5.0]
         Kernel
             [S ::= Ta A · B Ta, {"⊥"}]
@@ -163,7 +163,7 @@ IELR(1) States
             D : 16
         Conflict contributions
             A ::= Ta C · D E
-                14 : Ta : Reduce E ::= epsilon
+                Ta : 14 : Reduce E ::= epsilon
     State 11 [10.0]
         Kernel
             [C ::= D ·, {Ta}]
@@ -207,7 +207,7 @@ IELR(1) States
             E : 21
         Conflict contributions
             A ::= Ta C D · E
-                14 : Ta : Reduce E ::= epsilon
+                Ta : 14 : Reduce E ::= epsilon
     State 17 [15.0]
         Kernel
             [S ::= Ta A B Ta ·, {"⊥"}]

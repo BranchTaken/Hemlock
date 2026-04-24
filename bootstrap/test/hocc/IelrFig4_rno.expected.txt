@@ -94,10 +94,10 @@ CONFLICT        Reduce B ::= Ta
             Tb : Reduce A ::= Ta
         Conflict contributions
             A ::= Ta ·
-                4 : Ta : Reduce A ::= Ta
-                4 : Tb : Reduce A ::= Ta
+                Ta : 4 : Reduce A ::= Ta
+                Tb : 4 : Reduce A ::= Ta
             B ::= Ta ·
-                4 : Ta : Reduce B ::= Ta
+                Ta : 4 : Reduce B ::= Ta
     State 5 [5.0]
         Kernel
             [Sn ::= Ta A · Ta, {"⊥"}]
@@ -119,9 +119,9 @@ CONFLICT        Reduce B ::= Ta
             Tb : Reduce B ::= Ta
         Conflict contributions
             A ::= Ta ·
-                4 : Ta : Reduce A ::= Ta
+                Ta : 4 : Reduce A ::= Ta
             B ::= Ta ·
-                4 : Tb : Reduce B ::= Ta
+                Tb : 4 : Reduce B ::= Ta
     State 8 [7.0]
         Kernel
             [Sn ::= Tb A · Ta, {"⊥"}]

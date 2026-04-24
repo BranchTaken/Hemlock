@@ -120,7 +120,7 @@ IELR(1) States
             A : 12
         Conflict contributions
             Z ::= Tz · A B
-                20 : Ta : Reduce E ::= epsilon
+                Ta : 20 : Reduce E ::= epsilon
     State 5 [5.0]
         Kernel
             [Z ::= Ty · A B, {Ta}]
@@ -132,7 +132,7 @@ IELR(1) States
             A : 13
         Conflict contributions
             Z ::= Ty · A B
-                20 : Ta : Reduce E ::= epsilon
+                Ta : 20 : Reduce E ::= epsilon
     State 6 [6.0]
         Kernel
             [S ::= Ta Z · Ta, {"⊥"}]
@@ -179,7 +179,7 @@ IELR(1) States
             D : 19
         Conflict contributions
             A ::= Ta · C D E
-                20 : Ta : Reduce E ::= epsilon
+                Ta : 20 : Reduce E ::= epsilon
     State 12 [10.0]
         Kernel
             [Z ::= Tz A · B, {Ta, Tb}]
@@ -243,7 +243,7 @@ IELR(1) States
             D : 24
         Conflict contributions
             A ::= Ta C · D E
-                20 : Ta : Reduce E ::= epsilon
+                Ta : 20 : Reduce E ::= epsilon
     State 19 [16.0]
         Kernel
             [C ::= D ·, {Ta}]
@@ -289,7 +289,7 @@ IELR(1) States
             E : 27
         Conflict contributions
             A ::= Ta C D · E
-                20 : Ta : Reduce E ::= epsilon
+                Ta : 20 : Reduce E ::= epsilon
     State 25 [20.1]
         Kernel
             [A ::= Ta C D · E, {Tb, Tc}]

@@ -78,7 +78,7 @@ IELR(1) States
             Ta : Reduce A ::= Ta prec p
         Conflict contributions
             A ::= Ta ·
-                4 : Ta : Reduce A ::= Ta
+                Ta : 4 : Reduce A ::= Ta
     State 5 [5.0]
         Kernel
             [S ::= Ta A · Ta, {"⊥"}] prec p
