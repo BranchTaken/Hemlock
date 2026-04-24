@@ -3,7 +3,7 @@ open! Basis.Rudiments
 
 (* Enqueue conflict state's ipred transits in preparation for annotation closure. *)
 let enq_ipred_lanectxs lalr_states adjs leftmost_cache conflict_state_lanectx =
-  let lanectxs_pending = Map.empty (module Transit) in
+  let lanectxs_pending = Ordmap.empty (module Transit) in
   let workq = Workq.empty (module Transit) in
   let conflict_state = LaneCtx.state conflict_state_lanectx in
   let conflict_state_index = State.index conflict_state in
@@ -13,7 +13,7 @@ let enq_ipred_lanectxs lalr_states adjs leftmost_cache conflict_state_lanectx =
       let ipred_state = Array.get ipred_state_index lalr_states in
       let ipred_lanectx, leftmost_cache =
         LaneCtx.of_ipred_state ipred_state leftmost_cache conflict_state_lanectx in
-      let lanectxs_pending = Map.insert_hlt ~k:ipred_transit ~v:ipred_lanectx lanectxs_pending in
+      let lanectxs_pending = Ordmap.insert_hlt ~k:ipred_transit ~v:ipred_lanectx lanectxs_pending in
       let workq = Workq.push_back ipred_transit workq in
       leftmost_cache, lanectxs_pending, workq
     ) (Adjs.ipreds_of_state (LaneCtx.state conflict_state_lanectx) adjs)
@@ -29,8 +29,8 @@ let rec close_lanectxs_impl lalr_states adjs leftmost_cache lanectxs_closed lane
   | true -> leftmost_cache, lanectxs_closed
   | false -> begin
       let transit, workq = Workq.pop workq in
-      let lanectx = Map.get_hlt transit lanectxs_pending in
-      let lanectxs_pending = Map.remove_hlt transit lanectxs_pending in
+      let lanectx = Ordmap.get_hlt transit lanectxs_pending in
+      let lanectxs_pending = Ordmap.remove_hlt transit lanectxs_pending in
       let state = LaneCtx.state lanectx in
       let state_index = State.index state in
       (* Enqueue ipred lane contexts if new transit attribs are inserted... *)
@@ -38,13 +38,13 @@ let rec close_lanectxs_impl lalr_states adjs leftmost_cache lanectxs_closed lane
         match LaneCtx.is_empty lanectx with
         | true -> leftmost_cache, workq, lanectxs_closed, lanectxs_pending
         | false -> begin
-            let did_merge, lanectxs_closed = match Map.get transit lanectxs_closed with
-              | None -> true, Map.insert_hlt ~k:transit ~v:lanectx lanectxs_closed
+            let did_merge, lanectxs_closed = match Ordmap.get transit lanectxs_closed with
+              | None -> true, Ordmap.insert_hlt ~k:transit ~v:lanectx lanectxs_closed
               | Some lanectx_closed -> begin
                   let did_merge, lanectx_closed = LaneCtx.merge lanectx lanectx_closed in
                   let lanectxs_closed = match did_merge with
                     | false -> lanectxs_closed
-                    | true -> Map.update_hlt ~k:transit ~v:lanectx_closed lanectxs_closed
+                    | true -> Ordmap.update_hlt ~k:transit ~v:lanectx_closed lanectxs_closed
                   in
                   did_merge, lanectxs_closed
                 end
@@ -58,12 +58,12 @@ let rec close_lanectxs_impl lalr_states adjs leftmost_cache lanectxs_closed lane
                     ~f:(fun (leftmost_cache, workq, lanectxs_closed, lanectxs_pending)
                       ipred_state_index ->
                       let ipred_transit = Transit.init ~src:ipred_state_index ~dst:state_index in
-                      let ipred_lanectx_closed_opt = Map.get ipred_transit lanectxs_closed in
+                      let ipred_lanectx_closed_opt = Ordmap.get ipred_transit lanectxs_closed in
                       let ipred_state = Array.get ipred_state_index lalr_states in
                       let ipred_lanectx, leftmost_cache =
                         LaneCtx.of_ipred_state ipred_state leftmost_cache lanectx in
                       let leftmost_cache, lanectxs_closed, lanectxs_pending, workq =
-                        match Map.get ipred_transit lanectxs_pending with
+                        match Ordmap.get ipred_transit lanectxs_pending with
                         | None -> begin
                             let ipred_lanectx =
                               filter_traced_ipred_lanectx ipred_lanectx_closed_opt ipred_lanectx in
@@ -72,7 +72,7 @@ let rec close_lanectxs_impl lalr_states adjs leftmost_cache lanectxs_closed lane
                               | true -> lanectxs_pending, workq
                               | false -> begin
                                   let lanectxs_pending =
-                                    Map.insert_hlt ~k:ipred_transit ~v:ipred_lanectx
+                                    Ordmap.insert_hlt ~k:ipred_transit ~v:ipred_lanectx
                                       lanectxs_pending in
                                   let workq = Workq.push_back ipred_transit workq in
                                   lanectxs_pending, workq
@@ -89,7 +89,7 @@ let rec close_lanectxs_impl lalr_states adjs leftmost_cache lanectxs_closed lane
                               | true -> lanectxs_pending, workq
                               | false -> begin
                                   let lanectxs_pending =
-                                    Map.update_hlt ~k:ipred_transit ~v:ipred_lanectx
+                                    Ordmap.update_hlt ~k:ipred_transit ~v:ipred_lanectx
                                       lanectxs_pending in
                                   let workq = match Workq.mem ipred_transit workq with
                                     | true -> workq
@@ -112,7 +112,7 @@ let rec close_lanectxs_impl lalr_states adjs leftmost_cache lanectxs_closed lane
     end
 
 let close_lanectxs lalr_states adjs leftmost_cache lanectxs_pending workq =
-  let lanectxs_closed = Map.empty (module Transit) in
+  let lanectxs_closed = Ordmap.empty (module Transit) in
   close_lanectxs_impl lalr_states adjs leftmost_cache lanectxs_closed lanectxs_pending workq
 
 (* {destination state, conflict state, symbol} key, used by `has_isolated_shift_attribs` and
@@ -192,7 +192,7 @@ let has_isolated_shift_attribs adjs annotations isolateds ~dst ~conflict_state_i
           let marks, has_isolated_shift = Array.fold_until ~init:(marks, false)
             ~f:(fun (marks, _has_isolated_shift) dst ->
               let marks, has_isolated_shift =
-                match Map.get (DstCsSym.init ~dst ~conflict_state_index ~symbol_index) isolateds
+                match Ordmap.get (DstCsSym.init ~dst ~conflict_state_index ~symbol_index) isolateds
                 with
                 | Some has_isolated_shift -> marks, has_isolated_shift
                 | None -> begin
@@ -214,14 +214,15 @@ let has_isolated_shift_attribs adjs annotations isolateds ~dst ~conflict_state_i
   match Contrib.mem_shift conflict with
   | false -> isolateds, false
   | true -> begin
-      match Map.get (DstCsSym.init ~dst ~conflict_state_index ~symbol_index) isolateds with
+      match Ordmap.get (DstCsSym.init ~dst ~conflict_state_index ~symbol_index) isolateds with
       | Some has_isolated_shift -> isolateds, has_isolated_shift
       | None -> begin
           let _marks, has_isolated_shift = inner adjs annotations ~dst ~conflict_state_index
               ~symbol_index isolateds (Set.singleton (module State.Index) dst)
           in
-          let isolateds = Map.insert_hlt ~k:(DstCsSym.init ~dst ~conflict_state_index ~symbol_index)
-            ~v:has_isolated_shift isolateds in
+          let isolateds =
+            Ordmap.insert_hlt ~k:(DstCsSym.init ~dst ~conflict_state_index ~symbol_index)
+              ~v:has_isolated_shift isolateds in
           isolateds, has_isolated_shift
         end
     end
@@ -253,7 +254,7 @@ let attribset_compat ~resolve symbols prods attribset =
 let filter_useless_annotations ~resolve symbols prods adjs annotations_all =
   (* Create a {destination state, conflict state, symbol}->{attrib set} map and use it to
    * distinguish useful vs useless annotations. *)
-  let dst_cs_sym_attribsets_shiftless = Ordmap.fold ~init:(Map.empty (module DstCsSym))
+  let dst_cs_sym_attribsets_shiftless = Ordmap.fold ~init:(Ordmap.empty (module DstCsSym))
     ~f:(fun dst_cs_sym_attribsets (Transit.{dst; _}, kernel_attribs) ->
       KernelAttribs.fold ~init:dst_cs_sym_attribsets
         ~f:(fun dst_cs_sym_attribsets (_kernel_lr0item, attribs) ->
@@ -262,7 +263,7 @@ let filter_useless_annotations ~resolve symbols prods adjs annotations_all =
               Attrib.{conflict_state_index; symbol_index; conflict; contrib; _} ->
               let attrib = Attrib.init ~conflict_state_index ~symbol_index ~conflict
                   ~isucc_lr1itemset:Lr1Itemset.empty ~contrib in
-              Map.amend (DstCsSym.init ~dst ~conflict_state_index ~symbol_index)
+              Ordmap.amend (DstCsSym.init ~dst ~conflict_state_index ~symbol_index)
                 ~f:(fun attribset_opt ->
                   let attribset = match attribset_opt with
                     | None -> Ordset.singleton (module Attrib) attrib
@@ -275,7 +276,7 @@ let filter_useless_annotations ~resolve symbols prods adjs annotations_all =
     ) annotations_all in
   (* Integrate any isolated shift attribs. *)
   let dst_cs_sym_attribsets, _isolateds =
-    Map.fold ~init:(dst_cs_sym_attribsets_shiftless, Map.empty (module DstCsSym))
+    Ordmap.fold ~init:(dst_cs_sym_attribsets_shiftless, Ordmap.empty (module DstCsSym))
       ~f:(fun (dst_cs_sym_attribsets, isolateds)
         (DstCsSym.{dst; conflict_state_index=cs; symbol_index=sym} as dst_cs_sym, attribset) ->
         let Attrib.{conflict_state_index; symbol_index; conflict; _} =
@@ -289,12 +290,12 @@ let filter_useless_annotations ~resolve symbols prods adjs annotations_all =
             let attrib = Attrib.init ~conflict_state_index ~symbol_index ~conflict
                 ~isucc_lr1itemset:Lr1Itemset.empty ~contrib:Contrib.shift in
             let attribset = Ordset.insert attrib attribset in
-            Map.update_hlt ~k:dst_cs_sym ~v:attribset dst_cs_sym_attribsets, isolateds
+            Ordmap.update_hlt ~k:dst_cs_sym ~v:attribset dst_cs_sym_attribsets, isolateds
           end
       ) dst_cs_sym_attribsets_shiftless in
   (* Per conflict state annotations regarding symbols for which any attribs are incompatible are
    * useful; all other annotations are useless. *)
-  let dst_cs_sym_useful = Map.fold ~init:(Set.empty (module DstCsSym))
+  let dst_cs_sym_useful = Ordmap.fold ~init:(Set.empty (module DstCsSym))
     ~f:(fun dst_cs_sym_useful (dst_cs_sym, attribset) ->
       match attribset_compat ~resolve symbols prods attribset with
       | true -> dst_cs_sym_useful
@@ -351,7 +352,7 @@ let annotations_init ~resolve io symbols prods lalr_states =
             let leftmost_cache, lanectxs_closed =
               close_lanectxs lalr_states adjs leftmost_cache lanectxs_pending workq in
             let annotations =
-              Map.fold ~init:(Ordmap.empty (module Transit))
+              Ordmap.fold ~init:(Ordmap.empty (module Transit))
                 ~f:(fun unfiltered_annotations (transit, lanectx) ->
                   let kernel_attribs = LaneCtx.kernel_attribs lanectx in
                   match KernelAttribs.is_empty kernel_attribs with
