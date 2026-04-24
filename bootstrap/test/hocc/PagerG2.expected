@@ -4,7 +4,7 @@ hocc: 0 precedences, 10 tokens, 8 non-terminals (1 start), 14 productions
 hocc: LR(1) item set compatibility: weak
 hocc: Generating LR(1) item set closures (workq/total) 0/27
 hocc: Generating 27 LR(1) states
-hocc: Tracing automaton (.+=actions[+gotos])...+.+.+.+
+hocc: Tracing automaton (.+=actions[+gotos])+...+.+.+.+
 hocc: 1 unreachable state
 hocc: Reindexing 26 LR(1) states
 hocc: 0 conflicts in 0 states

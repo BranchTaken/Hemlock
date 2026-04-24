@@ -13,14 +13,55 @@
  *   exist a reachable lane from that state to a successor that contains a corresponding reduce
  *   action. This implementation filters out states that do not meet these requirements, but no
  *   mechanism is implemented for recognizing which states to re-trace when a goto becomes
- *   reachable. The solution is to repeatedly scan all traced states until no new frontier edges are
- *   discovered.
+ *   reachable. The solution is to repeatedly scan all traced states that contain reduce actions
+ *   associated with previously untraced gotos until no new frontier edges are discovered.
  * - It's really expensive to find N-distant predecessors via graph traversal. This implementation
  *   transitions to reduce-goto tracing only when action tracing cannot make tracing progress on its
  *   own, and caches the graph traversal results to the degree possible. *)
 
 open Basis
 open! Basis.Rudiments
+
+module DepthPredLookahead = struct
+  module T = struct
+    type t = {
+      depth: uns;
+      pred_state_index: State.Index.t;
+      lookahead_index: Symbol.Index.t;
+    }
+
+    let hash_fold {depth; pred_state_index; lookahead_index} state =
+      state
+      |> Uns.hash_fold depth
+      |> State.Index.hash_fold pred_state_index
+      |> Symbol.Index.hash_fold lookahead_index
+
+    let cmp {depth=d0; pred_state_index=psi0; lookahead_index=li0}
+      {depth=d1; pred_state_index=psi1; lookahead_index=li1} =
+      let open Cmp in
+      match Uns.cmp d0 d1 with
+      | Lt -> Lt
+      | Eq -> begin
+          match State.Index.cmp psi0 psi1 with
+          | Lt -> Lt
+          | Eq -> Symbol.Index.cmp li0 li1
+          | Gt -> Gt
+        end
+      | Gt -> Gt
+
+    let pp {depth; pred_state_index; lookahead_index} formatter =
+      formatter
+      |> Fmt.fmt "{depth=" |> Uns.pp depth
+      |> Fmt.fmt "; pred_state_index=" |> State.Index.pp pred_state_index
+      |> Fmt.fmt "; lookahead_index=" |> Symbol.Index.pp lookahead_index
+      |> Fmt.fmt "}"
+  end
+  include T
+  include Identifiable.Make(T)
+
+  let init ~depth ~pred_state_index ~lookahead_index =
+    {depth; pred_state_index; lookahead_index}
+end
 
 (* Shift can lead to all actions, whereas each reduce-goto can lead to precisely the one action
  * corresponding to the lookahead symbol. This type records `Shift` if a shift ipred edge is
@@ -35,15 +76,16 @@ let reach_union _state_index reach0 reach1 =
   | _, Shift -> Shift
   | Follows actions0, Follows actions1 -> Follows (Ordset.union actions0 actions1)
 
-let rec reachable_preds_of_state_index adjs ~traced state_index d cache =
+(* Cache filtered preds for each distance; computing it is really expensive. *)
+let rec filtered_preds_of_state_index adjs ~filter state_index d cache =
   match d < (Array.length cache) with
   | true -> Array.get d cache, cache
   | false -> begin
       let reachable_preds, cache = match d with
-        | 0L -> Ordset.singleton (module State.Index) state_index, cache
+        | 0L -> Ordset.singleton (module State.Index) state_index |> Ordset.filter ~f:filter, cache
         | _ -> begin
             let reachable_preds_prev, cache =
-              reachable_preds_of_state_index adjs ~traced state_index (pred d) cache in
+              filtered_preds_of_state_index adjs ~filter state_index (pred d) cache in
             let reachable_preds =
               reachable_preds_prev
               |> Ordset.fold ~init:(Ordset.empty (module State.Index))
@@ -53,7 +95,7 @@ let rec reachable_preds_of_state_index adjs ~traced state_index d cache =
                     Ordset.insert state_index reachable_preds
                   )
                 )
-              |> Ordset.filter ~f:(fun state_index -> Ordmap.mem state_index traced)
+              |> Ordset.filter ~f:filter
             in
             reachable_preds, cache
           end
@@ -62,57 +104,72 @@ let rec reachable_preds_of_state_index adjs ~traced state_index d cache =
       reachable_preds, cache
     end
 
-(* Compute a pred->lookahead->gotos map based on backward traversal through traced states. *)
-let pred_lookahead_gotos prods states adjs ~traced state_index =
-  let pred_lookahead_gotos = Map.empty (module State.Index) in
-  (* Cache reachable_preds for each distance; computing it is really expensive. *)
+(* Compute a {depth,pred,lookahead}->gotos map based on backward traversal through traced states. *)
+let depth_pred_lookahead_gotos prods states adjs ~filter state_index =
+  let depth_pred_lookahead_gotos = Ordmap.empty (module DepthPredLookahead) in
   let reachable_preds_cache = [||] in
   let State.{actions; _} = Array.get state_index states in
-  let pred_lookahead_gotos, _reachable_preds_cache =
-    Ordmap.fold ~init:(pred_lookahead_gotos, reachable_preds_cache)
-      ~f:(fun (pred_lookahead_gotos, reachable_preds_cache) (symbol_index, action_set) ->
-        Ordset.fold ~init:(pred_lookahead_gotos, reachable_preds_cache)
-          ~f:(fun (pred_lookahead_gotos, reachable_preds_cache) action ->
+  let depth_pred_lookahead_gotos, _reachable_preds_cache =
+    Ordmap.fold ~init:(depth_pred_lookahead_gotos, reachable_preds_cache)
+      ~f:(fun (depth_pred_lookahead_gotos, reachable_preds_cache) (symbol_index, action_set) ->
+        Ordset.fold ~init:(depth_pred_lookahead_gotos, reachable_preds_cache)
+          ~f:(fun (depth_pred_lookahead_gotos, reachable_preds_cache) action ->
             let open State.Action in
             match action with
             | ShiftPrefix _isucc_state_index
-            | ShiftAccept _isucc_state_index -> pred_lookahead_gotos, reachable_preds_cache
+            | ShiftAccept _isucc_state_index -> depth_pred_lookahead_gotos, reachable_preds_cache
             | Reduce prod_index -> begin
                 let Prod.{lhs_index; rhs_indexes; _} =
                   Prods.prod_of_prod_index prod_index prods in
-                let rhs_length = Array.length rhs_indexes in
+                let depth = Array.length rhs_indexes in
                 let pred_state_indexes, reachable_preds_cache =
-                  reachable_preds_of_state_index adjs ~traced state_index rhs_length
+                  filtered_preds_of_state_index adjs ~filter state_index depth
                     reachable_preds_cache in
-                let pred_lookahead_gotos =
-                  Ordset.fold ~init:pred_lookahead_gotos
-                    ~f:(fun pred_lookahead_gotos pred_state_index ->
+                let depth_pred_lookahead_gotos =
+                  Ordset.fold ~init:depth_pred_lookahead_gotos
+                    ~f:(fun depth_pred_lookahead_gotos pred_state_index ->
                       let State.{gotos; _} = Array.get pred_state_index states in
                       match Ordmap.get lhs_index gotos with
-                      | None -> pred_lookahead_gotos
+                      | None -> depth_pred_lookahead_gotos
                       | Some goto_state_index -> begin
-                          Map.amend pred_state_index ~f:(fun lookahead_gotos_opt ->
-                            match lookahead_gotos_opt with
-                            | None -> begin
-                                Some (Map.singleton (module Symbol.Index) ~k:symbol_index
-                                  ~v:(Ordset.singleton (module State.Index) goto_state_index))
-                              end
-                            | Some lookahead_gotos ->
-                              Some (Map.amend symbol_index ~f:(fun gotos_opt ->
-                                match gotos_opt with
-                                | None ->
-                                  Some (Ordset.singleton (module State.Index) goto_state_index)
-                                | Some gotos -> Some (Ordset.insert goto_state_index gotos)
-                              ) lookahead_gotos)
-                          ) pred_lookahead_gotos
+                          let depth_pred_lookahead = DepthPredLookahead.init ~depth
+                              ~pred_state_index ~lookahead_index:symbol_index in
+                          Ordmap.amend depth_pred_lookahead ~f:(fun gotos_opt ->
+                            match gotos_opt with
+                            | None -> Some (Ordset.singleton (module State.Index) goto_state_index)
+                            | Some gotos -> Some (Ordset.insert goto_state_index gotos)
+                          ) depth_pred_lookahead_gotos
                         end
                     ) pred_state_indexes in
-                pred_lookahead_gotos, reachable_preds_cache
+                depth_pred_lookahead_gotos, reachable_preds_cache
               end
           ) action_set
       ) actions
   in
-  pred_lookahead_gotos
+  depth_pred_lookahead_gotos
+
+(* Filter unreachable entries out of `untraced_depth_pred_lookahead_gotos`. *)
+let reachable_depth_pred_lookahead_gotos adjs ~traced untraced_depth_pred_lookahead_gotos
+    state_index =
+  let filter = (fun state_index -> Ordmap.mem state_index traced) in
+  let reachable_depth_pred_lookahead_gotos = Ordmap.empty (module DepthPredLookahead) in
+  let reachable_preds_cache = [||] in
+  let reachable_depth_pred_lookahead_gotos, _reachable_preds_cache =
+    Ordmap.fold ~init:(reachable_depth_pred_lookahead_gotos, reachable_preds_cache)
+      ~f:(fun (reachable_depth_pred_lookahead_gotos, reachable_preds_cache)
+        (DepthPredLookahead.{depth; pred_state_index; _} as depth_pred_lookahead, gotos) ->
+        let reachable_preds, reachable_preds_cache =
+          filtered_preds_of_state_index adjs ~filter state_index depth reachable_preds_cache in
+        let reachable_depth_pred_lookahead_gotos =
+          match Ordset.mem pred_state_index reachable_preds with
+          | false -> reachable_depth_pred_lookahead_gotos
+          | true ->
+            Ordmap.insert_hlt ~k:depth_pred_lookahead ~v:gotos reachable_depth_pred_lookahead_gotos
+        in
+        reachable_depth_pred_lookahead_gotos, reachable_preds_cache
+      ) untraced_depth_pred_lookahead_gotos
+  in
+  reachable_depth_pred_lookahead_gotos
 
 let reached_actions states state_index reach =
   let State.{actions; _} = Array.get state_index states in
@@ -148,75 +205,140 @@ let trace_actions states ~traced ~frontier =
     ) reached_actions
   ) frontier
 
-let trace_gotos prods states adjs ~traced =
-  Ordmap.fold ~init:(Ordmap.empty (module State.Index)) ~f:(fun frontier (state_index, reach) ->
-    let reached_actions = reached_actions states state_index reach in
-    let reached_lookaheads = Ordmap.fold ~init:(Ordset.empty (module Symbol.Index))
-      ~f:(fun reached_lookaheads (symbol_index, action_set) ->
-        Ordset.fold ~init:reached_lookaheads ~f:(fun reached_lookaheads action ->
-          let open State.Action in
-          match action with
-          | ShiftPrefix _isucc_state_index
-          | ShiftAccept _isucc_state_index -> reached_lookaheads
-          | Reduce _prod_index -> Ordset.insert symbol_index reached_lookaheads
-        ) action_set
-      ) reached_actions in
-    (* Merge into frontier. *)
-    pred_lookahead_gotos prods states adjs ~traced state_index
-    |> Map.fold ~init:frontier ~f:(fun frontier (_pred_state_index, lookahead_gotos) ->
-      Map.fold ~init:frontier ~f:(fun frontier (lookahead, gotos) ->
-        match Ordset.mem lookahead reached_lookaheads with
-        | false -> frontier
-        | true -> begin
-            Ordset.fold ~init:frontier ~f:(fun frontier goto ->
-              let in_traced =
-                match Ordmap.get goto traced with
-                | None -> false
-                | Some Shift -> true
-                | Some (Follows reach) -> Ordset.mem lookahead reach
-              in
-              match in_traced with
-              | true -> frontier
-              | false -> begin
-                  Ordmap.amend goto ~f:(fun reach_opt ->
-                    match reach_opt with
-                    | None -> Some (Follows (Ordset.singleton (module Symbol.Index) lookahead))
-                    | Some Shift -> reach_opt
-                    | Some (Follows follows) -> Some (Follows (Ordset.insert lookahead follows))
-                  ) frontier
-                end
-            ) gotos
-          end
-      ) lookahead_gotos
-    )
-  ) traced
+let reached_lookaheads states state_index reach =
+  let reached_actions = reached_actions states state_index reach in
+  Ordmap.fold ~init:(Ordset.empty (module Symbol.Index))
+    ~f:(fun reached_lookaheads (symbol_index, action_set) ->
+      Ordset.fold ~init:reached_lookaheads ~f:(fun reached_lookaheads action ->
+        let open State.Action in
+        match action with
+        | ShiftPrefix _isucc_state_index
+        | ShiftAccept _isucc_state_index -> reached_lookaheads
+        | Reduce _prod_index -> Ordset.insert symbol_index reached_lookaheads
+      ) action_set
+    ) reached_actions
 
-let rec trace io prods states adjs ~traced ~frontier =
+let trace_gotos states adjs ~untraced_gotos ~traced =
+  let frontier = Ordmap.empty (module State.Index) in
+  Ordmap.fold ~init:(untraced_gotos, frontier)
+    ~f:(fun (untraced_gotos, frontier) (state_index, reach) ->
+      match Ordmap.get state_index untraced_gotos with
+      | None -> untraced_gotos, frontier
+      | Some untraced_depth_pred_lookahead_gotos -> begin
+          let reachable_depth_pred_lookahead_gotos =
+            reachable_depth_pred_lookahead_gotos adjs ~traced untraced_depth_pred_lookahead_gotos
+              state_index in
+          match Ordmap.is_empty reachable_depth_pred_lookahead_gotos with
+          | true -> untraced_gotos, frontier
+          | false -> begin
+              let reached_lookaheads = reached_lookaheads states state_index reach in
+              let untraced_gotos, frontier =
+                reachable_depth_pred_lookahead_gotos
+                |> Ordmap.fold ~init:(untraced_gotos, frontier) ~f:(fun (untraced_gotos, frontier)
+                  (DepthPredLookahead.{lookahead_index; _} as depth_pred_lookahead, reachable_gotos)
+                  ->
+                    match Ordset.mem lookahead_index reached_lookaheads with
+                    | false -> untraced_gotos, frontier
+                    | true -> begin
+                        let frontier = Ordset.fold ~init:frontier ~f:(fun frontier goto ->
+                          (* Merge into frontier if not already traced. *)
+                          let in_traced =
+                            match Ordmap.get goto traced with
+                            | None -> false
+                            | Some Shift -> true
+                            | Some (Follows reach) -> Ordset.mem lookahead_index reach
+                          in
+                          let frontier = match in_traced with
+                            | true -> frontier
+                            | false -> begin
+                                let frontier = Ordmap.amend goto ~f:(fun reach_opt ->
+                                  match reach_opt with
+                                  | None -> begin
+                                      Some (Follows (Ordset.singleton (module Symbol.Index)
+                                        lookahead_index))
+                                    end
+                                  | Some Shift -> reach_opt
+                                  | Some (Follows follows) ->
+                                    Some (Follows (Ordset.insert lookahead_index follows))
+                                ) frontier in
+                                frontier
+                              end
+                          in
+                          frontier
+                        ) reachable_gotos
+                        in
+                        (* Remove traced gotos to avoid repeated tracing. *)
+                        let untraced_gotos =
+                          Ordmap.amend state_index ~f:(fun depth_pred_lookahead_gotos_opt ->
+                            match depth_pred_lookahead_gotos_opt with
+                            | None -> None
+                            | Some depth_pred_lookahead_gotos -> begin
+                                let depth_pred_lookahead_gotos =
+                                  Ordmap.amend depth_pred_lookahead ~f:(fun gotos_opt ->
+                                    match gotos_opt with
+                                    | None -> None
+                                    | Some gotos -> begin
+                                        let gotos = Ordset.diff gotos reachable_gotos in
+                                        match Ordset.is_empty gotos with
+                                        | true -> None
+                                        | false -> Some gotos
+                                      end
+                                  ) depth_pred_lookahead_gotos in
+                                match Ordmap.is_empty depth_pred_lookahead_gotos with
+                                | true -> None
+                                | false -> Some depth_pred_lookahead_gotos
+                              end
+                          ) untraced_gotos
+                        in
+                        untraced_gotos, frontier
+                      end
+                ) in
+              untraced_gotos, frontier
+            end
+        end
+    ) traced
+
+let rec trace io prods states adjs ~untraced_gotos ~traced ~frontier =
   let traced = Ordmap.union ~vunion:reach_union frontier traced in
   let frontier = trace_actions states ~traced ~frontier in
   match Ordmap.is_empty frontier with
   | false -> begin
       let io = io.log |> Fmt.fmt "." |> Io.with_log io in
-      trace io prods states adjs ~traced ~frontier
+      trace io prods states adjs ~untraced_gotos ~traced ~frontier
     end
   | true -> begin
       let io = io.log |> Fmt.fmt "+" |> Io.with_log io in
-      let frontier = trace_gotos prods states adjs ~traced in
+      let untraced_gotos, frontier = trace_gotos states adjs ~untraced_gotos ~traced in
       match Ordmap.is_empty frontier with
       | true -> io, traced
-      | false -> trace io prods states adjs ~traced ~frontier
+      | false -> trace io prods states adjs ~untraced_gotos ~traced ~frontier
     end
 
 (* Trace the automaton in `t` from its roots (start states) and return the set of reachable states
  * and their corresponding reachable actions. *)
 let reachable io prods states adjs =
+  (* Compute a state->{depth,pred,lookahead}->gotos map that contains entries for all reduce
+   * actions, such that it is possible to look up the set of untraced reduce-gotos for a reduce
+   * action. Map entries are removed during goto tracing when they are reached via a reduce-goto
+   * trace. *)
+  let io = io.log |> Fmt.fmt "+" |> Io.with_log io in (* Tracing all untraced gotos. *)
+  let untraced_gotos = Array.fold ~init:(Ordmap.empty (module State.Index))
+    ~f:(fun untraced_gotos state ->
+      let state_index = State.index state in
+      let depth_pred_lookahead_gotos =
+        depth_pred_lookahead_gotos prods states adjs ~filter:(fun _ -> true) state_index in
+      match Ordmap.is_empty depth_pred_lookahead_gotos with
+      | true -> untraced_gotos
+      | false -> Ordmap.insert_hlt ~k:state_index ~v:depth_pred_lookahead_gotos untraced_gotos
+    ) states in
+  let traced = Ordmap.empty (module State.Index) in
   (* Gather the start states as roots. *)
   let frontier = Array.fold ~init:(Ordmap.empty (module State.Index)) ~f:(fun frontier state ->
     match State.is_start state with
     | false -> frontier
     | true -> Ordmap.insert_hlt ~k:(State.index state) ~v:Shift frontier
   ) states in
-  trace io prods states adjs ~traced:(Ordmap.empty (module State.Index)) ~frontier
+  trace io prods states adjs ~untraced_gotos ~traced ~frontier
 
 let gc_states io prods isocores states =
   let io = io.log |> Fmt.fmt "hocc: Tracing automaton (.+=actions[+gotos])" |> Io.with_log io in
