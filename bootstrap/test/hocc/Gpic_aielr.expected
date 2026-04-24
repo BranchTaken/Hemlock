@@ -10,7 +10,7 @@ hocc: Gathering IELR(1) conflict state attributions (/=none/some)
 hocc: LR(1) item set compatibility: ielr
 hocc: Generating LR(1) item set closures (workq/total) 0/450
 hocc: Generating 450 LR(1) states
-hocc: Tracing automaton (.+=actions[+gotos]).+....+....+..+.+.+.+++
+hocc: Tracing automaton (.+=actions[+gotos])+.+....+....+..+.+.+.+++
 hocc: 3 unreachable states
 hocc: Reindexing 447 LR(1) states
 hocc: 239 unresolvable conflicts in 239 states (239 ⊥, 0 shift-reduce, 0 reduce-reduce)

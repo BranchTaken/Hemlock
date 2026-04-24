@@ -6,7 +6,7 @@ hocc: Generating LR(1) item set closures (workq/total) 0/5
 hocc: Generating 5 LR(1) states
 hocc: Searching for remergeable state subgraphs (mergeable/max[worklst]) 0/0[0]
 hocc: 0 remergeable states
-hocc: Tracing automaton (.+=actions[+gotos]).+.+
+hocc: Tracing automaton (.+=actions[+gotos])+.+.+
 hocc: 0 unreachable states
 hocc: 1 unresolvable conflict in 1 state (1 ⊥, 0 shift-reduce, 0 reduce-reduce)
 hocc: Searching for unused precedences/tokens/non-terminals/productions
