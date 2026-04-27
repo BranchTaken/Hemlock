@@ -4,7 +4,7 @@ hocc: 6 precedences, 13 tokens, 5 non-terminals (1 start), 15 productions
 hocc: LR(1) item set compatibility: lalr
 hocc: Generating LR(1) item set closures (workq/total) 0/45
 hocc: Generating 45 LR(1) states
-hocc: Tracing automaton (.+=actions[+gotos])+.+..+.+.+..+.++
+hocc: Tracing automaton (.+=actions[+gotos])+.+..+.+.+..+.+.++
 hocc: 0 unreachable states
 hocc: 18 conflicts in 6 states (0 ⊥, 18 shift-reduce, 0 reduce-reduce) (conflict resolution disabled)
 hocc: Searching for unused precedences/tokens/non-terminals/productions
