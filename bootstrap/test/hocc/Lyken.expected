@@ -4,15 +4,16 @@ hocc: 88 precedences, 101 tokens, 129 non-terminals (1 start), 692 productions
 hocc: LR(1) item set compatibility: weak
 hocc: Generating LR(1) item set closures (workq/total) 201/1_000 0/1_375
 hocc: Generating 1_375 LR(1) states
-hocc: Tracing automaton (.+=actions[+gotos])+........+.....+.....+.....+...+....+..+.+.+.++
-hocc: 26 unreachable states
-hocc: Reindexing 1_349 LR(1) states
+hocc: Tracing automaton (.+=actions[+gotos])+........+.....+.....+.....+...+....+..+.+.+.+.++
+hocc: 35 unreachable states
+hocc: Reindexing 1_340 LR(1) states
 hocc: 0 unresolvable conflicts in 0 states
 hocc: Searching for unused precedences/tokens/non-terminals/productions
 hocc: 2 unused tokens:
 hocc:    token COMMENT
 hocc:    token WHITESPACE
-hocc: 16 unused productions:
+hocc: 19 unused productions:
+hocc:    Lval ::= TypeName "." LvalSuffix prec pLval1
 hocc:    LvalListBody ::= Annotations Var "," Lval prec pLvalListBody
 hocc:    LvalListBody ::= Lval "," Annotations Var prec pLvalListBody
 hocc:    LvalListBody ::= Annotations Var "," Var prec pLvalListBody
@@ -29,3 +30,5 @@ hocc:    ExprSuffix ::= LvalSuffix "." ID prec pExprSuffix
 hocc:    ExprSuffix ::= LvalSuffix "." ID ExprSlice
 hocc:    ExprSuffix ::= ExprSuffix "." ID prec pExprSuffix
 hocc:    ExprSuffix ::= ExprSuffix "." ID ExprSlice
+hocc:    Expr ::= Expr "." LvalSuffix prec pExpr2
+hocc:    Expr ::= Lval "." LvalSuffix prec pExpr2
