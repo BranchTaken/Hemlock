@@ -576,14 +576,14 @@ clock times for the `Gpic` grammar are representative. Both `hocc` and `bison` a
 emit no reports nor generated code (`hocc` has remerging and unreachable state garbage collection
 disabled), and the reported numbers are the best of three runs on an AMD EPYC 7742 CPU running
 Ubuntu Linux 24.04, using OCaml 5.4.0 with flambda enabled for `hocc`
-main-0-g7c301cdc5d719962c833d5f7df9af052d5406fa7 versus the vendor-supplied `bison` 3.8.2.
+main-0-g1cade600f4cfa931a9b481739a9a641ff3583637 versus the vendor-supplied `bison` 3.8.2.
 
 | Algorithm | hocc  | bison   |
 |:----------|------:|--------:|
-| LALR(1)   | 0.989 |   0.017 |
-| PGM(1)    | 1.066 | &mdash; |
-| IELR(1)   | 7.416 |   0.029 |
-| LR(1)     | 4.098 |   1.527 |
+| LALR(1)   | 0.964 |   0.017 |
+| PGM(1)    | 1.052 | &mdash; |
+| IELR(1)   | 5.576 |   0.029 |
+| LR(1)     | 3.843 |   1.527 |
 
 `bison` is a [C](https://en.wikipedia.org/wiki/C_(programming_language)) application that relies on
 flat and linearly allocated mutable global data structures, whereas `hocc` is an
@@ -603,14 +603,14 @@ optimization is left as an exercise for the aspirational Hemlock-native `hocc` i
 A basic IELR(1) implementation can get away without two of the refinements described in this report,
 namely useless annotation filtering and leftmost transitive closure memoization. That said,
 anecdotal evidence based on processing the `Lyken` grammar (an abandoned research language) suggests
-that these refinements can matter for antagonistic inputs. The `Lyken` grammar was developed using
+that these refinements matter a lot for antagonistic inputs. The `Lyken` grammar was developed using
 an [implementation of the PGM(1) algorithm](https://github.com/MagicStack/parsing), and it relied
 heavily on per conflict precedence relationships. The IELR(1) annotations are copious, and the lanes
-are heavily intertwined. Absent either refinement, IELR(1) processing requires nearly 47 GiB of RAM
-and approximately 34 hours of wall time. Useless annotation filtering reduces this to 7 GiB and 28
-hours. Leftmost transitive closure memoization causes a minor memory usage increase, and further
-reduces wall time to less than half an hour. Performance impacts for less tortuous grammars range
-from neutral to modest speedup, e.g. ~1.25X for `Gpic`.
+are heavily intertwined. Absent either refinement, IELR(1) processing requires 44 GiB of RAM and
+approximately 29 hours of wall time. Useless annotation filtering reduces this to 6 GiB of RAM.
+Leftmost transitive closure memoization causes a minor memory usage increase, and further reduces
+wall time to less than 20 minutes. Performance impacts for less tortuous grammars range from neutral
+to substantial speedup, e.g. ~2.7X for `Gpic`.
 
 ## Conclusion
 
