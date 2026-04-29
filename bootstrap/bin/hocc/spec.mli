@@ -27,7 +27,7 @@ val synthetic_name_of_start_name: string -> string
 (** [synthetic_name_of_start_name start_name] returns a synthetic symbol name based on [start_name],
     e.g. "Start" -> "Start'". *)
 
-val init: Conf.algorithm -> resolve:bool -> gc:bool -> remerge:Conf.remerge -> Io.t
+val init: Conf.algorithm -> resolve:bool -> gc:Conf.gc -> remerge:Conf.remerge -> Io.t
   -> Parse.nonterm_hmh -> Io.t * t
 (** [init algorithm ~resolve ~gc ~remerge io hmh] creates a specification using the specified
     [algorithm] on [hmh], with conflicts optionally resolved, unreachable states optionally

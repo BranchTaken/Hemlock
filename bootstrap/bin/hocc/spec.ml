@@ -1292,6 +1292,11 @@ and init algorithm ~resolve ~gc ~remerge io hmh =
   in
   let io, precs, symbols, prods, callbacks = hmh_extract io hmh in
   let io, isocores, states = init_inner algorithm ~resolve io precs symbols prods callbacks in
+  let io, isocores, states = match gc with
+    | Conf.PreRemerge -> Trace.gc_states io prods isocores states
+    | PostRemerge
+    | No -> io, isocores, states
+  in
   let io, isocores, states = match remerge with
     | Conf.Default true
     | Explicit true -> begin
@@ -1319,8 +1324,9 @@ and init algorithm ~resolve ~gc ~remerge io hmh =
     | Explicit false -> io, isocores, states
   in
   let io, _isocores, states = match gc with
-    | true -> Trace.gc_states io prods isocores states
-    | false -> io, isocores, states
+    | PostRemerge -> Trace.gc_states io prods isocores states
+    | PreRemerge
+    | No -> io, isocores, states
   in
   let io = log_conflicts io ~resolve states in
   let io = log_unused io precs symbols prods states in

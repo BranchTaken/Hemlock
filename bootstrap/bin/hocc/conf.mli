@@ -9,6 +9,11 @@ type algorithm =
   | Pgm (** PGM LR(1) algorithm. *)
   | Lalr (** LALR(1) algorithm. *)
 
+type gc =
+  | PreRemerge (** Perform unreachable state garbage collection before potentially remerging. *)
+  | PostRemerge (** Perform unreachable state garbage collection after potentially remerging. *)
+  | No (** Do not perform unreachable state garbage collection. *)
+
 type remerge =
   | Default of bool (** Default; no remerge parameter specified. *)
   | Explicit of bool (** Explicit remerge parameter specified. *)
@@ -39,8 +44,8 @@ val algorithm: t -> algorithm
 val resolve: t -> bool
 (** [resolve t] returns true if conflict resolution is enabled. *)
 
-val gc: t -> bool
-(** [gc t] returns true if unreachable state garbage collection is enabled. *)
+val gc: t -> gc
+(** [gc t] returns whether/when to perform unreachable state garbage collection. *)
 
 val remerge: t -> remerge
 (** [remerge t] returns a [Default]/[Explicit] remerging parameter, true if remerging of equivalent

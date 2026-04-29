@@ -4,11 +4,11 @@ hocc: 5 precedences, 42 tokens, 48 non-terminals (2 starts), 158 productions
 hocc: LR(1) item set compatibility: lr
 hocc: Generating LR(1) item set closures (workq/total) 0/860
 hocc: Generating 860 LR(1) states
+hocc: Tracing automaton (.+=actions[+gotos])+.+.....+...+....+..+..+....+..+..+..+.+...+.++.+.+.++
+hocc: 1 unreachable state
+hocc: Reindexing 859 LR(1) states
 hocc: Searching for remergeable state subgraphs (mergeable/max[worklst]) 0/601[785] 601/601[0]
 hocc: Remerging 601 LR(1) states
-hocc: Reindexing 259 LR(1) states
-hocc: Tracing automaton (.+=actions[+gotos])+.+.....+...+....+..+..+.+..+..+.+.+.+.+.++
-hocc: 1 unreachable state
 hocc: Reindexing 258 LR(1) states
 hocc: 0 unresolvable conflicts in 0 states
 hocc: Searching for unused precedences/tokens/non-terminals/productions

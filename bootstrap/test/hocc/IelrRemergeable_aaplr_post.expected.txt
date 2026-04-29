@@ -1,4 +1,4 @@
-IelrRemergeable_aaplr grammar
+IelrRemergeable_aaplr_gpost grammar
 
 Precedences
     left p0
@@ -580,13 +580,13 @@ APLR(1) States
             "," : ShiftPrefix 18 prec p4
     State 36 [36.0]
         Kernel
-            [E ::= E "<" · E, {")", "+", "-", "max", "<", ">", ",", EOI}] prec p3
+            [E ::= E "<" · E, {")", "+", "-", "max", "min", "<", ">", ",", EOI}] prec p3
         Added
-            [E ::= · "var", {")", "+", "-", "max", "<", ">", ",", EOI}]
-            [E ::= · E "+" E, {")", "+", "-", "max", "<", ">", ",", EOI}] prec p0
-            [E ::= · "(" E ")", {")", "+", "-", "max", "<", ">", ",", EOI}]
-            [E ::= · E "<" E, {")", "+", "-", "max", "<", ">", ",", EOI}] prec p3
-            [E ::= · E ">" E, {")", "+", "-", "max", "<", ">", ",", EOI}] prec p3
+            [E ::= · "var", {")", "+", "-", "max", "min", "<", ">", ",", EOI}]
+            [E ::= · E "+" E, {")", "+", "-", "max", "min", "<", ">", ",", EOI}] prec p0
+            [E ::= · "(" E ")", {")", "+", "-", "max", "min", "<", ">", ",", EOI}]
+            [E ::= · E "<" E, {")", "+", "-", "max", "min", "<", ">", ",", EOI}] prec p3
+            [E ::= · E ">" E, {")", "+", "-", "max", "min", "<", ">", ",", EOI}] prec p3
         Actions
             "var" : ShiftPrefix 1 prec p5
             "(" : ShiftPrefix 26 prec p5
@@ -664,15 +664,16 @@ APLR(1) States
             EOI : Reduce Pos ::= "(" Pos "," Pos ")"
     State 41 [41.0]
         Kernel
-            [E ::= E · "+" E, {")", "+", "-", "max", "<", ">", ",", EOI}] prec p0
-            [E ::= E · "<" E, {")", "+", "-", "max", "<", ">", ",", EOI}] prec p3
-            [E ::= E "<" E ·, {")", "+", "-", "max", "<", ">", ",", EOI}] prec p3
-            [E ::= E · ">" E, {")", "+", "-", "max", "<", ">", ",", EOI}] prec p3
+            [E ::= E · "+" E, {")", "+", "-", "max", "min", "<", ">", ",", EOI}] prec p0
+            [E ::= E · "<" E, {")", "+", "-", "max", "min", "<", ">", ",", EOI}] prec p3
+            [E ::= E "<" E ·, {")", "+", "-", "max", "min", "<", ">", ",", EOI}] prec p3
+            [E ::= E · ">" E, {")", "+", "-", "max", "min", "<", ">", ",", EOI}] prec p3
         Actions
             ")" : Reduce E ::= E "<" E prec p3
             "+" : ShiftPrefix 14 prec p0
             "-" : Reduce E ::= E "<" E prec p3
             "max" : Reduce E ::= E "<" E prec p3
+            "min" : Reduce E ::= E "<" E prec p3
             "<" : Reduce E ::= E "<" E prec p3
             ">" : Reduce E ::= E "<" E prec p3
             "," : Reduce E ::= E "<" E prec p3
