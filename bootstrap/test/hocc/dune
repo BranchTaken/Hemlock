@@ -466,6 +466,21 @@
  (deps
   (glob_files IelrRemergeable.hmh*)
   %{bin:hocc})
+ (targets IelrRemergeable_aaplr_gpost.out.txt)
+ (action
+  (with-accepted-exit-codes 0
+   (with-outputs-to IelrRemergeable_aaplr_gpost.out (run ./hocc_test %{bin:hocc} IelrRemergeable -algorithm aplr -gc post -v -txt)))))
+(rule
+ (alias runtest)
+ (action
+  (progn
+   (diff IelrRemergeable_aaplr_post.expected IelrRemergeable_aaplr_gpost.out)
+   (diff IelrRemergeable_aaplr_post.expected.txt IelrRemergeable_aaplr_gpost.out.txt))))
+
+(rule
+ (deps
+  (glob_files IelrRemergeable.hmh*)
+  %{bin:hocc})
  (targets IelrRemergeable_aielr_gno.out.txt)
  (action
   (with-accepted-exit-codes 0

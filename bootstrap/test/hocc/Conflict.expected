@@ -4,10 +4,10 @@ hocc: 0 precedences, 3 tokens, 2 non-terminals (1 start), 3 productions
 hocc: LR(1) item set compatibility: lr
 hocc: Generating LR(1) item set closures (workq/total) 0/4
 hocc: Generating 4 LR(1) states
-hocc: State subgraph remerging disabled due to unresolvable conflicts
-hocc: Explicitly enable remerging (-remerge yes) to override
 hocc: Tracing automaton (.+=actions[+gotos])+.+.+
 hocc: 0 unreachable states
+hocc: State subgraph remerging disabled due to unresolvable conflicts
+hocc: Explicitly enable remerging (-remerge yes) to override
 hocc: 1 unresolvable conflict in 1 state (0 ⊥, 0 shift-reduce, 1 reduce-reduce)
 hocc: Searching for unused precedences/tokens/non-terminals/productions
 hocc: Hemlock code not generated due to conflict

@@ -49,7 +49,7 @@ case "$1" in
         shift 2
         ;;
     *)
-        gc="yes"
+        gc="pre"
 esac
 
 if [ "x${mangled_src}" != "x${src}" ] ; then

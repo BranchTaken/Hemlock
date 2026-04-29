@@ -17,9 +17,21 @@ let pp_algorithm algorithm formatter =
     | Lalr -> "Lalr"
   )
 
+type gc =
+  | PreRemerge
+  | PostRemerge
+  | No
+
+let pp_gc gc formatter =
+  formatter |> Fmt.fmt (match gc with
+    | PreRemerge -> "PreRemerge"
+    | PostRemerge -> "PostRemerge"
+    | No -> "No"
+  )
+
 type remerge =
-  | Default of bool (** Default; no remerge parameter specified. *)
-  | Explicit of bool (** Explicit remerge parameter specified. *)
+  | Default of bool
+  | Explicit of bool
 
 type t = {
   verbose: bool;
@@ -28,7 +40,7 @@ type t = {
   algorithm: algorithm;
   resolve_opt: bool option;
   remerge_opt: bool option;
-  gc: bool;
+  gc: gc;
   hemlock: bool;
   ocaml: bool;
   srcdir_opt: Path.t option;
@@ -45,7 +57,7 @@ let pp {verbose; text; hocc; algorithm; resolve_opt; remerge_opt; gc; hemlock; o
   |> Fmt.fmt "; algorithm=" |> pp_algorithm algorithm
   |> Fmt.fmt "; resolve_opt=" |> Option.pp Bool.pp resolve_opt
   |> Fmt.fmt "; remerge_opt=" |> Option.pp Bool.pp remerge_opt
-  |> Fmt.fmt "; gc=" |> Bool.pp gc
+  |> Fmt.fmt "; gc=" |> pp_gc gc
   |> Fmt.fmt "; hemlock=" |> Bool.pp hemlock
   |> Fmt.fmt "; ocaml=" |> Bool.pp ocaml
   |> Fmt.fmt "; srcdir_opt=" |> (Option.pp Path.pp) srcdir_opt
@@ -60,7 +72,7 @@ let default = {
   algorithm=Aplr;
   resolve_opt=None;
   remerge_opt=None;
-  gc=true;
+  gc=PreRemerge;
   hemlock=false;
   ocaml=false;
   srcdir_opt=None;
@@ -112,8 +124,9 @@ Parameters:
                         for aplr/ielr/lr algorithms, no for pgm/lalr algorithms.
 -[re]m[erge] (yes|no) : Control compatible state subgraph remerging enablement.
                         Defaults to yes for aplr algorithm, no otherwise.
-  -g[c] (yes|no)      : Control unreachable state garbage collection enablement.
-                        Defaults to yes.
+  -g[c] (pre|post|no) : Control unreachable state garbage collection enablement
+                        and ordering relative to remerging. Defaults to
+                        pre-remerging.
        -hm | -hemlock : Generate a Hemlock-based parser implementation and write
                         it to "<dstdir>/<module>.hm[i]".
          -ml | -ocaml : Generate an OCaml-based parser implementation and write
@@ -236,8 +249,9 @@ let of_argv argv =
           end
         | "-g" | "-gc" -> begin
             let gc = match Bytes.to_string_replace (arg_arg argv i) with
-              | "yes" -> true
-              | "no" -> false
+              | "pre" -> PreRemerge
+              | "post" -> PostRemerge
+              | "no" -> No
               | s -> begin
                   File.Fmt.stderr |> Fmt.fmt "hocc: Invalid gc parameter: "
                   |> Fmt.fmt s |> Fmt.fmt "\n" |> ignore;
