@@ -16,6 +16,15 @@ hocc: Searching for remergeable state subgraphs (mergeable/max[worklst]) 0/13[25
 hocc: Remerging 13 LR(1) states
 hocc: Reindexing 45 LR(1) states
 hocc: 0 unresolvable conflicts in 0 states
-hocc: Searching for unused precedences/tokens/non-terminals/productions
+hocc: Searching for unused precedences/associativities/tokens/non-terminals/productions
+hocc: 4 unused precedence set associativities:
+hocc:    left p1 < p0
+hocc:    left p2 < p1
+hocc:    left p4 < p3
+hocc:    left p5 < p4
+hocc: 3 unused token precedences:
+hocc:    token MAX "max" prec p1
+hocc:    token VAR "var" prec p5
+hocc:    token LPAREN "(" prec p5
 hocc: Generating text report
 hocc: Writing "./hocc/IelrRemergeable_aielr_myes.txt"

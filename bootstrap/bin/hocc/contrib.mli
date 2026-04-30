@@ -49,6 +49,6 @@ val inter: t -> t -> t
 val diff: t -> t -> t
 (** [diff t0 t1] returns the contributions in [t0] that are not in [t1]. *)
 
-val resolve: Symbols.t -> Prods.t -> Symbol.Index.t -> t -> t
-(** [resolve symbols prods symbol_index t] returns the resolution of [t] assuming conflict on
+val resolve: Precs.t -> Symbols.t -> Prods.t -> Symbol.Index.t -> t -> t
+(** [resolve precs symbols prods symbol_index t] returns the resolution of [t] assuming conflict on
     [symbol_index]. *)

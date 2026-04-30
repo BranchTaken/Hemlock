@@ -36,11 +36,11 @@ type t
 
 include FormattableIntf.SMono with type t := t
 
-val fmt_hr: Symbols.t -> Prods.t -> ?alt:bool -> ?width:uns -> t -> (module Fmt.Formatter)
-  -> (module Fmt.Formatter)
-(** [fmt_hr symbols prods ~alt ~width t formatter] formats a human-readable representation of [t].
-    If [~alt=true], the output is broken across multiple lines with outermost indentation [~width]
-    (elements are indented to [~width + 4]). *)
+val fmt_hr: Precs.t -> Symbols.t -> Prods.t -> ?alt:bool -> ?width:uns -> t
+  -> (module Fmt.Formatter) -> (module Fmt.Formatter)
+(** [fmt_hr precs symbols prods ~alt ~width t formatter] formats a human-readable representation of
+    [t]. If [~alt=true], the output is broken across multiple lines with outermost indentation
+    [~width] (elements are indented to [~width + 4]). *)
 
 val isucc: t -> State.t
 (** [isucc t] returns the state [t] immediately leads to. *)
@@ -58,10 +58,10 @@ val traces_length: t -> uns
 (** [traces_length t] returns the number of lane traces in [t]. If [t] contains no traces, its
     predecessors will contain no traces nor conflict attributions. *)
 
-val of_conflict_state: resolve:bool -> Symbols.t -> Prods.t -> Lr1ItemsetClosure.LeftmostCache.t
-  -> State.t -> t * Lr1ItemsetClosure.LeftmostCache.t
-(** [of_conflict_state ~resolve symbols prods leftmost_cache conflict_state] creates a lane context
-    for [conflict_state]. *)
+val of_conflict_state: resolve:bool -> Precs.t -> Symbols.t -> Prods.t
+  -> Lr1ItemsetClosure.LeftmostCache.t -> State.t -> t * Lr1ItemsetClosure.LeftmostCache.t
+(** [of_conflict_state ~resolve precs symbols prods leftmost_cache conflict_state] creates a lane
+    context for [conflict_state]. *)
 
 val of_ipred_state: State.t -> Lr1ItemsetClosure.LeftmostCache.t -> t
   -> t * Lr1ItemsetClosure.LeftmostCache.t

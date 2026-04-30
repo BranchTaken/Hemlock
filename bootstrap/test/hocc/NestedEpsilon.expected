@@ -9,6 +9,6 @@ hocc: 0 unreachable states
 hocc: State subgraph remerging disabled due to unresolvable conflicts
 hocc: Explicitly enable remerging (-remerge yes) to override
 hocc: 1 unresolvable conflict in 1 state (0 ⊥, 0 shift-reduce, 1 reduce-reduce)
-hocc: Searching for unused precedences/tokens/non-terminals/productions
+hocc: Searching for unused precedences/associativities/tokens/non-terminals/productions
 hocc: Generating text report
 hocc: Writing "./hocc/NestedEpsilon.txt"

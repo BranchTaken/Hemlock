@@ -10,4 +10,58 @@ hocc: Reindexing 2_359 LR(1) states
 hocc: State subgraph remerging disabled due to unresolvable conflicts
 hocc: Explicitly enable remerging (-remerge yes) to override
 hocc: 308 unresolvable conflicts in 210 states (43 ⊥, 265 shift-reduce, 0 reduce-reduce)
-hocc: Searching for unused precedences/tokens/non-terminals/productions
+hocc: Searching for unused precedences/associativities/tokens/non-terminals/productions
+hocc: 11 unused precedence set associativities:
+hocc:    left pParen
+hocc:    left pDollar < pParen
+hocc:    left pXcrement < pDollar
+hocc:    right pUnary < pCarat
+hocc:    left pY < pAdd
+hocc:    left pConcat < pY
+hocc:    nonassoc pComma < pMatch
+hocc:    left pCall < pComma
+hocc:    nonassoc pIn < pCall
+hocc:    left pGetline < pIn
+hocc:    right pAssign < pIfElse
+hocc: 6 unused token precedences:
+hocc:    token RPAREN ")" prec pParen
+hocc:    token APPEND_OP prec pRel
+hocc:    token COMMA "," prec pComma
+hocc:    token LEX_GETLINE prec pGetline
+hocc:    token COLON ":" prec pIfElse
+hocc:    token ASSIGNOP prec pAssign
+hocc: 34 unused production precedences:
+hocc:    Func_name ::= FUNC_CALL prec pCall
+hocc:    Lex_builtin ::= LEX_BUILTIN prec pCall
+hocc:    Lex_builtin ::= LEX_LENGTH prec pCall
+hocc:    Function_prologue ::= LEX_FUNCTION Midrule3 Func_name "(" Opt_param_list R_paren Opt_nls prec pParen
+hocc:    Pattern ::= Exp "," Exp prec pComma
+hocc:    Regexp ::= "/" Midrule4 REGEXP "/" prec pMul
+hocc:    Statement ::= LEX_WHILE "(" Exp R_paren Opt_nls Statement prec pParen
+hocc:    Statement ::= LEX_DO Opt_nls Statement LEX_WHILE "(" Exp R_paren Opt_nls prec pParen
+hocc:    Statement ::= LEX_FOR "(" Opt_exp Semi Opt_nls Exp Semi Opt_nls Opt_exp R_paren Opt_nls Statement prec pParen
+hocc:    Statement ::= LEX_FOR "(" Opt_exp Semi Opt_nls Semi Opt_nls Opt_exp R_paren Opt_nls Statement prec pParen
+hocc:    Statement ::= Print "(" Expression_list R_paren Output_redir Statement_term prec pParen
+hocc:    If_statement ::= LEX_IF "(" Exp R_paren Opt_nls Statement prec pComma
+hocc:    Output_redir ::= ">" Exp prec pRel
+hocc:    Output_redir ::= APPEND_OP Exp prec pRel
+hocc:    Output_redir ::= "|" Exp prec pRel
+hocc:    Output_redir ::= TWOWAYIO Exp prec pRel
+hocc:    Exp ::= Exp "|" LEX_GETLINE Opt_variable prec pGetline
+hocc:    Exp ::= Exp TWOWAYIO LEX_GETLINE Opt_variable prec pGetline
+hocc:    Exp ::= LEX_GETLINE Opt_variable Input_redir prec pGetline
+hocc:    Exp ::= "!" Regexp prec pUnary
+hocc:    Rexp ::= LEX_GETLINE Opt_variable Input_redir prec pGetline
+hocc:    Rexp ::= "!" Regexp prec pUnary
+hocc:    Simp_exp ::= Variable INCREMENT prec pXcrement
+hocc:    Simp_exp ::= Variable DECREMENT prec pXcrement
+hocc:    Non_post_simp_exp ::= "(" Exp R_paren prec pParen
+hocc:    Non_post_simp_exp ::= LEX_BUILTIN "(" Opt_expression_list R_paren prec pParen
+hocc:    Non_post_simp_exp ::= LEX_LENGTH "(" Opt_expression_list R_paren prec pParen
+hocc:    Non_post_simp_exp ::= FUNC_CALL "(" Opt_expression_list R_paren prec pParen
+hocc:    Non_post_simp_exp ::= INCREMENT Variable prec pXcrement
+hocc:    Non_post_simp_exp ::= DECREMENT Variable prec pXcrement
+hocc:    Non_post_simp_exp ::= YNUMBER prec pY
+hocc:    Non_post_simp_exp ::= YSTRING prec pY
+hocc:    Variable ::= "$" Non_post_simp_exp prec pDollar
+hocc:    Comma ::= "," Opt_nls prec pComma

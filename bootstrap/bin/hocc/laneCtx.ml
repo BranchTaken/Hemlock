@@ -77,14 +77,14 @@ module TraceVal = struct
       formatter
       |> Ordmap.pp Lr1Itemset.pp t
 
-    let fmt_hr symbols ?(alt=false) ?(width=0L) t formatter =
+    let fmt_hr precs symbols ?(alt=false) ?(width=0L) t formatter =
       formatter
       |> List.fmt ~alt ~width (fun (lr1item, lr1itemset) formatter ->
         formatter
         |> Fmt.fmt "(src="
-        |> Lr1Item.pp_hr symbols lr1item
+        |> Lr1Item.pp_hr precs symbols lr1item
         |> Fmt.fmt ", dsts="
-        |> Lr1Itemset.fmt_hr ~alt ~width:(width + 4L) symbols lr1itemset
+        |> Lr1Itemset.fmt_hr ~alt ~width:(width + 4L) precs symbols lr1itemset
       ) (Ordmap.to_alist t)
   end
   include T
@@ -173,7 +173,7 @@ let pp {isucc; state; traces} formatter =
   )
   |> Fmt.fmt "}"
 
-let fmt_hr symbols prods ?(alt=false) ?(width=0L)
+let fmt_hr precs symbols prods ?(alt=false) ?(width=0L)
   {isucc; state; traces} formatter =
   formatter
   |> Fmt.fmt "{isucc index=" |> Uns.pp (State.index isucc)
@@ -182,7 +182,7 @@ let fmt_hr symbols prods ?(alt=false) ?(width=0L)
   |> List.fmt ~alt ~width:(width + 4L) (fun (tracekey, traceval) formatter ->
     formatter
     |> Fmt.fmt "{tracekey=" |> TraceKey.pp_hr symbols prods tracekey
-    |> Fmt.fmt "; traceval=" |> TraceVal.fmt_hr symbols ~alt ~width:(width + 4L) traceval
+    |> Fmt.fmt "; traceval=" |> TraceVal.fmt_hr precs symbols ~alt ~width:(width + 4L) traceval
     |> Fmt.fmt "}"
   ) (Ordmap.to_alist traces)
   |> Fmt.fmt "}"
@@ -254,7 +254,7 @@ let kernel_attribs {traces; _} =
         ) kernel_isuccs
     ) traces
 
-let of_conflict_state ~resolve symbols prods leftmost_cache conflict_state =
+let of_conflict_state ~resolve precs symbols prods leftmost_cache conflict_state =
   let traces, leftmost_cache = Attribs.fold
       ~init:(Ordmap.empty (module TraceKey), leftmost_cache)
       ~f:(fun (traces, leftmost_cache) {conflict_state_index; symbol_index; conflict; contrib; _} ->
@@ -272,7 +272,7 @@ let of_conflict_state ~resolve symbols prods leftmost_cache conflict_state =
           ) traces in
           traces, leftmost_cache
         ) (Contrib.reduces contrib)
-      ) (State.conflict_attribs ~resolve symbols prods conflict_state) in
+      ) (State.conflict_attribs ~resolve precs symbols prods conflict_state) in
   assert (not (Ordmap.is_empty traces));
   let t = {
     isucc=conflict_state;

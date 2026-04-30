@@ -1381,10 +1381,10 @@ let expand_hm_prods prods ~indentation formatter =
           |> (fun formatter ->
             match prec with
             | None -> formatter |> Fmt.fmt "None"
-            | Some {name_index; prec_set={index; _}} -> begin
+            | Some {name_index; prec_set_index} -> begin
                 formatter
                 |> Fmt.fmt "(Some (Prec.init ~name_index:" |> Prec.Index.pp name_index
-                |> Fmt.fmt " ~prec_set_index:" |> PrecSet.Index.pp index |> Fmt.fmt "))"
+                |> Fmt.fmt " ~prec_set_index:" |> PrecSet.Index.pp prec_set_index |> Fmt.fmt "))"
               end
           )
           |> Fmt.fmt " ~callback:" |> Callback.Index.pp callback.index
@@ -1422,10 +1422,10 @@ let expand_hm_symbols symbols ~indentation formatter =
           |> (fun formatter ->
             match prec with
             | None -> formatter |> Fmt.fmt "None"
-            | Some {name_index; prec_set={index; _}} -> begin
+            | Some {name_index; prec_set_index} -> begin
                 formatter
                 |> Fmt.fmt "(Some (Prec.init ~name_index:" |> Prec.Index.pp name_index
-                |> Fmt.fmt " ~prec_set_index:" |> PrecSet.Index.pp index |> Fmt.fmt "))"
+                |> Fmt.fmt " ~prec_set_index:" |> PrecSet.Index.pp prec_set_index |> Fmt.fmt "))"
                 |> Fmt.fmt "\n" |> indent |> Fmt.fmt " "
               end
           )
@@ -3330,10 +3330,10 @@ let expand_ml_prods prods ~indentation formatter =
           |> (fun formatter ->
             match prec with
             | None -> formatter |> Fmt.fmt "None"
-            | Some {name_index; prec_set={index; _}} -> begin
+            | Some {name_index; prec_set_index} -> begin
                 formatter
                 |> Fmt.fmt "(Some (Prec.init ~name_index:" |> ml_uns_pp name_index
-                |> Fmt.fmt " ~prec_set_index:" |> ml_uns_pp index |> Fmt.fmt "))"
+                |> Fmt.fmt " ~prec_set_index:" |> ml_uns_pp prec_set_index |> Fmt.fmt "))"
               end
           )
           |> Fmt.fmt " ~callback:" |> ml_uns_pp callback.index
@@ -3371,10 +3371,10 @@ let expand_ml_symbols symbols ~indentation formatter =
           |> (fun formatter ->
             match prec with
             | None -> formatter |> Fmt.fmt "None"
-            | Some {name_index; prec_set={index; _}} -> begin
+            | Some {name_index; prec_set_index} -> begin
                 formatter
                 |> Fmt.fmt "(Some (Prec.init ~name_index:" |> ml_uns_pp name_index
-                |> Fmt.fmt " ~prec_set_index:" |> ml_uns_pp index |> Fmt.fmt "))"
+                |> Fmt.fmt " ~prec_set_index:" |> ml_uns_pp prec_set_index |> Fmt.fmt "))"
                 |> Fmt.fmt "\n" |> indent |> Fmt.fmt " "
               end
           )

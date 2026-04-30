@@ -54,8 +54,8 @@ val merge: Symbols.t -> GotoNub.t -> t -> bool * t
     creates the closure of the merged kernel, as well as merging conflict attributions from
     [gotonub]. The boolean result indicates whether items were merged into the kernel. *)
 
-val compat_ielr: resolve:bool -> Symbols.t -> Prods.t -> GotoNub.t -> t -> bool
-(** [compat_ielr ~resolve symbols prods gotonub t] determines whether [gotonub] and [t] are
+val compat_ielr: resolve:bool -> Precs.t -> Symbols.t -> Prods.t -> GotoNub.t -> t -> bool
+(** [compat_ielr ~resolve precs symbols prods gotonub t] determines whether [gotonub] and [t] are
     split-stable (i.e. irrelevant to compatibility testing) and make compatible conflict
     attributions (if any) in the context of each {state,symbol} conflict. If [resolve] is true,
     conflicts which will be successfully resolved during state generation are treated as compatible

@@ -18,8 +18,43 @@ module Builder = struct
     Array.init (0L =:< Ordmap.length t) ~f:(fun index -> Ordmap.get_hlt index t)
 end
 
+let use_prec prod_index t =
+  let prod = Array.get prod_index t in
+  let prod' = Prod.use_prec prod in
+  let t' = Array.set prod_index prod' t in
+  t'
+
 let length = Array.length
 
 let prod_of_prod_index = Array.get
 
 let fold = Array.fold
+
+let src_fmt precs symbols Prod.{lhs_index; rhs_indexes; prec; _} formatter =
+  let lhs_symbol = Symbols.symbol_of_symbol_index lhs_index symbols in
+  formatter
+  |> Fmt.fmt "    "
+  |> Fmt.fmt lhs_symbol.name
+  |> Fmt.fmt " ::="
+  |> (fun formatter ->
+    match Array.length rhs_indexes with
+    | 0L -> formatter |> Fmt.fmt " epsilon"
+    | _ -> begin
+        Array.fold ~init:formatter ~f:(fun formatter rhs_index ->
+          let rhs_symbol = Symbols.symbol_of_symbol_index rhs_index symbols in
+          formatter
+          |> Fmt.fmt " "
+          |> (fun formatter ->
+            match rhs_symbol.alias with
+            | None -> formatter |> Fmt.fmt rhs_symbol.name
+            | Some alias -> formatter |> String.pp alias
+          )
+        ) rhs_indexes
+      end
+  )
+  |> (fun formatter ->
+    match prec with
+    | None -> formatter
+    | Some prec -> formatter |> Fmt.fmt " " |> Precs.pp_prec_hr prec precs
+  )
+  |> Fmt.fmt "\n"

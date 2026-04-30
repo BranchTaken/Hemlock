@@ -17,6 +17,7 @@ module T = struct
     name: string;
     stype: SymbolType.t;
     prec: Prec.t option;
+    prec_useful: bool;
     stmt: stmt option;
     alias: string option;
     start: bool;
@@ -31,12 +32,13 @@ module T = struct
   let cmp {index=index0; _} {index=index1; _} =
     Index.cmp index0 index1
 
-  let pp {index; name; stype; prec; stmt; alias; start; prods; first; follow} formatter =
-    formatter
+  let pp {index; name; stype; prec; prec_useful; stmt; alias; start; prods; first; follow} formatter
+    = formatter
     |> Fmt.fmt "{index=" |> Index.pp index
     |> Fmt.fmt "; name=" |> String.pp name
     |> Fmt.fmt "; stype=" |> SymbolType.pp stype
     |> Fmt.fmt "; prec=" |> (Option.pp Prec.pp) prec
+    |> Fmt.fmt "; prec_useful=" |> Bool.pp prec_useful
     |> Fmt.fmt "; stmt=" |> (Option.pp pp_stmt) stmt
     |> Fmt.fmt "; alias=" |> (Option.pp String.pp) alias
     |> Fmt.fmt "; start=" |> Bool.pp start
@@ -58,6 +60,7 @@ include T
 include Identifiable.Make(T)
 
 let init_token ~index ~name ~stype ~prec ~stmt ~alias =
+  let prec_useful = false in
   let stmt = match stmt with
     | None -> None
     | Some stmt -> Some (Token stmt)
@@ -67,7 +70,7 @@ let init_token ~index ~name ~stype ~prec ~stmt ~alias =
   (* Tokens are in their own `first` sets. *)
   let first = Bitset.singleton index in
   let follow = Bitset.empty in
-  {index; name; stype; prec; stmt; alias; start; prods; first; follow}
+  {index; name; stype; prec; prec_useful; stmt; alias; start; prods; first; follow}
 
 let init_synthetic_token ~index ~name ~alias =
   init_token ~index ~name ~stype:SymbolType.synthetic_implicit ~prec:None ~stmt:None
@@ -78,6 +81,7 @@ let epsilon = init_synthetic_token ~index:0L ~name:"EPSILON" ~alias:"ε"
 let pseudo_end = init_synthetic_token ~index:1L ~name:"PSEUDO_END" ~alias:"⊥"
 
 let init_nonterm ~index ~name ~stype ~prec ~stmt ~start ~prods =
+  let prec_useful = false in
   let stmt = match stmt with
     | None -> None
     | Some stmt -> Some (Nonterm stmt)
@@ -98,7 +102,7 @@ let init_nonterm ~index ~name ~stype ~prec ~stmt ~start ~prods =
     | Some _ -> Bitset.empty
     | None -> Bitset.singleton epsilon.index
   in
-  {index; name; stype; prec; stmt; alias; start; prods; first; follow}
+  {index; name; stype; prec; prec_useful; stmt; alias; start; prods; first; follow}
 
 let is_token {prods; _} =
   Array.is_empty prods
@@ -137,3 +141,7 @@ let follow_has_diff symbol_indexes t =
 let follow_union symbol_indexes t =
   let follow = Bitset.union symbol_indexes t.follow in
   {t with follow}
+
+let use_prec ({prec; _} as t) =
+  assert (Option.is_some prec);
+  {t with prec_useful=true}

@@ -10,6 +10,6 @@ hocc: 0 unreachable states
 hocc: Searching for remergeable state subgraphs (mergeable/max[worklst]) 0/0[0]
 hocc: 0 remergeable states
 hocc: 0 unresolvable conflicts in 0 states
-hocc: Searching for unused precedences/tokens/non-terminals/productions
+hocc: Searching for unused precedences/associativities/tokens/non-terminals/productions
 hocc: Writing "./Example_b.hmi"
 hocc: Writing "./Example_b.hm"

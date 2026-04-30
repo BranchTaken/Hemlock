@@ -24,7 +24,7 @@ module T = struct
     |> Fmt.fmt "{lr0item=" |> Lr0Item.pp lr0item
     |> Fmt.fmt "; follow=" |> Bitset.pp follow
 
-  let pp_hr symbols {lr0item=({prod={prec; _}; _} as lr0item); follow} formatter =
+  let pp_hr precs symbols {lr0item=({prod={prec; _}; _} as lr0item); follow} formatter =
     formatter
     |> Fmt.fmt "["
     |> Lr0Item.pp_hr symbols lr0item
@@ -43,7 +43,7 @@ module T = struct
     |> (fun formatter ->
       match prec with
       | None -> formatter
-      | Some prec -> formatter |> Fmt.fmt " " |> Prec.pp_hr prec
+      | Some prec -> formatter |> Fmt.fmt " " |> Precs.pp_prec_hr prec precs
     )
 end
 include T

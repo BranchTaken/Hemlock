@@ -227,7 +227,7 @@ let has_isolated_shift_attribs adjs annotations isolateds ~dst ~conflict_state_i
         end
     end
 
-let attribset_compat ~resolve symbols prods attribset =
+let attribset_compat ~resolve precs symbols prods attribset =
   (* Determine whether all pairs of attribs in attribset are compatible. *)
   let rec inner ~resolve symbols prods attrib0 attribset_seq_base attribset_seq_cur = begin
     match Ordset.Seq.next_opt attribset_seq_cur with
@@ -239,7 +239,7 @@ let attribset_compat ~resolve symbols prods attribset =
           inner ~resolve symbols prods attrib0' attribset_seq_base' attribset_seq_base'
       end
     | Some (attrib1, attribset_seq_cur') -> begin
-        match Attrib.compat_ielr ~resolve symbols prods attrib0 attrib1 with
+        match Attrib.compat_ielr ~resolve precs symbols prods attrib0 attrib1 with
         | false -> false
         | true -> inner ~resolve symbols prods attrib0 attribset_seq_base attribset_seq_cur'
       end
@@ -251,7 +251,7 @@ let attribset_compat ~resolve symbols prods attribset =
       inner ~resolve symbols prods attrib0 attribset_seq attribset_seq
     end
 
-let filter_useless_annotations ~resolve symbols prods adjs annotations_all =
+let filter_useless_annotations ~resolve precs symbols prods adjs annotations_all =
   (* Create a {destination state, conflict state, symbol}->{attrib set} map and use it to
    * distinguish useful vs useless annotations. *)
   let dst_cs_sym_attribsets_shiftless = Ordmap.fold ~init:(Ordmap.empty (module DstCsSym))
@@ -297,7 +297,7 @@ let filter_useless_annotations ~resolve symbols prods adjs annotations_all =
    * useful; all other annotations are useless. *)
   let dst_cs_sym_useful = Ordmap.fold ~init:(Set.empty (module DstCsSym))
     ~f:(fun dst_cs_sym_useful (dst_cs_sym, attribset) ->
-      match attribset_compat ~resolve symbols prods attribset with
+      match attribset_compat ~resolve precs symbols prods attribset with
       | true -> dst_cs_sym_useful
       | false -> Set.insert dst_cs_sym dst_cs_sym_useful
     ) dst_cs_sym_attribsets in
@@ -323,7 +323,7 @@ let filter_useless_annotations ~resolve symbols prods adjs annotations_all =
       | false -> Ordmap.insert_hlt ~k:transit ~v:kernel_attribs annotations_useful
     ) annotations_all
 
-let annotations_init ~resolve io symbols prods lalr_states =
+let annotations_init ~resolve io precs symbols prods lalr_states =
   let adjs = Adjs.init lalr_states in
   (* Gather transit attribs for all conflict states. *)
   let io =
@@ -337,7 +337,7 @@ let annotations_init ~resolve io symbols prods lalr_states =
     Array.fold ~init:(leftmost_cache, io, annotations)
       ~f:(fun (leftmost_cache, io, annotations) conflict_state ->
         match State.conflicts ~filter_pseudo_end:false conflict_state,
-          State.has_conflict_attribs ~resolve symbols prods conflict_state with
+          State.has_conflict_attribs ~resolve precs symbols prods conflict_state with
         | 0L, false -> leftmost_cache, io, annotations
         | _, false -> begin
             let io = io.log |> Fmt.fmt "" |> Io.with_log io in
@@ -346,7 +346,8 @@ let annotations_init ~resolve io symbols prods lalr_states =
         | _, true -> begin
             let io = io.log |> Fmt.fmt "" |> Io.with_log io in
             let conflict_lanectx, leftmost_cache =
-              LaneCtx.of_conflict_state ~resolve symbols prods leftmost_cache conflict_state in
+              LaneCtx.of_conflict_state ~resolve precs symbols prods leftmost_cache conflict_state
+            in
             let leftmost_cache, lanectxs_pending, workq =
               enq_ipred_lanectxs lalr_states adjs leftmost_cache conflict_lanectx in
             let leftmost_cache, lanectxs_closed =
@@ -359,7 +360,7 @@ let annotations_init ~resolve io symbols prods lalr_states =
                   | true -> unfiltered_annotations
                   | false -> Ordmap.insert_hlt ~k:transit ~v:kernel_attribs unfiltered_annotations
                 ) lanectxs_closed
-              |> filter_useless_annotations ~resolve symbols prods adjs
+              |> filter_useless_annotations ~resolve precs symbols prods adjs
               |> Ordmap.union ~vunion:(fun _transit ka0 ka1 -> KernelAttribs.union ka0 ka1)
                 annotations
             in
@@ -372,8 +373,8 @@ let annotations_init ~resolve io symbols prods lalr_states =
 
 (* Create lookup function for attribs that closes on the prerequisite LALR(1) inadequacy analysis.
 *)
-let gen_gotonub_of_statenub_goto ~resolve io symbols prods lalr_isocores lalr_states =
-  let io, annotations = annotations_init ~resolve io symbols prods lalr_states in
+let gen_gotonub_of_statenub_goto ~resolve io precs symbols prods lalr_isocores lalr_states =
+  let io, annotations = annotations_init ~resolve io precs symbols prods lalr_states in
   let transit_of_statenub_goto statenub goto = begin
     let statenub_core = (Lr1Itemset.core StateNub.(statenub.lr1itemsetclosure.kernel)) in
     let goto_core = Lr1Itemset.core goto in

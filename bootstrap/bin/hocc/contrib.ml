@@ -92,22 +92,29 @@ let inter {shift=s0; reduce=r0} {shift=s1; reduce=r1} =
 let diff {shift=s0; reduce=r0} {shift=s1; reduce=r1} =
   {shift=s0 && (not s1); reduce=Ordset.diff r0 r1}
 
-let resolve symbols prods symbol_index t =
-  let prec_of_shift symbols symbol_index = begin
-    match Symbols.symbol_of_symbol_index symbol_index symbols with Symbol.{prec; _} -> prec
-  end in
-  let prec_of_reduce prods prod_index = begin
-    match Prods.prod_of_prod_index prod_index prods with Prod.{prec; _} -> prec
-  end in
-  let assoc_of_shift symbols symbol_index = begin
-    match prec_of_shift symbols symbol_index with
+let resolve precs symbols prods symbol_index t =
+  let prec_set_of_prec_opt precs prec_opt = begin
+    match prec_opt with
     | None -> None
-    | Some {prec_set={assoc; _}; _} -> assoc
+    | Some Prec.{prec_set_index; _} -> Some (Precs.prec_set_of_prec_index prec_set_index precs)
   end in
-  let assoc_of_reduce prods prod_index = begin
-    match prec_of_reduce prods prod_index with
+  let prec_set_of_shift precs symbols symbol_index = begin
+    let Symbol.{prec; _} = Symbols.symbol_of_symbol_index symbol_index symbols in
+    prec_set_of_prec_opt precs prec
+  end in
+  let prec_set_of_reduce precs prods prod_index = begin
+    let Prod.{prec; _} = Prods.prod_of_prod_index prod_index prods in
+    prec_set_of_prec_opt precs prec
+  end in
+  let assoc_of_shift precs symbols symbol_index = begin
+    match prec_set_of_shift precs symbols symbol_index with
     | None -> None
-    | Some {prec_set={assoc; _}; _} -> assoc
+    | Some PrecSet.{assoc; _} -> assoc
+  end in
+  let assoc_of_reduce precs prods prod_index = begin
+    match prec_set_of_reduce precs prods prod_index with
+    | None -> None
+    | Some PrecSet.{assoc; _} -> assoc
   end in
   match length t with
   | 0L
@@ -121,23 +128,24 @@ let resolve symbols prods symbol_index t =
           match is_empty max_prec_contrib with
           | true -> init_reduce prod_index, false
           | false -> begin
-              let max_prec = match mem_shift max_prec_contrib with
-                | true -> prec_of_shift symbols symbol_index
-                | false -> prec_of_reduce prods (Ordset.choose_hlt max_prec_contrib.reduce)
+              let max_prec_set = match mem_shift max_prec_contrib with
+                | true -> prec_set_of_shift precs symbols symbol_index
+                | false ->
+                  prec_set_of_reduce precs prods (Ordset.choose_hlt max_prec_contrib.reduce)
               in
-              let reduce_prec = prec_of_reduce prods prod_index in
-              match max_prec, reduce_prec with
+              let reduce_prec_set = prec_set_of_reduce precs prods prod_index in
+              match max_prec_set, reduce_prec_set with
               | None, _
               | _, None -> begin
                   (* Disjoint lack of precedence(s). *)
                   empty, true
                 end
-              | Some max_prec, Some reduce_prec -> begin
-                  match Uns.(=) max_prec.prec_set.index reduce_prec.prec_set.index with
+              | Some max_prec_set, Some reduce_prec_set -> begin
+                  match Uns.(=) max_prec_set.index reduce_prec_set.index with
                   | false -> begin
-                      match Bitset.mem max_prec.prec_set.index reduce_prec.prec_set.doms with
+                      match Bitset.mem max_prec_set.index reduce_prec_set.doms with
                       | false -> begin
-                          match Bitset.mem reduce_prec.prec_set.index max_prec.prec_set.doms with
+                          match Bitset.mem reduce_prec_set.index max_prec_set.doms with
                           | false -> begin
                               (* Disjoint precedence; no conflict resolution possible. *)
                               empty, true
@@ -168,11 +176,11 @@ let resolve symbols prods symbol_index t =
           (* Determine whether the subset of actions with maximal precedence has homogeneous
            * associativity. *)
           let assoc = match mem_shift max_prec_contrib with
-            | true -> assoc_of_shift symbols symbol_index
-            | false -> assoc_of_reduce prods (Ordset.choose_hlt max_prec_contrib.reduce)
+            | true -> assoc_of_shift precs symbols symbol_index
+            | false -> assoc_of_reduce precs prods (Ordset.choose_hlt max_prec_contrib.reduce)
           in
           let homogeneous = Ordset.fold_until ~init:true ~f:(fun _ prod_index ->
-            let reduce_assoc = assoc_of_reduce prods prod_index in
+            let reduce_assoc = assoc_of_reduce precs prods prod_index in
             match Cmp.is_eq (Option.cmp Assoc.cmp assoc reduce_assoc) with
             | false -> false, true
             | true -> true, false

@@ -8,10 +8,36 @@ hocc: Tracing automaton (.+=actions[+gotos])+........+.....+.....+.....+...+....
 hocc: 35 unreachable states
 hocc: Reindexing 1_340 LR(1) states
 hocc: 0 unresolvable conflicts in 0 states
-hocc: Searching for unused precedences/tokens/non-terminals/productions
+hocc: Searching for unused precedences/associativities/tokens/non-terminals/productions
+hocc: 15 unused precedence set associativities:
+hocc:    left pColon < pGenericParamOne
+hocc:    left pRparen < pProcParmBody
+hocc:    left pLparen < pOptionalGenericParamList, pList
+hocc:    left pRarrow < pOptionalGenericParamList
+hocc:    left pDot < pTypeName2, pVarRestId, pOptionalGenericParamList
+hocc:    left pLbrace
+hocc:    left pLbracket < pVarRestId, pOptionalGenericParamList
+hocc:    left pEq < pLvalListBody
+hocc:    left pComma < pDictElm, pProcParmRequiredList, pProcParmOptional, pInitFieldList, pCallNamed, pCallPargs, pCallThis, pLvalListBody, pUnaryExpr2, pPlusOp, pAssnExpr1, pExprListBodyA, pExprListBodyB
+hocc:    left pRdangle
+hocc:    left pRbrace < pStmt
+hocc:    left pIs
+hocc:    left pBar
+hocc:    left pLdangle
+hocc:    left pRbracket
 hocc: 2 unused tokens:
 hocc:    token COMMENT
 hocc:    token WHITESPACE
+hocc: 9 unused token precedences:
+hocc:    token IMPLEMENTS "implements" prec pImplements
+hocc:    token IS "is" prec pIs
+hocc:    token THIS "this" prec pThis
+hocc:    token BAR "|" prec pBar
+hocc:    token RARROW "->" prec pRarrow
+hocc:    token LBRACE "{" prec pLbrace
+hocc:    token LDANGLE "«" prec pLdangle
+hocc:    token RBRACE "}" prec pRbrace
+hocc:    token RBRACKET "]" prec pRbracket
 hocc: 19 unused productions:
 hocc:    Lval ::= TypeName "." LvalSuffix prec pLval1
 hocc:    LvalListBody ::= Annotations Var "," Lval prec pLvalListBody
@@ -32,3 +58,61 @@ hocc:    ExprSuffix ::= ExprSuffix "." ID prec pExprSuffix
 hocc:    ExprSuffix ::= ExprSuffix "." ID ExprSlice
 hocc:    Expr ::= Expr "." LvalSuffix prec pExpr2
 hocc:    Expr ::= Lval "." LvalSuffix prec pExpr2
+hocc: 57 unused production precedences:
+hocc:    GenericParamOne ::= epsilon prec pGenericParamOne
+hocc:    OptionalGenericParamList ::= "«" ParamTypeList "»" prec pOptionalGenericParamList
+hocc:    OptionalGenericParamList ::= "«" ParamTypeList "where" DerivationConstraintList "»" prec pOptionalGenericParamList
+hocc:    TypeNameSuffix ::= TypeNameSuffixElm prec pTypeNameSuffix1
+hocc:    LvalListBody ::= Var "," Lval prec pLvalListBody
+hocc:    LvalListBody ::= Var "," Var prec pLvalListBody
+hocc:    ProcParmRequired ::= Annotations TypeSpec ID prec pProcParmRequired2
+hocc:    ProcParmRequired ::= TypeSpec ID prec pProcParmRequired1
+hocc:    ProcParmRequired ::= Annotations ID prec pProcParmRequired2
+hocc:    ProcParmRequired ::= ID prec pProcParmRequired1
+hocc:    ProcParmRequired ::= Annotations TypeSpec "_" prec pProcParmRequired2
+hocc:    ProcParmRequired ::= TypeSpec "_" prec pProcParmRequired1
+hocc:    ProcParmRequired ::= Annotations "_" prec pProcParmRequired2
+hocc:    ProcParmRequired ::= "_" prec pProcParmRequired1
+hocc:    ProcParmRequiredList ::= ProcParmRequired prec pProcParmRequiredList
+hocc:    ImplementsInterface ::= epsilon prec pImplementsInterface
+hocc:    ImportLval ::= Annotations "from" ImportModule "import" ImportVars prec pImportLval
+hocc:    ImportLval ::= "from" ImportModule "import" ImportVars prec pImportLval
+hocc:    PowOp ::= "^" prec pPowOp
+hocc:    MulOp ::= "*" prec pMulOp
+hocc:    MulOp ::= "/" prec pMulOp
+hocc:    MulOp ::= "\%" prec pMulOp
+hocc:    PlusOp ::= "+" prec pPlusOp
+hocc:    PlusOp ::= "-" prec pPlusOp
+hocc:    CmpOp1 ::= "<" prec pCmpOp1
+hocc:    CmpOp1 ::= "<=" prec pCmpOp1
+hocc:    CmpOp1 ::= ">=" prec pCmpOp1
+hocc:    CmpOp1 ::= ">" prec pCmpOp1
+hocc:    CmpOp2 ::= "==" prec pCmpOp2
+hocc:    CmpOp2 ::= "!=" prec pCmpOp2
+hocc:    CmpOp2 ::= "===" prec pCmpOp2
+hocc:    CmpOp2 ::= "!==" prec pCmpOp2
+hocc:    CmpOp3 ::= "and" prec pCmpOp3
+hocc:    CmpOp4 ::= "xor" prec pCmpOp4
+hocc:    CmpOp5 ::= "or" prec pCmpOp5
+hocc:    InfixExpr ::= Expr PowOp "(" ")" prec pPowOp
+hocc:    InfixExpr ::= Expr PowOp "(" CallList ")" prec pPowOp
+hocc:    InfixExpr ::= Expr PowOp "(" LvalListBody ")" prec pPowOp
+hocc:    InfixExpr ::= Lval PowOp "(" ")" prec pPowOp
+hocc:    InfixExpr ::= Lval PowOp "(" CallList ")" prec pPowOp
+hocc:    InfixExpr ::= Lval PowOp "(" LvalListBody ")" prec pPowOp
+hocc:    InfixExpr ::= Expr MulOp "(" ")" prec pMulOp
+hocc:    InfixExpr ::= Expr MulOp "(" CallList ")" prec pMulOp
+hocc:    InfixExpr ::= Expr MulOp "(" LvalListBody ")" prec pMulOp
+hocc:    InfixExpr ::= Lval MulOp "(" ")" prec pMulOp
+hocc:    InfixExpr ::= Lval MulOp "(" CallList ")" prec pMulOp
+hocc:    InfixExpr ::= Lval MulOp "(" LvalListBody ")" prec pMulOp
+hocc:    InfixExpr ::= Expr PlusOp "(" ")" prec pPlusOp
+hocc:    InfixExpr ::= Expr PlusOp "(" CallList ")" prec pPlusOp
+hocc:    InfixExpr ::= Expr PlusOp "(" LvalListBody ")" prec pPlusOp
+hocc:    InfixExpr ::= Lval PlusOp "(" ")" prec pPlusOp
+hocc:    InfixExpr ::= Lval PlusOp "(" CallList ")" prec pPlusOp
+hocc:    InfixExpr ::= Lval PlusOp "(" LvalListBody ")" prec pPlusOp
+hocc:    AssnExprLeft ::= Var "," "[" "]" GenericParamOne ":" Lval prec pAssnExprLeft2
+hocc:    VarRestId ::= "[" "]" GenericParamOne ID prec pVarRestId
+hocc:    VarRestId ::= "[" "]" GenericParamOne "_" prec pVarRestId
+hocc:    Stmt ::= ExprList prec pStmt

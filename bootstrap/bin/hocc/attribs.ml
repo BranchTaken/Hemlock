@@ -53,13 +53,14 @@ module T = struct
     formatter
     |> Ordmap.pp (fun attrib formatter -> formatter |> Attrib.pp attrib) t
 
-  let fmt_hr symbols prods ?(alt=false) ?(width=0L) t
+  let fmt_hr precs symbols prods ?(alt=false) ?(width=0L) t
     formatter =
     let attrib_lst = Ordmap.fold_right ~init:[]
       ~f:(fun attrib_lst (_, attrib) -> attrib :: attrib_lst) t in
     formatter
     |> (fun formatter ->
-      List.fmt ~alt ~width (Attrib.fmt_hr symbols prods ~alt ~width:(width+4L)) attrib_lst formatter
+      List.fmt ~alt ~width (Attrib.fmt_hr precs symbols prods ~alt ~width:(width+4L)) attrib_lst
+        formatter
     )
 end
 include T

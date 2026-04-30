@@ -32,7 +32,8 @@ module Builder : sig
   val insert_token: name:string -> stype:SymbolType.t -> prec:Prec.t option
     -> stmt:Parse.nonterm_token option -> alias:string option -> t -> t
   (** [insert_token ~name ~stype ~prec ~stmt ~alias t] creates a token [Symbol.t] with unique index
-      and returns a new [t] with the symbol inserted. *)
+      and returns a new [t] with the symbol inserted. Must not be called after any
+      [insert_nonterm_info] call. *)
 
   val insert_nonterm_info: name:string -> stype:SymbolType.t -> t -> t
   (** [insert_nonterm_info ~name ~stype t] creates a non-terminal [info] and returns a new [t] with
@@ -80,6 +81,10 @@ module Builder : sig
   (** [build t] builds a [Symbols.t]. *)
 end
 
+val use_prec: Symbol.Index.t -> t -> t
+(** [use_prec symbol_index t] returns a derivative of [t] with the precedence for the symbol
+    corresponding to [symbol_index] marked as useful. *)
+
 val symbol_of_name: string -> t -> Symbol.t option
 (** [symbol_index_of_name name t] returns [Some index] if a symbol with the specified [name] exists,
     halts otherwise. *)
@@ -109,7 +114,7 @@ val nonterms_fold: init:'accum -> f:('accum -> Symbol.t -> 'accum) -> t -> 'accu
 (** [nonterms_fold ~init ~f t] iteratively applies [f] to the non-terminals in [t], in increasing
     index order. *)
 
-val src_fmt: Symbol.t -> t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
+val src_fmt: Precs.t -> Symbol.t -> t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
 (** Formatter which outputs symbol in hocc syntax. *)
 
 val pp_prod_hr: Prod.t -> t -> (module Fmt.Formatter) -> (module Fmt.Formatter)

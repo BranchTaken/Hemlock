@@ -33,10 +33,11 @@ type t = {
 
 include IdentifiableIntf.S with type t := t
 
-val init: resolve:bool -> Symbols.t -> Prods.t -> Isocores.t
-  -> gotonub_of_statenub_goto:(StateNub.t -> Lr1Itemset.t -> GotoNub.t) -> StateNub.t -> t
-(** [init ~resolve symbols prods isocores ~gotonub_of_statenub_goto statenub] creates a state based
-    on [statenub]. *)
+val init: resolve:bool -> Precs.t -> Symbols.t -> Prods.t -> Isocores.t
+  -> gotonub_of_statenub_goto:(StateNub.t -> Lr1Itemset.t -> GotoNub.t) -> StateNub.t
+  -> Precs.t * Symbols.t * Prods.t * t
+(** [init ~resolve precs symbols prods isocores ~gotonub_of_statenub_goto statenub] creates a state
+    based on [statenub]. *)
 
 val remerge: Symbols.t -> (Index.t, Index.t, Index.cmper_witness) Ordmap.t-> t -> t -> t
 (** [remerge symbols index_map t0 t1] re-merges state [t0] into [t1], where [t0] has a higher index
@@ -61,20 +62,20 @@ val start_symbol_index: t -> Symbol.Index.t
 val has_pseudo_end_conflict: t -> bool
 (** [has_pseudo_end_conflict t] returns true if the state conflicts on the pseudo-end (⊥) symbol. *)
 
-val has_conflict_attribs: resolve:bool -> Symbols.t -> Prods.t -> t -> bool
-(** [has_conflict_attribs ~resolve symbols prods t] returns true iff there are conflict
+val has_conflict_attribs: resolve:bool -> Precs.t -> Symbols.t -> Prods.t -> t -> bool
+(** [has_conflict_attribs ~resolve precs symbols prods t] returns true iff there are conflict
     attributions, i.e. per symbol conflict attributions. If [resolve] is true, omit conflicts that
     cannot result in inadequacy in the context of conflict resolution (i.e. conflicts that resolve
     to shift). The pseudo-end (⊥) symbol is omitted, because this function is used for attributing
     conflict attributions, and conflicting actions on ⊥ are a special case to which conflict
     attributions do not apply. *)
 
-val conflict_attribs: resolve:bool -> Symbols.t -> Prods.t -> t -> Attribs.t
-(** [conflict_attribs ~resolve symbols prods t] returns conflict attributions. If [resolve] is true,
-    omit conflicts that cannot result in inadequacy in the context of conflict resolution (i.e.
-    conflicts that resolve to shift). The pseudo-end (⊥) symbol is omitted, because this function is
-    used for attributing conflict contributions, and conflicting actions on ⊥ are a special case to
-    which conflict attributions do not apply. *)
+val conflict_attribs: resolve:bool -> Precs.t -> Symbols.t -> Prods.t -> t -> Attribs.t
+(** [conflict_attribs ~resolve precs symbols prods t] returns conflict attributions. If [resolve] is
+    true, omit conflicts that cannot result in inadequacy in the context of conflict resolution
+    (i.e. conflicts that resolve to shift). The pseudo-end (⊥) symbol is omitted, because this
+    function is used for attributing conflict contributions, and conflicting actions on ⊥ are a
+    special case to which conflict attributions do not apply. *)
 
 val conflicts: ?filter_pseudo_end:bool -> t -> uns
 (** [conflicts ~filter_pseudo_end t] returns the number of conflicts in [t]. Pseudo-end (⊥)
