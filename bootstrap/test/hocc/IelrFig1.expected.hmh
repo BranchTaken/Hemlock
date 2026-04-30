@@ -3,8 +3,8 @@ hocc
     token Ta prec p
     token Tb
     start S ::=
-      | Ta A Ta prec p
+      | Ta A Ta
       | Tb A Tb
-    nonterm A prec p ::=
-      | Ta
+    nonterm A ::=
+      | Ta prec p
       | Ta Ta

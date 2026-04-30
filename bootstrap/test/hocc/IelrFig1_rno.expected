@@ -18,10 +18,8 @@ hocc: 1 unused precedence set associativity:
 hocc:    left p
 hocc: 1 unused token precedence:
 hocc:    token Ta prec p
-hocc: 3 unused production precedences:
-hocc:    S ::= Ta A Ta prec p
+hocc: 1 unused production precedence:
 hocc:    A ::= Ta prec p
-hocc:    A ::= Ta Ta prec p
 hocc: Generating text report
 hocc: Generating hocc report
 hocc: Writing "./hocc/IelrFig1_rno.txt"

@@ -20,7 +20,7 @@ Non-terminals
         First: {Ta, Tb}
         Follow: {"⊥"}
         Productions
-            S ::= Ta A Ta prec p
+            S ::= Ta A Ta
             S ::= Tb A Tb
     start S'
         First: {Ta, Tb}
@@ -32,13 +32,13 @@ Non-terminals
         Follow: {Ta, Tb}
         Productions
             A ::= Ta prec p
-            A ::= Ta Ta prec p
+            A ::= Ta Ta
 IELR(1) States
     State 0 [0.0]
         Kernel
             [S' ::= · S "⊥", {"ε"}]
         Added
-            [S ::= · Ta A Ta, {"⊥"}] prec p
+            [S ::= · Ta A Ta, {"⊥"}]
             [S ::= · Tb A Tb, {"⊥"}]
         Actions
             Ta : ShiftPrefix 1 prec p
@@ -47,10 +47,10 @@ IELR(1) States
             S : 3
     State 1 [1.0]
         Kernel
-            [S ::= Ta · A Ta, {"⊥"}] prec p
+            [S ::= Ta · A Ta, {"⊥"}]
         Added
             [A ::= · Ta, {Ta}] prec p
-            [A ::= · Ta Ta, {Ta}] prec p
+            [A ::= · Ta Ta, {Ta}]
         Actions
             Ta : ShiftPrefix 4 prec p
         Gotos
@@ -60,7 +60,7 @@ IELR(1) States
             [S ::= Tb · A Tb, {"⊥"}]
         Added
             [A ::= · Ta, {Tb}] prec p
-            [A ::= · Ta Ta, {Tb}] prec p
+            [A ::= · Ta Ta, {Tb}]
         Actions
             Ta : ShiftPrefix 6 prec p
         Gotos
@@ -73,7 +73,7 @@ IELR(1) States
     State 4 [4.0]
         Kernel
             [A ::= Ta ·, {Ta}] prec p
-            [A ::= Ta · Ta, {Ta}] prec p
+            [A ::= Ta · Ta, {Ta}]
         Actions
             Ta :
 CONFLICT        ShiftPrefix 9 prec p
@@ -83,13 +83,13 @@ CONFLICT        Reduce A ::= Ta prec p
                 Ta : 4 : Reduce A ::= Ta
     State 5 [5.0]
         Kernel
-            [S ::= Ta A · Ta, {"⊥"}] prec p
+            [S ::= Ta A · Ta, {"⊥"}]
         Actions
             Ta : ShiftAccept 10 prec p
     State 6 [4.1]
         Kernel
             [A ::= Ta ·, {Tb}] prec p
-            [A ::= Ta · Ta, {Tb}] prec p
+            [A ::= Ta · Ta, {Tb}]
         Actions
             Ta : ShiftPrefix 9 prec p
             Tb : Reduce A ::= Ta prec p
@@ -105,15 +105,15 @@ CONFLICT        Reduce A ::= Ta prec p
             "ε" : Reduce S' ::= S "⊥"
     State 9 [8.0]
         Kernel
-            [A ::= Ta Ta ·, {Ta, Tb}] prec p
+            [A ::= Ta Ta ·, {Ta, Tb}]
         Actions
-            Ta : Reduce A ::= Ta Ta prec p
-            Tb : Reduce A ::= Ta Ta prec p
+            Ta : Reduce A ::= Ta Ta
+            Tb : Reduce A ::= Ta Ta
     State 10 [9.0]
         Kernel
-            [S ::= Ta A Ta ·, {"⊥"}] prec p
+            [S ::= Ta A Ta ·, {"⊥"}]
         Actions
-            "⊥" : Reduce S ::= Ta A Ta prec p
+            "⊥" : Reduce S ::= Ta A Ta
     State 11 [10.0]
         Kernel
             [S ::= Tb A Tb ·, {"⊥"}]
