@@ -10,12 +10,12 @@ module T = struct
 
   let pp = Ordmap.pp Attribs.pp
 
-  let fmt_hr symbols prods ?(alt=false) ?(width=0L) t formatter =
+  let fmt_hr precs symbols prods ?(alt=false) ?(width=0L) t formatter =
     List.fmt ~alt ~width (fun (lr0item, attribs) formatter ->
       formatter
       |> Lr0Item.pp_hr symbols lr0item
       |> Fmt.fmt " = "
-      |> Attribs.fmt_hr symbols prods ~alt ~width:(width + 4L) attribs
+      |> Attribs.fmt_hr precs symbols prods ~alt ~width:(width + 4L) attribs
     ) (Ordmap.to_alist t) formatter
 end
 include T

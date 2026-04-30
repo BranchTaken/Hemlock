@@ -58,7 +58,7 @@ module T = struct
     |> Fmt.fmt "; contrib=" |> Contrib.pp contrib
     |> Fmt.fmt "}"
 
-  let fmt_hr symbols prods ?(alt=false) ?(width=0L)
+  let fmt_hr precs symbols prods ?(alt=false) ?(width=0L)
     {conflict_state_index; symbol_index; conflict; isucc_lr1itemset; contrib} formatter =
     formatter
     |> Fmt.fmt "{conflict_state_index="
@@ -69,7 +69,7 @@ module T = struct
     |> Fmt.fmt "); conflict="
     |> Contrib.pp_hr symbols prods conflict
     |> Fmt.fmt "; isucc_lr1itemset="
-    |> Lr1Itemset.fmt_hr symbols ~alt ~width isucc_lr1itemset
+    |> Lr1Itemset.fmt_hr precs symbols ~alt ~width isucc_lr1itemset
     |> Fmt.fmt "; contrib="
     |> Contrib.pp_hr symbols prods contrib
     |> Fmt.fmt "}"
@@ -115,7 +115,7 @@ let contrib_implicit {conflict; _} =
   | false -> Contrib.empty
   | true -> Contrib.shift
 
-let compat_ielr_impl ~resolve symbols prods c0 ({symbol_index; _} as t1) =
+let compat_ielr_impl ~resolve precs symbols prods c0 ({symbol_index; _} as t1) =
   (* Attribs that contribute nothing to the conflict are oblivious to merging. Otherwise resolution
    * must be equal for attribs to be compatible. *)
   match Contrib.is_empty c0 with
@@ -128,18 +128,18 @@ let compat_ielr_impl ~resolve symbols prods c0 ({symbol_index; _} as t1) =
           match resolve with
           | false -> Contrib.equal c0 c1
           | true -> begin
-              let r0 = Contrib.resolve symbols prods symbol_index c0 in
-              let r1 = Contrib.resolve symbols prods symbol_index c1 in
+              let r0 = Contrib.resolve precs symbols prods symbol_index c0 in
+              let r1 = Contrib.resolve precs symbols prods symbol_index c1 in
               Contrib.equal r0 r1
             end
         end
     end
 
-let compat_ielr ~resolve symbols prods
+let compat_ielr ~resolve precs symbols prods
     ({isucc_lr1itemset=il0; _} as t0)
     ({isucc_lr1itemset=il1; _} as t1) =
   (* Test merged kernel attrib compatibility. *)
-  match compat_ielr_impl ~resolve symbols prods (contrib t0) t1 with
+  match compat_ielr_impl ~resolve precs symbols prods (contrib t0) t1 with
   | false -> false
   | true -> begin
       (* Test per kernel attrib compatibility. *)
@@ -152,18 +152,18 @@ let compat_ielr ~resolve symbols prods
         end
       | true, false -> begin
           (* core0 > core1 *)
-          compat_ielr_impl ~resolve symbols prods (contrib_implicit t0) t0
+          compat_ielr_impl ~resolve precs symbols prods (contrib_implicit t0) t0
         end
       | false, true -> begin
           (* core0 < core1 *)
-          compat_ielr_impl ~resolve symbols prods (contrib_implicit t1) t1
+          compat_ielr_impl ~resolve precs symbols prods (contrib_implicit t1) t1
         end
       | false, false -> begin
           (* Overlapping or disjoint. *)
-          compat_ielr_impl ~resolve symbols prods (contrib_implicit t0) t0
-          && compat_ielr_impl ~resolve symbols prods (contrib_implicit t1) t1
+          compat_ielr_impl ~resolve precs symbols prods (contrib_implicit t0) t0
+          && compat_ielr_impl ~resolve precs symbols prods (contrib_implicit t1) t1
         end
     end
 
-let compat_ielr_implicit ~resolve symbols prods t =
-  compat_ielr_impl ~resolve symbols prods (contrib_implicit t) t
+let compat_ielr_implicit ~resolve precs symbols prods t =
+  compat_ielr_impl ~resolve precs symbols prods (contrib_implicit t) t

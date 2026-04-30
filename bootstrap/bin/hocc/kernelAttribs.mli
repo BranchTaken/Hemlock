@@ -7,11 +7,11 @@ type t
 
 include IdentifiableIntf.S with type t := t
 
-val fmt_hr: Symbols.t -> Prods.t -> ?alt:bool -> ?width:uns -> t -> (module Fmt.Formatter)
-  -> (module Fmt.Formatter)
-(** [fmt_hr symbols prods ~alt ~width t formatter] formats a human-readable representation of [t].
-    If [~alt=true], the output is broken across multiple lines with outermost indentation [~width]
-    (elements are indented to [~width + 4]). *)
+val fmt_hr: Precs.t -> Symbols.t -> Prods.t -> ?alt:bool -> ?width:uns -> t
+  -> (module Fmt.Formatter) -> (module Fmt.Formatter)
+(** [fmt_hr precs symbols prods ~alt ~width t formatter] formats a human-readable representation of
+    [t]. If [~alt=true], the output is broken across multiple lines with outermost indentation
+    [~width] (elements are indented to [~width + 4]). *)
 
 module Seq : sig
   type container = t

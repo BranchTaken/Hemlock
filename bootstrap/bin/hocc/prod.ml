@@ -8,6 +8,7 @@ module T = struct
     lhs_index: SymbolIndex.t;
     rhs_indexes: SymbolIndex.t array;
     prec: Prec.t option;
+    prec_useful: bool;
     stmt: Parse.nonterm_prod option;
     callback: Callback.t;
   }
@@ -18,12 +19,13 @@ module T = struct
   let cmp {index=index0; _} {index=index1; _} =
     Index.cmp index0 index1
 
-  let pp {index; lhs_index; rhs_indexes; prec; stmt; callback} formatter =
+  let pp {index; lhs_index; rhs_indexes; prec; prec_useful; stmt; callback} formatter =
     formatter
     |> Fmt.fmt "{index=" |> Index.pp index
     |> Fmt.fmt "; lhs_index=" |> SymbolIndex.pp lhs_index
     |> Fmt.fmt "; rhs_indexes=" |> (Array.pp SymbolIndex.pp) rhs_indexes
     |> Fmt.fmt "; prec=" |> (Option.pp Prec.pp) prec
+    |> Fmt.fmt "; prec_useful=" |> Bool.pp prec_useful
     |> Fmt.fmt "; stmt=" |> (Option.pp Parse.fmt_prod) stmt
     |> Fmt.fmt "; callback=" |> Callback.pp callback
     |> Fmt.fmt "}"
@@ -32,10 +34,14 @@ include T
 include Identifiable.Make(T)
 
 let init ~index ~lhs_index ~rhs_indexes ~prec ~stmt ~callback =
-  {index; lhs_index; rhs_indexes; prec; stmt; callback}
+  {index; lhs_index; rhs_indexes; prec; prec_useful=false; stmt; callback}
 
 let is_synthetic {stmt; _} =
   Option.is_none stmt
 
 let is_epsilon {rhs_indexes; _} =
   Array.is_empty rhs_indexes
+
+let use_prec ({prec; _} as t) =
+  assert (Option.is_some prec);
+  {t with prec_useful=true}

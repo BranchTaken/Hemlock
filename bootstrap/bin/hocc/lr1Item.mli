@@ -13,7 +13,7 @@ type t = {
 
 include IdentifiableIntf.S with type t := t
 
-val pp_hr: Symbols.t -> t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
+val pp_hr: Precs.t -> Symbols.t -> t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
 (** Formatter which outputs LR(1) item in human-readable form. *)
 
 val init: lr0item:Lr0Item.t -> follow:Bitset.t -> t

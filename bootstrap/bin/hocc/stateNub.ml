@@ -68,12 +68,13 @@ let merge symbols GotoNub.{goto; kernel_attribs=gotonub_ka; attribs=gotonub_a; _
   let attribs = Attribs.union gotonub_a statenub_a in
   merged, {lr1itemsetclosure; isocores_sn; isocore_set_sn; kernel_attribs; attribs}
 
-let compat_ielr ~resolve symbols prods GotoNub.{attribs=g_a; _} {attribs=t_a; _} =
+let compat_ielr ~resolve precs symbols prods GotoNub.{attribs=g_a; _} {attribs=t_a; _} =
   Attribs.fold2_until ~init:true ~f:(fun _compat attrib_opt0 attrib_opt1 ->
     let compat = match attrib_opt0, attrib_opt1 with
-      | Some attrib0, Some attrib1 -> Attrib.compat_ielr ~resolve symbols prods attrib0 attrib1
+      | Some attrib0, Some attrib1 ->
+        Attrib.compat_ielr ~resolve precs symbols prods attrib0 attrib1
       | Some attrib, None
-      | None, Some attrib -> Attrib.compat_ielr_implicit ~resolve symbols prods attrib
+      | None, Some attrib -> Attrib.compat_ielr_implicit ~resolve precs symbols prods attrib
       | None, None -> not_reached ()
     in
     compat, not compat

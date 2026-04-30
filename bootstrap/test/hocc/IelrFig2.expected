@@ -14,7 +14,7 @@ hocc: Tracing automaton (.+=actions[+gotos])+...+.+.+
 hocc: 2 unreachable states
 hocc: Reindexing 19 LR(1) states
 hocc: 0 unresolvable conflicts in 0 states
-hocc: Searching for unused precedences/tokens/non-terminals/productions
+hocc: Searching for unused precedences/associativities/tokens/non-terminals/productions
 hocc: 1 unused production:
 hocc:    S ::= Tb C Ta
 hocc: Generating text report

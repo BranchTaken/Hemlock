@@ -16,6 +16,9 @@ type t = {
   assoc: Assoc.t option;
   (** Corresponding associativity, if any. *)
 
+  assoc_useful: bool;
+  (** True if assoc used for conflict resolution. *)
+
   doms: Bitset.t;
   (** Set of precedence sets which dominate this precedence. *)
 
@@ -23,7 +26,7 @@ type t = {
   (** Declaration AST. *)
 }
 
-include FormattableIntf.SMono with type t := t
+include IdentifiableIntf.S with type t := t
 
 val pp_hr: t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
 (** Formatter which outputs precedence set in human-readable form. *)
@@ -34,3 +37,9 @@ val src_fmt: t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
 val init: index:Index.t -> names:string array -> assoc:(Assoc.t option) -> doms:Bitset.t
   -> stmt:Parse.nonterm_prec_set -> t
 (** Used only by [Precs.init]. *)
+
+val name_of_name_index: PrecIndex.t -> t -> string
+(** [name_of_name_index name_index t] returns the precedence name corresponding to [name_index]. *)
+
+val use_assoc: t -> t
+(** [use_assoc t] returns a derivative ot [t] with [assoc_useful] set to true. *)

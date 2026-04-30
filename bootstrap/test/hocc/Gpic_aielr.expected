@@ -14,6 +14,134 @@ hocc: Tracing automaton (.+=actions[+gotos])+.+....+....+..+.+.+.+++
 hocc: 3 unreachable states
 hocc: Reindexing 447 LR(1) states
 hocc: 239 unresolvable conflicts in 239 states (239 ⊥, 0 shift-reduce, 0 reduce-reduce)
-hocc: Searching for unused precedences/tokens/non-terminals/productions
+hocc: Searching for unused precedences/associativities/tokens/non-terminals/productions
+hocc: 17 unused precedence set associativities:
+hocc:    right pXmark < pCarat
+hocc:    left pAnd < pAdd
+hocc:    left pBetween < pAnd
+hocc:    left pComma < pOror
+hocc:    left pRelative < pComma
+hocc:    left pObjectRelative < pRelative
+hocc:    left pDir < pObjectRelative
+hocc:    left pDim < pDir
+hocc:    left pObject < pDim
+hocc:    left pOrd < pObject
+hocc:    left pTrig < pOrd
+hocc:    left pLabel < pTrig
+hocc:    left pStyle < pLabel
+hocc:    left pJust < pLr
+hocc:    left pText < pJust
+hocc:    left pPlot < pText
+hocc:    left pDot < pPlot
+hocc: 23 unused token precedences:
+hocc:    token AND prec pAnd
+hocc:    token HEIGHT prec pDim
+hocc:    token RADIUS prec pDim
+hocc:    token WIDTH prec pDim
+hocc:    token DIAMETER prec pDim
+hocc:    token FROM prec pDim
+hocc:    token TO prec pDim
+hocc:    token AT prec pDim
+hocc:    token THICKNESS prec pDim
+hocc:    token CHOP prec pStyle
+hocc:    token SOLID prec pStyle
+hocc:    token DASHED prec pStyle
+hocc:    token DOTTED prec pStyle
+hocc:    token UP prec pStyle
+hocc:    token DOWN prec pStyle
+hocc:    token FILL prec pStyle
+hocc:    token COLORED prec pStyle
+hocc:    token OUTLINED prec pStyle
+hocc:    token LJUST prec pJust
+hocc:    token RJUST prec pJust
+hocc:    token ABOVE prec pJust
+hocc:    token BELOW prec pJust
+hocc:    token PLOT prec pPlot
 hocc: 1 unused production:
 hocc:    Path ::= ORDINAL LAST Object_type Relative_path prec pTrig
+hocc: 85 unused production precedences:
+hocc:    Placeless_element ::= UP prec pStyle
+hocc:    Placeless_element ::= DOWN prec pStyle
+hocc:    Placeless_element ::= LEFT prec pLr
+hocc:    Placeless_element ::= RIGHT prec pLr
+hocc:    Placeless_element ::= COPY TEXT prec pText
+hocc:    Reset_variables ::= RESET VARIABLE prec pTrig
+hocc:    Reset_variables ::= Reset_variables VARIABLE prec pTrig
+hocc:    Reset_variables ::= Reset_variables "," VARIABLE prec pTrig
+hocc:    Until ::= UNTIL TEXT prec pText
+hocc:    Text_expr ::= Text EQUALEQUAL Text prec pEq
+hocc:    Text_expr ::= Text NOTEQUAL Text prec pEq
+hocc:    Optional_by ::= BY "*" Expr prec pMul
+hocc:    Object_spec ::= BOX prec pObject
+hocc:    Object_spec ::= CIRCLE prec pObject
+hocc:    Object_spec ::= ELLIPSE prec pObject
+hocc:    Object_spec ::= ARC prec pObject
+hocc:    Object_spec ::= LINE prec pObject
+hocc:    Object_spec ::= ARROW prec pObject
+hocc:    Object_spec ::= SPLINE prec pObject
+hocc:    Object_spec ::= Text prec pText
+hocc:    Object_spec ::= PLOT Expr Text prec pPlot
+hocc:    Object_spec ::= Object_spec SOLID prec pStyle
+hocc:    Object_spec ::= Object_spec COLORED Text prec pStyle
+hocc:    Object_spec ::= Object_spec OUTLINED Text prec pStyle
+hocc:    Object_spec ::= Object_spec Text prec pText
+hocc:    Object_spec ::= Object_spec LJUST prec pJust
+hocc:    Object_spec ::= Object_spec RJUST prec pJust
+hocc:    Object_spec ::= Object_spec ABOVE prec pJust
+hocc:    Object_spec ::= Object_spec BELOW prec pJust
+hocc:    Text ::= TEXT prec pText
+hocc:    Sprintf_args ::= Sprintf_args "," Expr prec pComma
+hocc:    Position_not_place ::= Position "+" Expr_pair prec pAdd
+hocc:    Position_not_place ::= Position "-" Expr_pair prec pAdd
+hocc:    Position_not_place ::= Expr "<" Position "," Position ">" prec pRel
+hocc:    Between ::= BETWEEN prec pBetween
+hocc:    Between ::= OF THE WAY BETWEEN prec pBetween
+hocc:    Place ::= Corner OF Label prec pBetween
+hocc:    Place ::= HERE prec pOrd
+hocc:    Label ::= Label "." LABEL prec pLabel
+hocc:    Optional_ordinal_last ::= Ordinal LAST prec pTrig
+hocc:    Object_type ::= BOX prec pObject
+hocc:    Object_type ::= CIRCLE prec pObject
+hocc:    Object_type ::= ELLIPSE prec pObject
+hocc:    Object_type ::= ARC prec pObject
+hocc:    Object_type ::= LINE prec pObject
+hocc:    Object_type ::= ARROW prec pObject
+hocc:    Object_type ::= SPLINE prec pObject
+hocc:    Object_type ::= TEXT prec pText
+hocc:    Label_path ::= "." LABEL prec pLabel
+hocc:    Label_path ::= Label_path "." LABEL prec pLabel
+hocc:    Path ::= LAST Object_type Relative_path prec pTrig
+hocc:    Path ::= ORDINAL Object_type Relative_path prec pOrd
+hocc:    Path ::= LABEL Relative_path prec pLabel
+hocc:    Corner ::= DOT_N prec pDir
+hocc:    Corner ::= DOT_E prec pDir
+hocc:    Corner ::= DOT_W prec pDir
+hocc:    Corner ::= DOT_S prec pDir
+hocc:    Corner ::= DOT_NE prec pDir
+hocc:    Corner ::= DOT_SE prec pDir
+hocc:    Corner ::= DOT_NW prec pDir
+hocc:    Corner ::= DOT_SW prec pDir
+hocc:    Corner ::= DOT_C prec pDir
+hocc:    Corner ::= DOT_START prec pObjectRelative
+hocc:    Corner ::= DOT_END prec pObjectRelative
+hocc:    Corner ::= TOP prec pObjectRelative
+hocc:    Corner ::= BOTTOM prec pObjectRelative
+hocc:    Corner ::= UPPER LEFT prec pLr
+hocc:    Corner ::= LOWER LEFT prec pLr
+hocc:    Corner ::= UPPER RIGHT prec pLr
+hocc:    Corner ::= LOWER RIGHT prec pLr
+hocc:    Corner ::= LEFT_CORNER prec pObjectRelative
+hocc:    Corner ::= RIGHT_CORNER prec pObjectRelative
+hocc:    Corner ::= UPPER LEFT_CORNER prec pObjectRelative
+hocc:    Corner ::= LOWER LEFT_CORNER prec pObjectRelative
+hocc:    Corner ::= UPPER RIGHT_CORNER prec pObjectRelative
+hocc:    Corner ::= LOWER RIGHT_CORNER prec pObjectRelative
+hocc:    Corner ::= NORTH prec pRelative
+hocc:    Corner ::= SOUTH prec pRelative
+hocc:    Corner ::= EAST prec pRelative
+hocc:    Corner ::= WEST prec pRelative
+hocc:    Corner ::= CENTER prec pRelative
+hocc:    Corner ::= START prec pRelative
+hocc:    Corner ::= END prec pRelative
+hocc:    Expr ::= VARIABLE prec pTrig
+hocc:    Expr ::= NUMBER prec pTrig

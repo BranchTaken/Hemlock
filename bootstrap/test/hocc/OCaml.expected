@@ -5,9 +5,269 @@ hocc: LR(1) item set compatibility: lalr
 hocc: Generating LR(1) item set closures (workq/total) 230/1_000 0/1_878
 hocc: Generating 1_878 LR(1) states
 hocc: 0 unresolvable conflicts in 0 states
-hocc: Searching for unused precedences/tokens/non-terminals/productions
+hocc: Searching for unused precedences/associativities/tokens/non-terminals/productions
+hocc: 23 unused precedence set associativities:
+hocc:    nonassoc p_BACKQUOTE, p_BANG, p_BEGIN, p_CHAR, p_FALSE, p_FLOAT, p_INT, p_LBRACE, p_LBRACELESS, p_LBRACKET, p_LBRACKETBAR, p_LBRACKETPERCENT, p_LIDENT, p_LPAREN, p_NEW, p_OBJECT, p_PREFIXOP, p_QUOTED_STRING_EXPR, p_STRING, p_TRUE, p_UIDENT
+hocc:    nonassoc p_DOT, p_DOTOP < p_BACKQUOTE
+hocc:    nonassoc p_below_DOT < p_DOT
+hocc:    nonassoc p_HASH < p_HASHOP
+hocc:    nonassoc p_below_HASH < p_HASH
+hocc:    nonassoc p_prec_constr_appl < p_below_HASH
+hocc:    nonassoc p_prec_constant_constructor < p_prec_constr_appl
+hocc:    nonassoc p_prec_unary_minus, p_prec_unary_plus < p_prec_constant_constructor
+hocc:    nonassoc p_LBRACKETAT < p_COLONCOLON
+hocc:    nonassoc p_below_LBRACKETAT < p_LBRACKETAT
+hocc:    nonassoc p_below_EQUAL < p_EQUAL
+hocc:    nonassoc p_below_COMMA < p_COMMA
+hocc:    nonassoc p_AS < p_BAR
+hocc:    nonassoc p_LESSMINUS < p_COLONEQUAL
+hocc:    nonassoc p_ELSE < p_LESSMINUS
+hocc:    nonassoc p_THEN < p_ELSE
+hocc:    nonassoc p_AND < p_THEN
+hocc:    nonassoc p_FUNCTION, p_WITH < p_AND
+hocc:    nonassoc p_below_WITH < p_FUNCTION
+hocc:    nonassoc p_LET < p_below_WITH
+hocc:    nonassoc p_SEMI < p_LET
+hocc:    nonassoc p_below_SEMI < p_SEMI
+hocc:    nonassoc p_IN < p_below_SEMI
 hocc: 4 unused tokens:
 hocc:    token COMMENT
 hocc:    token DOCSTRING
 hocc:    token EOL
 hocc:    token GREATERRBRACKET ">]"
+hocc: 4 unused token precedences:
+hocc:    token FUNCTION "function" prec p_FUNCTION
+hocc:    token IN "in" prec p_IN
+hocc:    token LESSMINUS "<-" prec p_LESSMINUS
+hocc:    token THEN "then" prec p_THEN
+hocc: 230 unused production precedences:
+hocc:    N_option_BAR_ ::= "|" prec p_BAR
+hocc:    N_option_SEMI_ ::= ";" prec p_SEMI
+hocc:    N_option_preceded_AS_mkrhs_LIDENT___ ::= "as" LIDENT prec p_LIDENT
+hocc:    N_option_preceded_EQUAL_expr__ ::= "=" N_expr prec p_EQUAL
+hocc:    N_option_preceded_EQUAL_module_type__ ::= "=" N_module_type prec p_EQUAL
+hocc:    N_option_preceded_EQUAL_pattern__ ::= "=" N_pattern prec p_EQUAL
+hocc:    N_option_preceded_EQUAL_seq_expr__ ::= "=" N_seq_expr prec p_EQUAL
+hocc:    N_list_and_class_declaration_ ::= "and" N_list_attribute_ N_virtual_flag N_formal_class_parameters LIDENT N_class_fun_binding N_list_post_item_attribute_ N_list_and_class_declaration_ prec p_LIDENT
+hocc:    N_list_and_class_type_declaration_ ::= "and" N_list_attribute_ N_virtual_flag N_formal_class_parameters LIDENT "=" N_class_signature N_list_post_item_attribute_ N_list_and_class_type_declaration_ prec p_EQUAL
+hocc:    N_list_and_module_binding_ ::= "and" N_list_attribute_ N_module_name N_module_binding_body N_list_post_item_attribute_ N_list_and_module_binding_ prec p_AND
+hocc:    N_list_generic_and_type_declaration_type_kind__ ::= "and" N_list_attribute_ N_type_parameters LIDENT N_type_kind N_reversed_llist_preceded_CONSTRAINT_constrain__ N_list_post_item_attribute_ N_list_generic_and_type_declaration_type_kind__ prec p_LIDENT
+hocc:    N_list_generic_and_type_declaration_type_subst_kind__ ::= "and" N_list_attribute_ N_type_parameters LIDENT ":=" N_nonempty_type_kind N_reversed_llist_preceded_CONSTRAINT_constrain__ N_list_post_item_attribute_ N_list_generic_and_type_declaration_type_subst_kind__ prec p_COLONEQUAL
+hocc:    N_nonempty_list_mkrhs_LIDENT__ ::= LIDENT prec p_LIDENT
+hocc:    N_nonempty_list_mkrhs_LIDENT__ ::= LIDENT N_nonempty_list_mkrhs_LIDENT__ prec p_LIDENT
+hocc:    N_nonempty_list_raw_string_ ::= STRING prec p_STRING
+hocc:    N_nonempty_list_raw_string_ ::= STRING N_nonempty_list_raw_string_ prec p_STRING
+hocc:    N_reversed_separated_nonempty_llist_AMPERSAND_core_type_no_attr_ ::= N_reversed_separated_nonempty_llist_AMPERSAND_core_type_no_attr_ "&" N_alias_type prec p_AMPERSAND
+hocc:    N_reversed_separated_nonempty_llist_AND_with_constraint_ ::= N_reversed_separated_nonempty_llist_AND_with_constraint_ "and" N_with_constraint prec p_AND
+hocc:    N_reversed_separated_nonempty_llist_BAR_row_field_ ::= N_reversed_separated_nonempty_llist_BAR_row_field_ "|" N_row_field prec p_BAR
+hocc:    N_reversed_separated_nonempty_llist_COMMA_core_type_ ::= N_reversed_separated_nonempty_llist_COMMA_core_type_ "," N_core_type prec p_COMMA
+hocc:    N_reversed_separated_nonempty_llist_COMMA_type_parameter_ ::= N_reversed_separated_nonempty_llist_COMMA_type_parameter_ "," N_type_parameter prec p_COMMA
+hocc:    N_reversed_separated_nonempty_llist_STAR_atomic_type_ ::= N_reversed_separated_nonempty_llist_STAR_atomic_type_ "*" N_atomic_type prec p_STAR
+hocc:    N_reversed_separated_nontrivial_llist_COMMA_core_type_ ::= N_reversed_separated_nontrivial_llist_COMMA_core_type_ "," N_core_type prec p_COMMA
+hocc:    N_reversed_separated_nontrivial_llist_COMMA_core_type_ ::= N_core_type "," N_core_type prec p_COMMA
+hocc:    N_separated_or_terminated_nonempty_list_SEMI_expr_ ::= N_expr ";" prec p_SEMI
+hocc:    N_separated_or_terminated_nonempty_list_SEMI_expr_ ::= N_expr ";" N_separated_or_terminated_nonempty_list_SEMI_expr_ prec p_SEMI
+hocc:    N_separated_or_terminated_nonempty_list_SEMI_object_expr_field_ ::= LIDENT N_option_preceded_EQUAL_expr__ prec p_LIDENT
+hocc:    N_separated_or_terminated_nonempty_list_SEMI_object_expr_field_ ::= LIDENT N_option_preceded_EQUAL_expr__ ";" prec p_SEMI
+hocc:    N_separated_or_terminated_nonempty_list_SEMI_object_expr_field_ ::= LIDENT N_option_preceded_EQUAL_expr__ ";" N_separated_or_terminated_nonempty_list_SEMI_object_expr_field_ prec p_SEMI
+hocc:    N_separated_or_terminated_nonempty_list_SEMI_pattern_ ::= N_pattern ";" prec p_SEMI
+hocc:    N_separated_or_terminated_nonempty_list_SEMI_pattern_ ::= N_pattern ";" N_separated_or_terminated_nonempty_list_SEMI_pattern_ prec p_SEMI
+hocc:    N_separated_or_terminated_nonempty_list_SEMI_record_expr_field_ ::= N_label_longident N_option_type_constraint_ N_option_preceded_EQUAL_expr__ ";" prec p_SEMI
+hocc:    N_separated_or_terminated_nonempty_list_SEMI_record_expr_field_ ::= N_label_longident N_option_type_constraint_ N_option_preceded_EQUAL_expr__ ";" N_separated_or_terminated_nonempty_list_SEMI_record_expr_field_ prec p_SEMI
+hocc:    N_reversed_preceded_or_separated_nonempty_llist_BAR_match_case_ ::= "|" N_match_case prec p_BAR
+hocc:    N_reversed_preceded_or_separated_nonempty_llist_BAR_match_case_ ::= N_reversed_preceded_or_separated_nonempty_llist_BAR_match_case_ "|" N_match_case prec p_BAR
+hocc:    N_listx_SEMI_record_pat_field_UNDERSCORE_ ::= N_label_longident N_option_preceded_COLON_core_type__ N_option_preceded_EQUAL_pattern__ ";" prec p_SEMI
+hocc:    N_listx_SEMI_record_pat_field_UNDERSCORE_ ::= N_label_longident N_option_preceded_COLON_core_type__ N_option_preceded_EQUAL_pattern__ ";" N_listx_SEMI_record_pat_field_UNDERSCORE_ prec p_SEMI
+hocc:    N_module_name ::= UIDENT prec p_UIDENT
+hocc:    N_structure_item ::= "type" N_ext N_list_attribute_ N_type_parameters N_type_longident "+=" N_private_flag N_reversed_bar_llist_extension_constructor_ N_list_post_item_attribute_ prec p_PLUSEQ
+hocc:    N_structure_item ::= "type" N_ext N_list_attribute_ "nonrec" N_type_parameters N_type_longident "+=" N_private_flag N_reversed_bar_llist_extension_constructor_ N_list_post_item_attribute_ prec p_PLUSEQ
+hocc:    N_structure_item ::= "class" N_ext N_list_attribute_ N_virtual_flag N_formal_class_parameters LIDENT N_class_fun_binding N_list_post_item_attribute_ N_list_and_class_declaration_ prec p_LIDENT
+hocc:    N_module_binding_body ::= "=" N_module_expr prec p_EQUAL
+hocc:    N_module_binding_body ::= ":" N_module_type "=" N_module_expr prec p_EQUAL
+hocc:    N_open_declaration ::= "open" "!" N_ext N_list_attribute_ N_module_expr N_list_post_item_attribute_ prec p_BANG
+hocc:    N_open_description ::= "open" "!" N_ext N_list_attribute_ N_mod_ext_longident N_list_post_item_attribute_ prec p_BANG
+hocc:    N_signature_item ::= "type" N_ext N_list_attribute_ N_type_parameters N_type_longident "+=" N_private_flag N_reversed_bar_llist_extension_constructor_declaration_ N_list_post_item_attribute_ prec p_PLUSEQ
+hocc:    N_signature_item ::= "type" N_ext N_list_attribute_ "nonrec" N_type_parameters N_type_longident "+=" N_private_flag N_reversed_bar_llist_extension_constructor_declaration_ N_list_post_item_attribute_ prec p_PLUSEQ
+hocc:    N_signature_item ::= "module" N_ext N_list_attribute_ N_module_name "=" N_mod_longident N_list_post_item_attribute_ prec p_EQUAL
+hocc:    N_module_subst ::= "module" N_ext N_list_attribute_ UIDENT ":=" N_mod_ext_longident N_list_post_item_attribute_ prec p_COLONEQUAL
+hocc:    N_module_type_subst ::= "module" "type" N_ext N_list_attribute_ N_ident ":=" N_module_type N_list_post_item_attribute_ prec p_COLONEQUAL
+hocc:    N_class_fun_binding ::= "=" N_class_expr prec p_EQUAL
+hocc:    N_class_fun_binding ::= ":" N_class_type "=" N_class_expr prec p_EQUAL
+hocc:    N_class_field ::= "inherit" "!" N_list_attribute_ N_class_expr N_option_preceded_AS_mkrhs_LIDENT___ N_list_post_item_attribute_ prec p_BANG
+hocc:    N_value ::= N_list_attribute_ N_mutable_flag LIDENT "=" N_seq_expr prec p_EQUAL
+hocc:    N_value ::= "!" N_list_attribute_ N_mutable_flag LIDENT "=" N_seq_expr prec p_EQUAL
+hocc:    N_value ::= N_list_attribute_ N_mutable_flag LIDENT N_type_constraint "=" N_seq_expr prec p_EQUAL
+hocc:    N_value ::= "!" N_list_attribute_ N_mutable_flag LIDENT N_type_constraint "=" N_seq_expr prec p_EQUAL
+hocc:    N_method_ ::= N_list_attribute_ N_private_flag LIDENT N_strict_binding prec p_LIDENT
+hocc:    N_method_ ::= "!" N_list_attribute_ N_private_flag LIDENT N_strict_binding prec p_LIDENT
+hocc:    N_method_ ::= N_list_attribute_ N_private_flag LIDENT ":" N_possibly_poly_core_type_ "=" N_seq_expr prec p_EQUAL
+hocc:    N_method_ ::= "!" N_list_attribute_ N_private_flag LIDENT ":" N_possibly_poly_core_type_ "=" N_seq_expr prec p_EQUAL
+hocc:    N_method_ ::= N_list_attribute_ N_private_flag LIDENT ":" "type" N_nonempty_list_mkrhs_LIDENT__ "." N_core_type "=" N_seq_expr prec p_EQUAL
+hocc:    N_method_ ::= "!" N_list_attribute_ N_private_flag LIDENT ":" "type" N_nonempty_list_mkrhs_LIDENT__ "." N_core_type "=" N_seq_expr prec p_EQUAL
+hocc:    N_class_type ::= N_optlabel N_tuple_type "->" N_class_type prec p_MINUSGREATER
+hocc:    N_class_type ::= LIDENT ":" N_tuple_type "->" N_class_type prec p_MINUSGREATER
+hocc:    N_class_type ::= N_tuple_type "->" N_class_type prec p_MINUSGREATER
+hocc:    N_constrain_field ::= N_core_type "=" N_core_type prec p_EQUAL
+hocc:    N_class_type_declarations ::= "class" "type" N_ext N_list_attribute_ N_virtual_flag N_formal_class_parameters LIDENT "=" N_class_signature N_list_post_item_attribute_ N_list_and_class_type_declaration_ prec p_EQUAL
+hocc:    N_seq_expr ::= N_expr ";" N_seq_expr prec p_SEMI
+hocc:    N_seq_expr ::= N_expr ";" "\%" N_attr_id N_seq_expr prec p_PERCENT
+hocc:    N_labeled_simple_pattern ::= "?" LIDENT prec p_LIDENT
+hocc:    N_labeled_simple_pattern ::= "~" LIDENT prec p_LIDENT
+hocc:    N_pattern_var ::= LIDENT prec p_LIDENT
+hocc:    N_label_let_pattern ::= LIDENT prec p_LIDENT
+hocc:    N_expr ::= "let" "module" N_ext N_list_attribute_ N_module_name N_module_binding_body "in" N_seq_expr prec p_IN
+hocc:    N_expr ::= "let" "exception" N_ext N_list_attribute_ N_constr_ident N_generalized_constructor_arguments N_list_attribute_ "in" N_seq_expr prec p_IN
+hocc:    N_expr ::= "let" "open" N_ext N_list_attribute_ N_module_expr "in" N_seq_expr prec p_IN
+hocc:    N_expr ::= "let" "open" "!" N_ext N_list_attribute_ N_module_expr "in" N_seq_expr prec p_IN
+hocc:    N_expr ::= N_let_bindings_ext_ "in" N_seq_expr prec p_IN
+hocc:    N_expr ::= LETOP N_letop_bindings "in" N_seq_expr prec p_IN
+hocc:    N_simple_expr ::= "new" N_ext N_list_attribute_ N_class_longident prec p_NEW
+hocc:    N_simple_expr ::= N_simple_expr "." N_label_longident prec p_DOT
+hocc:    N_simple_expr ::= N_simple_expr "#" LIDENT prec p_LIDENT
+hocc:    N_labeled_simple_expr ::= "~" LIDENT prec p_LIDENT
+hocc:    N_labeled_simple_expr ::= "?" LIDENT prec p_LIDENT
+hocc:    N_let_binding_body_no_punning ::= N_val_ident N_type_constraint "=" N_seq_expr prec p_EQUAL
+hocc:    N_let_binding_body_no_punning ::= N_val_ident ":" N_reversed_nonempty_llist_typevar_ "." N_core_type "=" N_seq_expr prec p_EQUAL
+hocc:    N_let_binding_body_no_punning ::= N_val_ident ":" "type" N_nonempty_list_mkrhs_LIDENT__ "." N_core_type "=" N_seq_expr prec p_EQUAL
+hocc:    N_let_binding_body_no_punning ::= N_pattern_no_exn "=" N_seq_expr prec p_EQUAL
+hocc:    N_let_binding_body_no_punning ::= N_simple_pattern_not_ident ":" N_core_type "=" N_seq_expr prec p_EQUAL
+hocc:    N_let_bindings_ext_ ::= "let" N_ext N_list_attribute_ N_rec_flag N_let_binding_body N_list_post_item_attribute_ prec p_LET
+hocc:    N_let_bindings_no_ext_ ::= "let" N_list_attribute_ N_rec_flag N_let_binding_body N_list_post_item_attribute_ prec p_LET
+hocc:    N_let_bindings_no_ext_ ::= "let" "\%" N_attr_id N_list_attribute_ N_rec_flag N_let_binding_body N_list_post_item_attribute_ prec p_PERCENT
+hocc:    N_and_let_binding ::= "and" N_list_attribute_ N_let_binding_body N_list_post_item_attribute_ prec p_AND
+hocc:    N_letop_binding_body ::= N_simple_pattern ":" N_core_type "=" N_seq_expr prec p_EQUAL
+hocc:    N_letop_binding_body ::= N_pattern_no_exn "=" N_seq_expr prec p_EQUAL
+hocc:    N_fun_binding ::= N_type_constraint "=" N_seq_expr prec p_EQUAL
+hocc:    N_strict_binding ::= "=" N_seq_expr prec p_EQUAL
+hocc:    N_match_case ::= N_pattern "->" N_seq_expr prec p_MINUSGREATER
+hocc:    N_match_case ::= N_pattern "when" N_seq_expr "->" N_seq_expr prec p_MINUSGREATER
+hocc:    N_match_case ::= N_pattern "->" "." prec p_DOT
+hocc:    N_fun_def ::= "->" N_seq_expr prec p_MINUSGREATER
+hocc:    N_fun_def ::= ":" N_atomic_type "->" N_seq_expr prec p_MINUSGREATER
+hocc:    N_record_expr_content ::= N_simple_expr "with" N_separated_or_terminated_nonempty_list_SEMI_record_expr_field_ prec p_WITH
+hocc:    N_pattern ::= N_pattern "as" N_val_ident prec p_AS
+hocc:    N_pattern_no_exn ::= N_pattern_no_exn "as" N_val_ident prec p_AS
+hocc:    N_simple_pattern_not_ident ::= "#" N_type_longident prec p_HASH
+hocc:    N_simple_pattern_not_ident ::= N_mod_longident "." N_simple_delimited_pattern prec p_DOT
+hocc:    N_primitive_declaration ::= "external" N_ext N_list_attribute_ N_val_ident ":" N_possibly_poly_core_type_ "=" N_nonempty_list_raw_string_ N_list_post_item_attribute_ prec p_EQUAL
+hocc:    N_generic_type_declaration_no_nonrec_flag_type_subst_kind_ ::= "type" N_ext N_list_attribute_ N_type_parameters LIDENT ":=" N_nonempty_type_kind N_reversed_llist_preceded_CONSTRAINT_constrain__ N_list_post_item_attribute_ prec p_COLONEQUAL
+hocc:    N_generic_type_declaration_no_nonrec_flag_type_subst_kind_ ::= "type" N_ext N_list_attribute_ "nonrec" N_type_parameters LIDENT ":=" N_nonempty_type_kind N_reversed_llist_preceded_CONSTRAINT_constrain__ N_list_post_item_attribute_ prec p_COLONEQUAL
+hocc:    N_generic_type_declaration_nonrec_flag_type_kind_ ::= "type" N_ext N_list_attribute_ N_type_parameters LIDENT N_type_kind N_reversed_llist_preceded_CONSTRAINT_constrain__ N_list_post_item_attribute_ prec p_LIDENT
+hocc:    N_generic_type_declaration_nonrec_flag_type_kind_ ::= "type" N_ext N_list_attribute_ "nonrec" N_type_parameters LIDENT N_type_kind N_reversed_llist_preceded_CONSTRAINT_constrain__ N_list_post_item_attribute_ prec p_LIDENT
+hocc:    N_nonempty_type_kind ::= N_core_type "=" N_constructor_declarations prec p_EQUAL
+hocc:    N_type_kind ::= "=" N_nonempty_type_kind prec p_EQUAL
+hocc:    N_type_variance ::= "+" prec p_PLUS
+hocc:    N_type_variance ::= "-" prec p_MINUS
+hocc:    N_type_variance ::= "!" prec p_BANG
+hocc:    N_type_variance ::= "+" "!" prec p_BANG
+hocc:    N_type_variance ::= "!" "+" prec p_PLUS
+hocc:    N_type_variance ::= "-" "!" prec p_BANG
+hocc:    N_type_variance ::= "!" "-" prec p_MINUS
+hocc:    N_type_variance ::= INFIXOP2 prec p_INFIXOP2
+hocc:    N_type_variance ::= PREFIXOP prec p_PREFIXOP
+hocc:    N_constructor_declarations ::= "|" prec p_BAR
+hocc:    N_generic_constructor_declaration_BAR_ ::= "|" N_constr_ident N_generalized_constructor_arguments N_list_attribute_ prec p_BAR
+hocc:    N_str_exception_declaration ::= "exception" N_ext N_list_attribute_ N_constr_ident "=" N_constr_longident N_list_attribute_ N_list_post_item_attribute_ prec p_EQUAL
+hocc:    N_label_declaration_semi ::= N_mutable_flag LIDENT ":" N_possibly_poly_core_type_no_attr_ N_list_attribute_ ";" N_list_attribute_ prec p_SEMI
+hocc:    N_extension_constructor_rebind_BAR_ ::= "|" N_constr_ident "=" N_constr_longident N_list_attribute_ prec p_EQUAL
+hocc:    N_extension_constructor_rebind_epsilon_ ::= N_constr_ident "=" N_constr_longident N_list_attribute_ prec p_EQUAL
+hocc:    N_with_constraint ::= "type" N_type_parameters N_label_longident ":=" N_alias_type prec p_COLONEQUAL
+hocc:    N_with_constraint ::= "module" N_mod_longident "=" N_mod_ext_longident prec p_EQUAL
+hocc:    N_with_constraint ::= "module" N_mod_longident ":=" N_mod_ext_longident prec p_COLONEQUAL
+hocc:    N_with_type_binder ::= "=" prec p_EQUAL
+hocc:    N_possibly_poly_core_type_ ::= N_reversed_nonempty_llist_typevar_ "." N_core_type prec p_DOT
+hocc:    N_possibly_poly_core_type_no_attr_ ::= N_reversed_nonempty_llist_typevar_ "." N_alias_type prec p_DOT
+hocc:    N_function_type ::= N_optlabel N_tuple_type "->" N_function_type prec p_MINUSGREATER
+hocc:    N_function_type ::= LIDENT ":" N_tuple_type "->" N_function_type prec p_MINUSGREATER
+hocc:    N_function_type ::= N_tuple_type "->" N_function_type prec p_MINUSGREATER
+hocc:    N_atomic_type ::= "<" N_meth_list ">" prec p_GREATER
+hocc:    N_atomic_type ::= "<" ">" prec p_GREATER
+hocc:    N_atomic_type ::= "#" N_clty_longident prec p_HASH
+hocc:    N_atomic_type ::= N_atomic_type "#" N_clty_longident prec p_HASH
+hocc:    N_atomic_type ::= "(" N_reversed_separated_nontrivial_llist_COMMA_core_type_ ")" "#" N_clty_longident prec p_HASH
+hocc:    N_opt_ampersand ::= "&" prec p_AMPERSAND
+hocc:    N_meth_list ::= LIDENT ":" N_possibly_poly_core_type_no_attr_ N_list_attribute_ ";" N_list_attribute_ N_meth_list prec p_SEMI
+hocc:    N_meth_list ::= N_atomic_type ";" N_meth_list prec p_SEMI
+hocc:    N_meth_list ::= LIDENT ":" N_possibly_poly_core_type_no_attr_ N_list_attribute_ ";" N_list_attribute_ prec p_SEMI
+hocc:    N_meth_list ::= N_atomic_type ";" prec p_SEMI
+hocc:    N_constant ::= INT prec p_INT
+hocc:    N_constant ::= CHAR prec p_CHAR
+hocc:    N_constant ::= STRING prec p_STRING
+hocc:    N_constant ::= FLOAT prec p_FLOAT
+hocc:    N_signed_constant ::= "-" INT prec p_INT
+hocc:    N_signed_constant ::= "-" FLOAT prec p_FLOAT
+hocc:    N_signed_constant ::= "+" INT prec p_INT
+hocc:    N_signed_constant ::= "+" FLOAT prec p_FLOAT
+hocc:    N_ident ::= UIDENT prec p_UIDENT
+hocc:    N_ident ::= LIDENT prec p_LIDENT
+hocc:    N_val_ident ::= LIDENT prec p_LIDENT
+hocc:    N_operator ::= PREFIXOP prec p_PREFIXOP
+hocc:    N_operator ::= DOTOP "(" N_index_mod ")" "<-" prec p_LESSMINUS
+hocc:    N_operator ::= DOTOP "[" N_index_mod "]" "<-" prec p_LESSMINUS
+hocc:    N_operator ::= DOTOP "{" N_index_mod "}" "<-" prec p_LESSMINUS
+hocc:    N_operator ::= HASHOP prec p_HASHOP
+hocc:    N_operator ::= "!" prec p_BANG
+hocc:    N_operator ::= INFIXOP0 prec p_INFIXOP0
+hocc:    N_operator ::= INFIXOP1 prec p_INFIXOP1
+hocc:    N_operator ::= INFIXOP2 prec p_INFIXOP2
+hocc:    N_operator ::= INFIXOP3 prec p_INFIXOP3
+hocc:    N_operator ::= INFIXOP4 prec p_INFIXOP4
+hocc:    N_operator ::= "+" prec p_PLUS
+hocc:    N_operator ::= "+." prec p_PLUSDOT
+hocc:    N_operator ::= "+=" prec p_PLUSEQ
+hocc:    N_operator ::= "-" prec p_MINUS
+hocc:    N_operator ::= "-." prec p_MINUSDOT
+hocc:    N_operator ::= "*" prec p_STAR
+hocc:    N_operator ::= "\%" prec p_PERCENT
+hocc:    N_operator ::= "=" prec p_EQUAL
+hocc:    N_operator ::= "<" prec p_LESS
+hocc:    N_operator ::= ">" prec p_GREATER
+hocc:    N_operator ::= "or" prec p_OR
+hocc:    N_operator ::= "||" prec p_BARBAR
+hocc:    N_operator ::= "&" prec p_AMPERSAND
+hocc:    N_operator ::= "&&" prec p_AMPERAMPER
+hocc:    N_operator ::= ":=" prec p_COLONEQUAL
+hocc:    N_constr_extra_nonprefix_ident ::= "false" prec p_FALSE
+hocc:    N_constr_extra_nonprefix_ident ::= "true" prec p_TRUE
+hocc:    N_constr_ident ::= UIDENT prec p_UIDENT
+hocc:    N_mk_longident_mod_ext_longident_LIDENT_ ::= LIDENT prec p_LIDENT
+hocc:    N_mk_longident_mod_ext_longident_LIDENT_ ::= N_mod_ext_longident "." LIDENT prec p_LIDENT
+hocc:    N_mk_longident_mod_ext_longident_UIDENT_ ::= UIDENT prec p_UIDENT
+hocc:    N_mk_longident_mod_ext_longident_UIDENT_ ::= N_mod_ext_longident "." UIDENT prec p_UIDENT
+hocc:    N_mk_longident_mod_ext_longident_ident_ ::= N_mod_ext_longident "." N_ident prec p_DOT
+hocc:    N_mk_longident_mod_longident_LIDENT_ ::= LIDENT prec p_LIDENT
+hocc:    N_mk_longident_mod_longident_LIDENT_ ::= N_mod_longident "." LIDENT prec p_LIDENT
+hocc:    N_mk_longident_mod_longident_UIDENT_ ::= UIDENT prec p_UIDENT
+hocc:    N_mk_longident_mod_longident_UIDENT_ ::= N_mod_longident "." UIDENT prec p_UIDENT
+hocc:    N_mk_longident_mod_longident_val_ident_ ::= N_mod_longident "." N_val_ident prec p_DOT
+hocc:    N_toplevel_directive ::= "#" N_ident prec p_HASH
+hocc:    N_toplevel_directive ::= "#" N_ident STRING prec p_STRING
+hocc:    N_toplevel_directive ::= "#" N_ident INT prec p_INT
+hocc:    N_toplevel_directive ::= "#" N_ident N_val_longident prec p_HASH
+hocc:    N_toplevel_directive ::= "#" N_ident N_mod_longident prec p_HASH
+hocc:    N_toplevel_directive ::= "#" N_ident "false" prec p_FALSE
+hocc:    N_toplevel_directive ::= "#" N_ident "true" prec p_TRUE
+hocc:    N_name_tag ::= "`" N_ident prec p_BACKQUOTE
+hocc:    N_subtractive ::= "-" prec p_MINUS
+hocc:    N_subtractive ::= "-." prec p_MINUSDOT
+hocc:    N_additive ::= "+" prec p_PLUS
+hocc:    N_additive ::= "+." prec p_PLUSDOT
+hocc:    N_single_attr_id ::= LIDENT prec p_LIDENT
+hocc:    N_single_attr_id ::= UIDENT prec p_UIDENT
+hocc:    N_single_attr_id ::= "and" prec p_AND
+hocc:    N_single_attr_id ::= "as" prec p_AS
+hocc:    N_single_attr_id ::= "begin" prec p_BEGIN
+hocc:    N_single_attr_id ::= "else" prec p_ELSE
+hocc:    N_single_attr_id ::= "false" prec p_FALSE
+hocc:    N_single_attr_id ::= "function" prec p_FUNCTION
+hocc:    N_single_attr_id ::= "in" prec p_IN
+hocc:    N_single_attr_id ::= "let" prec p_LET
+hocc:    N_single_attr_id ::= "new" prec p_NEW
+hocc:    N_single_attr_id ::= "object" prec p_OBJECT
+hocc:    N_single_attr_id ::= "or" prec p_OR
+hocc:    N_single_attr_id ::= "then" prec p_THEN
+hocc:    N_single_attr_id ::= "true" prec p_TRUE
+hocc:    N_single_attr_id ::= "with" prec p_WITH
+hocc:    N_attr_id ::= N_single_attr_id "." N_attr_id prec p_DOT
+hocc:    N_ext ::= "\%" N_attr_id prec p_PERCENT
+hocc:    N_extension ::= QUOTED_STRING_EXPR prec p_QUOTED_STRING_EXPR

@@ -2,10 +2,9 @@ open Basis
 open! Basis.Rudiments
 
 type t = {
-  names: (string, Symbol.t, String.cmper_witness) Map.t;
-  symbols: Symbol.t array;
-  tokens: Symbol.t array;
-  nonterms: Symbol.t array;
+  names: (string, Symbol.Index.t, String.cmper_witness) Map.t;
+  symbols: Symbol.t array; (* Element i is symbol i. *)
+  ntokens: uns;
 }
 
 module Builder = struct
@@ -54,7 +53,8 @@ module Builder = struct
     | Some symbol_index -> info_of_name Symbol.((Ordmap.get_hlt symbol_index tokens).name) t
 
   let insert_token ~name ~stype ~prec ~stmt ~alias
-      ({infos; names; aliases; symbols; tokens; _} as t) =
+      ({infos; names; aliases; symbols; tokens; nonterms} as t) =
+    assert (Ordmap.is_empty nonterms);
     let index = Map.length infos in
     let info = {index; name; alias; stype} in
     let token = Symbol.init_token ~index ~name ~stype ~prec ~stmt ~alias in
@@ -102,21 +102,31 @@ module Builder = struct
   let nonterms_fold ~init ~f {nonterms; _} =
     Ordmap.fold ~init ~f:(fun accum (_symbol_index, symbol) -> f accum symbol) nonterms
 
-  let build {names; symbols; tokens; nonterms; _} =
+  let build {names; symbols; tokens; _} =
     let names' = Map.fold ~init:(Map.empty (module String)) ~f:(fun names' (name, symbol_index) ->
-      let symbol = Ordmap.get_hlt symbol_index symbols in
-      Map.insert_hlt ~k:name ~v:symbol names'
+      let symbol_index = Ordmap.get_hlt symbol_index symbols |> Symbol.index in
+      Map.insert_hlt ~k:name ~v:symbol_index names'
     ) names in
     let symbols' =
-      Array.init (0L =:< Ordmap.length symbols) ~f:(fun index -> Ordmap.get_hlt index symbols) in
-    let tokens' = Ordmap.to_array tokens |> Array.map ~f:(fun (_symbol_index, symbol) -> symbol) in
-    let nonterms' =
-      Ordmap.to_array nonterms |> Array.map ~f:(fun (_symbol_index, symbol) -> symbol) in
-    {names=names'; symbols=symbols'; tokens=tokens'; nonterms=nonterms'}
+      Array.init (0L =:< Ordmap.length symbols) ~f:(fun index ->
+        let symbol = Ordmap.get_hlt index symbols in
+        assert (Symbol.index symbol = index);
+        symbol
+      ) in
+    let ntokens = Ordmap.length tokens in
+    {names=names'; symbols=symbols'; ntokens}
 end
 
-let symbol_of_name name {names; _} =
-  Map.get name names
+let use_prec symbol_index ({symbols; _} as t) =
+  let symbol = Array.get symbol_index symbols in
+  let symbol' = Symbol.use_prec symbol in
+  let symbols' = Array.set symbol_index symbol' symbols in
+  {t with symbols=symbols'}
+
+let symbol_of_name name {names; symbols; _} =
+  match Map.get name names with
+  | None -> None
+  | Some symbol_index -> Some (Array.get symbol_index symbols)
 
 let symbol_of_symbol_index index {symbols; _} =
   Array.get index symbols
@@ -124,22 +134,24 @@ let symbol_of_symbol_index index {symbols; _} =
 let symbols_length {symbols; _} =
   Array.length symbols
 
-let tokens_length {tokens; _} =
-  Array.length tokens
+let tokens_length {ntokens; _} =
+  ntokens
 
-let nonterms_length {nonterms; _} =
-  Array.length nonterms
+let nonterms_length {symbols; ntokens; _} =
+  (Array.length symbols) - ntokens
 
 let symbols_fold ~init ~f {symbols; _} =
   Array.fold ~init ~f symbols
 
-let tokens_fold ~init ~f {tokens; _} =
-  Array.fold ~init ~f tokens
+let tokens_fold ~init ~f {symbols; ntokens; _} =
+  Array.Slice.init ~range:(0L =:< ntokens) symbols
+  |> Array.Slice.fold ~init ~f
 
-let nonterms_fold ~init ~f {nonterms; _} =
-  Array.fold ~init ~f nonterms
+let nonterms_fold ~init ~f {symbols; ntokens; _} =
+  Array.Slice.init ~range:(ntokens =:< Array.length symbols) symbols
+  |> Array.Slice.fold ~init ~f
 
-let src_fmt (Symbol.{name; prec; alias; start; prods; _} as symbol) t formatter =
+let src_fmt precs (Symbol.{name; prec; alias; start; prods; _} as symbol) t formatter =
   match Symbol.is_token symbol with
   | true -> begin
       formatter
@@ -153,7 +165,7 @@ let src_fmt (Symbol.{name; prec; alias; start; prods; _} as symbol) t formatter 
       |> (fun formatter ->
         match prec with
         | None -> formatter
-        | Some prec -> formatter |> Fmt.fmt " " |> Prec.pp_hr prec
+        | Some prec -> formatter |> Fmt.fmt " " |> Precs.pp_prec_hr prec precs
       )
       |> Fmt.fmt "\n"
     end
@@ -167,7 +179,7 @@ let src_fmt (Symbol.{name; prec; alias; start; prods; _} as symbol) t formatter 
       |> (fun formatter ->
         match prec with
         | None -> formatter
-        | Some prec -> formatter |> Fmt.fmt " " |> Prec.pp_hr prec
+        | Some prec -> formatter |> Fmt.fmt " " |> Precs.pp_prec_hr prec precs
       )
       |> Fmt.fmt " ::="
       |> Fmt.fmt (match Array.length prods with
@@ -203,7 +215,7 @@ let src_fmt (Symbol.{name; prec; alias; start; prods; _} as symbol) t formatter 
             | None, None
             | Some _, Some _ (* Re-normalize; prec was propagated from symbol. *)
               -> formatter
-            | None, Some prec -> formatter |> Fmt.fmt " " |> Prec.pp_hr prec
+            | None, Some prec -> formatter |> Fmt.fmt " " |> Precs.pp_prec_hr prec precs
             | Some _, None -> not_reached ()
           )
           |> Fmt.fmt "\n"

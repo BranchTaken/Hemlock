@@ -28,7 +28,9 @@ let generate_txt conf io Spec.{algorithm; precs; symbols; prods; states; _} =
     )
     |> Fmt.fmt "}"
   end in
-  let pp_prec name formatter = begin
+  let pp_prec precs Prec.{name_index; prec_set_index} formatter = begin
+    let prec_set = Precs.prec_set_of_prec_index prec_set_index precs in
+    let name = PrecSet.name_of_name_index name_index prec_set in
     formatter
     |> Fmt.fmt "prec "
     |> Fmt.fmt name
@@ -53,7 +55,7 @@ let generate_txt conf io Spec.{algorithm; precs; symbols; prods; states; _} =
       match do_pp_prec, prec with
       | false, _
       | _, None -> formatter
-      | true, Some prec -> formatter |> Fmt.fmt " " |> pp_prec (Prec.name prec)
+      | true, Some prec -> formatter |> Fmt.fmt " " |> pp_prec precs prec
     )
   end in
   let pp_lr0item lr0item formatter = begin
@@ -101,7 +103,7 @@ let generate_txt conf io Spec.{algorithm; precs; symbols; prods; states; _} =
     |> (fun formatter ->
       match prec with
       | None -> formatter
-      | Some prec -> formatter |> Fmt.fmt " " |> pp_prec (Prec.name prec)
+      | Some prec -> formatter |> Fmt.fmt " " |> pp_prec precs prec
     )
   end in
   let pp_state_index state_index formatter = begin
@@ -114,7 +116,7 @@ let generate_txt conf io Spec.{algorithm; precs; symbols; prods; states; _} =
       let symbol = Symbols.symbol_of_symbol_index symbol_index symbols in
       match symbol.prec with
       | None -> formatter
-      | Some prec -> formatter |> Fmt.fmt " " |> pp_prec (Prec.name prec)
+      | Some prec -> formatter |> Fmt.fmt " " |> pp_prec precs prec
     end in
     let pp_reduce_prec Prod.{lhs_index; prec; _} formatter = begin
       match prec with
@@ -259,7 +261,7 @@ let generate_txt conf io Spec.{algorithm; precs; symbols; prods; states; _} =
             |> (fun formatter ->
               match prec with
               | None -> formatter
-              | Some prec -> formatter |> Fmt.fmt " " |> pp_prec (Prec.name prec)
+              | Some prec -> formatter |> Fmt.fmt " " |> pp_prec precs prec
             )
             |> Fmt.fmt "\n"
             |> Fmt.fmt "        First: "

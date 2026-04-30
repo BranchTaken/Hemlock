@@ -19,10 +19,10 @@ module T = struct
     |> Fmt.fmt "; core=" |> Lr0Itemset.pp core
     |> Fmt.fmt "}"
 
-  let fmt_hr symbols ?(alt=false) ?(width=0L) {items; _} formatter =
+  let fmt_hr precs symbols ?(alt=false) ?(width=0L) {items; _} formatter =
     List.fmt ~alt ~width (fun (_lr0item, lr1item) formatter ->
       formatter
-      |> Lr1Item.pp_hr symbols lr1item
+      |> Lr1Item.pp_hr precs symbols lr1item
     ) (Ordmap.to_alist items) formatter
 end
 include T

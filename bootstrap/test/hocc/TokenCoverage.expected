@@ -10,7 +10,7 @@ hocc: 0 unreachable states
 hocc: Searching for remergeable state subgraphs (mergeable/max[worklst]) 0/0[0]
 hocc: 0 remergeable states
 hocc: 0 unresolvable conflicts in 0 states
-hocc: Searching for unused precedences/tokens/non-terminals/productions
+hocc: Searching for unused precedences/associativities/tokens/non-terminals/productions
 hocc: 6 unused precedences:
 hocc:    right p3
 hocc:    neutral p4 < p1
@@ -18,6 +18,8 @@ hocc:    left p5 < p1, p2
 hocc:    right p6 < p3, p4, p5
 hocc:    neutral mul
 hocc:    neutral add < mul
+hocc: 1 unused precedence set associativity:
+hocc:    left p2
 hocc: 6 unused tokens:
 hocc:    token OP
 hocc:    token PLUS "+"
@@ -44,3 +46,6 @@ hocc:    N6 ::= N4 N5
 hocc:    N6 ::= epsilon
 hocc:    N7 ::= OP N1 N2
 hocc:    N8 ::= N5 N5 N5 N5 N6 N5 N5 N5 N5 N5 N5 N5 N5 N5 N5 N5 N5 N5 N5 N5 N5 N5
+hocc: 2 unused production precedences:
+hocc:    N3 ::= epsilon prec p1
+hocc:    N5 ::= epsilon prec p2

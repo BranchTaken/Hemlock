@@ -14,14 +14,14 @@ let generate_hocc io Spec.{precs; symbols; _} =
     Symbols.symbols_fold ~init:formatter ~f:(fun formatter symbol ->
       match Symbol.is_token symbol && not (Symbol.is_synthetic symbol) with
       | false -> formatter
-      | true -> formatter |> Symbols.src_fmt symbol symbols
+      | true -> formatter |> Symbols.src_fmt precs symbol symbols
     ) symbols
   )
   |> (fun formatter ->
     Symbols.symbols_fold ~init:formatter ~f:(fun formatter symbol ->
       match Symbol.is_nonterm symbol && not (Symbol.is_synthetic symbol) with
       | false -> formatter
-      | true -> formatter |> Symbols.src_fmt symbol symbols
+      | true -> formatter |> Symbols.src_fmt precs symbol symbols
     ) symbols
   )
   |> Io.with_hocc io

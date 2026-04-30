@@ -10,7 +10,16 @@ hocc: Searching for remergeable state subgraphs (mergeable/max[worklst]) 0/10[20
 hocc: Remerging 10 LR(1) states
 hocc: Reindexing 15 LR(1) states
 hocc: 0 unresolvable conflicts in 0 states
-hocc: Searching for unused precedences/tokens/non-terminals/productions
+hocc: Searching for unused precedences/associativities/tokens/non-terminals/productions
+hocc: 2 unused precedence set associativities:
+hocc:    left p1
+hocc:    left p2 < p1
+hocc: 1 unused token precedence:
+hocc:    token RPAREN prec p1
+hocc: 3 unused production precedences:
+hocc:    E ::= E PLUS T prec p2
+hocc:    F ::= LPAREN E RPAREN prec p1
+hocc:    F ::= ID prec p1
 hocc: Generating text report
 hocc: Generating hocc report
 hocc: Writing "./hocc/MulAddParenPrec.txt"

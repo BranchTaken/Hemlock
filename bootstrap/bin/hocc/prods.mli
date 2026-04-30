@@ -22,6 +22,10 @@ module Builder : sig
   (** [build t] builds a [Prods.t]. *)
 end
 
+val use_prec: Prod.Index.t -> t -> t
+(** [use_prec prod_index t] returns a derivative of [t] with the precedence for the production
+    corresponding to [prod_index] marked as useful. *)
+
 val length: t -> uns
 (** [length t] returns the number of productions in [t]. *)
 
@@ -31,3 +35,6 @@ val prod_of_prod_index: Prod.Index.t -> t -> Prod.t
 val fold: init:'accum -> f:('accum -> Prod.t -> 'accum) -> t -> 'accum
 (** [fold ~init ~f t] iteratively applies [f] to the productions in [t], in increasing index order.
 *)
+
+val src_fmt: Precs.t -> Symbols.t -> Prod.t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
+(** Formatter which outputs production in hocc syntax. *)
