@@ -1,6 +1,6 @@
 hocc: Parsing "./IelrRemergeable_alalr_rno.hmh"
 hocc: Generating LALR(1) specification
-hocc: 6 precedences, 13 tokens, 5 non-terminals (1 start), 15 productions
+hocc: 5 precedences, 13 tokens, 5 non-terminals (1 start), 15 productions
 hocc: LR(1) item set compatibility: lalr
 hocc: Generating LR(1) item set closures (workq/total) 0/45
 hocc: Generating 45 LR(1) states
@@ -8,23 +8,16 @@ hocc: Tracing automaton (.+=actions[+gotos])+.+..+.+.+..+.+.++
 hocc: 0 unreachable states
 hocc: 18 conflicts in 6 states (0 ⊥, 18 shift-reduce, 0 reduce-reduce) (conflict resolution disabled)
 hocc: Searching for unused precedences/associativities/tokens/non-terminals/productions
-hocc: 6 unused precedence set associativities:
+hocc: 2 unused precedence set associativities:
 hocc:    left p0
-hocc:    left p1 < p0
-hocc:    left p2 < p1
 hocc:    left p3 < p2
-hocc:    left p4 < p3
-hocc:    left p5 < p4
-hocc: 9 unused token precedences:
+hocc: 6 unused token precedences:
 hocc:    token PLUS "+" prec p0
 hocc:    token MINUS "-" prec p0
-hocc:    token MAX "max" prec p1
 hocc:    token MIN "min" prec p2
 hocc:    token LT "<" prec p3
 hocc:    token GT ">" prec p3
 hocc:    token COMMA "," prec p4
-hocc:    token VAR "var" prec p5
-hocc:    token LPAREN "(" prec p5
 hocc: 5 unused production precedences:
 hocc:    Pos ::= E "min" Pos "max" Pos prec p1
 hocc:    EPair ::= E "," E prec p4

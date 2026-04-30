@@ -2,11 +2,10 @@ IelrRemergeable_aielr_myes grammar
 
 Precedences
     left p0
-    left p1 < p0
-    left p2 < p0, p1
+    neutral p1 < p0
+    neutral p2 < p0, p1
     left p3 < p0, p1, p2
-    left p4 < p0, p1, p2, p3
-    left p5 < p0, p1, p2, p3, p4
+    neutral p4 < p0, p1, p2, p3
 Tokens
     token EPSILON "ε"
         First: {"ε"}
@@ -23,7 +22,7 @@ Tokens
     token MINUS "-" prec p0
         First: {"-"}
         Follow: {"var", "("}
-    token MAX "max" prec p1
+    token MAX "max"
         First: {"max"}
         Follow: {"var", "("}
     token MIN "min" prec p2
@@ -38,10 +37,10 @@ Tokens
     token COMMA "," prec p4
         First: {","}
         Follow: {"var", "("}
-    token VAR "var" prec p5
+    token VAR "var"
         First: {"var"}
         Follow: {")", "+", "-", "max", "min", "<", ">", ",", EOI}
-    token LPAREN "(" prec p5
+    token LPAREN "("
         First: {"("}
         Follow: {"var", "("}
     token EOI
@@ -103,8 +102,8 @@ IELR(1) States
             [E ::= · E "<" E, {"+", "min", "<", ">", ","}] prec p3
             [E ::= · E ">" E, {"+", "min", "<", ">", ","}] prec p3
         Actions
-            "var" : ShiftPrefix 1 prec p5
-            "(" : ShiftPrefix 2 prec p5
+            "var" : ShiftPrefix 1
+            "(" : ShiftPrefix 2
         Gotos
             S : 3
             Pos : 4
@@ -143,8 +142,8 @@ IELR(1) States
             [E ::= · E "<" E, {")", "+", "min", "<", ">", ","}] prec p3
             [E ::= · E ">" E, {")", "+", "min", "<", ">", ","}] prec p3
         Actions
-            "var" : ShiftPrefix 1 prec p5
-            "(" : ShiftPrefix 2 prec p5
+            "var" : ShiftPrefix 1
+            "(" : ShiftPrefix 2
         Gotos
             Pos : 7
             EPair : 8
@@ -297,8 +296,8 @@ IELR(1) States
             [E ::= · E "<" E, {"+", "<", ">", ","}] prec p3
             [E ::= · E ">" E, {"+", "<", ">", ","}] prec p3
         Actions
-            "var" : ShiftPrefix 1 prec p5
-            "(" : ShiftPrefix 22 prec p5
+            "var" : ShiftPrefix 1
+            "(" : ShiftPrefix 22
         Gotos
             EPair : 23
             E : 24
@@ -320,8 +319,8 @@ IELR(1) States
             [E ::= · E "<" E, {"+", "<", ">", ","}] prec p3
             [E ::= · E ">" E, {"+", "<", ">", ","}] prec p3
         Actions
-            "var" : ShiftPrefix 1 prec p5
-            "(" : ShiftPrefix 22 prec p5
+            "var" : ShiftPrefix 1
+            "(" : ShiftPrefix 22
         Gotos
             EPair : 25
             E : 24
@@ -346,8 +345,8 @@ IELR(1) States
             [E ::= · E "<" E, {")", "+", "-", "max", "min", "<", ">", ",", EOI}] prec p3
             [E ::= · E ">" E, {")", "+", "-", "max", "min", "<", ">", ",", EOI}] prec p3
         Actions
-            "var" : ShiftPrefix 1 prec p5
-            "(" : ShiftPrefix 26 prec p5
+            "var" : ShiftPrefix 1
+            "(" : ShiftPrefix 26
         Gotos
             E : 27
         Conflict contributions
@@ -375,8 +374,8 @@ IELR(1) States
             [E ::= · E "<" E, {"+", "min", "<", ">", ","}] prec p3
             [E ::= · E ">" E, {"+", "min", "<", ">", ","}] prec p3
         Actions
-            "var" : ShiftPrefix 1 prec p5
-            "(" : ShiftPrefix 2 prec p5
+            "var" : ShiftPrefix 1
+            "(" : ShiftPrefix 2
         Gotos
             Pos : 28
             EPair : 5
@@ -407,8 +406,8 @@ IELR(1) States
             [E ::= · E "<" E, {")", "+", "min", "<", ">", ","}] prec p3
             [E ::= · E ">" E, {")", "+", "min", "<", ">", ","}] prec p3
         Actions
-            "var" : ShiftPrefix 1 prec p5
-            "(" : ShiftPrefix 2 prec p5
+            "var" : ShiftPrefix 1
+            "(" : ShiftPrefix 2
         Gotos
             Pos : 29
             EPair : 5
@@ -436,8 +435,8 @@ IELR(1) States
             [E ::= · E "<" E, {")", "+", "-", "max", "min", "<", ">", ",", EOI}] prec p3
             [E ::= · E ">" E, {")", "+", "-", "max", "min", "<", ">", ",", EOI}] prec p3
         Actions
-            "var" : ShiftPrefix 1 prec p5
-            "(" : ShiftPrefix 26 prec p5
+            "var" : ShiftPrefix 1
+            "(" : ShiftPrefix 26
         Gotos
             E : 31
         Conflict contributions
@@ -457,8 +456,8 @@ IELR(1) States
             [E ::= · E "<" E, {")", "+", "-", "max", "<", ">", ",", EOI}] prec p3
             [E ::= · E ">" E, {")", "+", "-", "max", "<", ">", ",", EOI}] prec p3
         Actions
-            "var" : ShiftPrefix 1 prec p5
-            "(" : ShiftPrefix 26 prec p5
+            "var" : ShiftPrefix 1
+            "(" : ShiftPrefix 26
         Gotos
             E : 32
         Conflict contributions
@@ -486,8 +485,8 @@ IELR(1) States
             [E ::= · E "<" E, {"+", "min", "<", ">", ","}] prec p3
             [E ::= · E ">" E, {"+", "min", "<", ">", ","}] prec p3
         Actions
-            "var" : ShiftPrefix 1 prec p5
-            "(" : ShiftPrefix 2 prec p5
+            "var" : ShiftPrefix 1
+            "(" : ShiftPrefix 2
         Gotos
             Pos : 33
             EPair : 5
@@ -529,8 +528,8 @@ IELR(1) States
             [E ::= · E "<" E, {")", "+", "<", ">", ","}] prec p3
             [E ::= · E ">" E, {")", "+", "<", ">", ","}] prec p3
         Actions
-            "var" : ShiftPrefix 1 prec p5
-            "(" : ShiftPrefix 22 prec p5
+            "var" : ShiftPrefix 1
+            "(" : ShiftPrefix 22
         Gotos
             EPair : 34
             E : 35
@@ -604,8 +603,8 @@ IELR(1) States
             [E ::= · E "<" E, {")", "+", "<", ">"}] prec p3
             [E ::= · E ">" E, {")", "+", "<", ">"}] prec p3
         Actions
-            "var" : ShiftPrefix 1 prec p5
-            "(" : ShiftPrefix 26 prec p5
+            "var" : ShiftPrefix 1
+            "(" : ShiftPrefix 26
         Gotos
             E : 37
         Conflict contributions
@@ -661,7 +660,7 @@ IELR(1) States
         Actions
             "+" : ShiftPrefix 11 prec p0
             "-" : ShiftPrefix 12 prec p0
-            "max" : ShiftPrefix 38 prec p1
+            "max" : ShiftPrefix 38
         Conflict contributions
             Pos ::= E "min" Pos · "max" Pos
                 ">" :
@@ -844,8 +843,8 @@ IELR(1) States
             [E ::= · E "<" E, {")", "+", "-", "max", "min", "<", ">", ",", EOI}] prec p3
             [E ::= · E ">" E, {")", "+", "-", "max", "min", "<", ">", ",", EOI}] prec p3
         Actions
-            "var" : ShiftPrefix 1 prec p5
-            "(" : ShiftPrefix 26 prec p5
+            "var" : ShiftPrefix 1
+            "(" : ShiftPrefix 26
         Gotos
             E : 41
         Conflict contributions
@@ -903,8 +902,8 @@ IELR(1) States
             [E ::= · E "<" E, {"+", "min", "<", ">", ","}] prec p3
             [E ::= · E ">" E, {"+", "min", "<", ">", ","}] prec p3
         Actions
-            "var" : ShiftPrefix 1 prec p5
-            "(" : ShiftPrefix 2 prec p5
+            "var" : ShiftPrefix 1
+            "(" : ShiftPrefix 2
         Gotos
             Pos : 42
             EPair : 5
@@ -934,8 +933,8 @@ IELR(1) States
             [E ::= · E "<" E, {"+", "min", "<", ">", ","}] prec p3
             [E ::= · E ">" E, {"+", "min", "<", ">", ","}] prec p3
         Actions
-            "var" : ShiftPrefix 1 prec p5
-            "(" : ShiftPrefix 2 prec p5
+            "var" : ShiftPrefix 1
+            "(" : ShiftPrefix 2
         Gotos
             Pos : 43
             EPair : 5
