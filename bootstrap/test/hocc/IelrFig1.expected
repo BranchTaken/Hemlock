@@ -14,9 +14,6 @@ hocc: Tracing automaton (.+=actions[+gotos])+...+.+.+
 hocc: 0 unreachable states
 hocc: 0 unresolvable conflicts in 0 states
 hocc: Searching for unused precedences/associativities/tokens/non-terminals/productions
-hocc: 2 unused production precedences:
-hocc:    S ::= Ta A Ta prec p
-hocc:    A ::= Ta Ta prec p
 hocc: Generating text report
 hocc: Generating hocc report
 hocc: Writing "./hocc/IelrFig1.txt"
