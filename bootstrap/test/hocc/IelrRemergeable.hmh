@@ -6,21 +6,20 @@
 
 hocc
     left p0
-    left p1 < p0
-    left p2 < p1
+    neutral p1 < p0
+    neutral p2 < p1
     left p3 < p2
-    left p4 < p3
-    left p5 < p4
+    neutral p4 < p3
     token RPAREN ")"
     token PLUS "+" prec p0
     token MINUS "-" prec p0
-    token MAX "max" prec p1
+    token MAX "max"
     token MIN "min" prec p2
     token LT "<" prec p3
     token GT ">" prec p3
     token COMMA "," prec p4
-    token VAR "var" prec p5
-    token LPAREN "(" prec p5
+    token VAR "var"
+    token LPAREN "("
     token EOI
     start S ::=
       | Pos EOI
