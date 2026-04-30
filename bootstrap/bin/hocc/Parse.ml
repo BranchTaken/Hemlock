@@ -372,7 +372,7 @@ include struct
           end
 
         let prec_sets = [|
-            PrecSet.init ~index:0L ~names:[|"pCIDENT"|] ~assoc:(Some Right) ~doms:(Bitset.empty);
+            PrecSet.init ~index:0L ~names:[|"pCIDENT"|] ~assoc:None ~doms:(Bitset.empty);
             PrecSet.init ~index:1L ~names:[|"pDOT"|] ~assoc:(Some Left) ~doms:(Bitset.empty);
             PrecSet.init ~index:2L ~names:[|"pCOMMA"|] ~assoc:(Some Left) ~doms:(Bitset.singleton 0L);
             PrecSet.init ~index:3L ~names:[|"pSEMI"|] ~assoc:(Some Right) ~doms:(Bitset.empty);
@@ -576,9 +576,9 @@ include struct
             Prod.init ~index:66L ~lhs_index:63L ~rhs_indexes:[|62L|]
               ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:3L)) ~callback:66L;
             Prod.init ~index:67L ~lhs_index:63L ~rhs_indexes:[|62L; 25L; 14L|]
-              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:3L)) ~callback:67L;
+              ~prec:None ~callback:67L;
             Prod.init ~index:68L ~lhs_index:63L ~rhs_indexes:[|62L; 25L; 63L|]
-              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:3L)) ~callback:68L;
+              ~prec:None ~callback:68L;
             Prod.init ~index:69L ~lhs_index:64L ~rhs_indexes:[|25L|]
               ~prec:None ~callback:69L;
             Prod.init ~index:70L ~lhs_index:64L ~rhs_indexes:[||]
@@ -867,8 +867,7 @@ include struct
               ~first:(Bitset.singleton 12L)
               ~follow:(Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn"));
             Symbol.init ~index:13L ~name:"CIDENT"
-              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:0L))
-              ~alias:None ~start:false
+              ~prec:None ~alias:None ~start:false
               ~prods:(Ordset.empty (module Prod))
               ~first:(Bitset.singleton 13L)
               ~follow:(Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn"));
@@ -1199,8 +1198,7 @@ include struct
               ~first:(Bitset.of_nat (Nat.of_string "0x1ffcn"))
               ~follow:(Bitset.of_nat (Nat.of_string "0x80_0200_0000n"));
             Symbol.init ~index:63L ~name:"PatternFields"
-              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:3L))
-              ~alias:None ~start:false
+              ~prec:None ~alias:None ~start:false
               ~prods:(Ordset.of_list (module Prod) [
                 Array.get 66L prods;
                 Array.get 67L prods;

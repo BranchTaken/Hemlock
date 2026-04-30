@@ -289,8 +289,8 @@ include hocc
 
     (* Identifiers *)
     token UIDENT of token_uident # Uncapitalized
-    right pCIDENT
-    token CIDENT of token_cident prec pCIDENT # Capitalized
+    neutral pCIDENT
+    token CIDENT of token_cident # Capitalized
     token USCORE "_" of token_uscore
 
     (* Token alias *)
@@ -448,8 +448,8 @@ include hocc
       | binding:Uident -> PatternFieldBinding {binding}
       | Uident "=" pattern:Pattern -> PatternFieldPattern {pattern}
 
-    nonterm PatternFields of nonterm_pattern_fields prec pSEMI ::=
-      | field:PatternField
+    nonterm PatternFields of nonterm_pattern_fields ::=
+      | field:PatternField prec pSEMI
       | field:PatternField ";" "_"
       -> PatternFieldsOne {field}
       | field:PatternField ";" fields:PatternFields

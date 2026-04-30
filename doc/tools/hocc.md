@@ -995,7 +995,7 @@ The `hocc` specification language grammar is equivalent to the following specifi
 
 ```hocc
 hocc
-    right pCIDENT
+    neutral pCIDENT
     left pDOT
     left pCOMMA < pCIDENT
     right pSEMI
@@ -1011,7 +1011,7 @@ hocc
     token NONASSOC "nonassoc"
     token PREC "prec"
     token UIDENT
-    token CIDENT prec pCIDENT
+    token CIDENT
     token USCORE "_"
     token ISTRING
     token COLON_COLON_EQ "::="
@@ -1122,8 +1122,8 @@ hocc
     nonterm PatternField ::=
       | Uident
       | Uident "=" Pattern
-    nonterm PatternFields prec pSEMI ::=
-      | PatternField
+    nonterm PatternFields ::=
+      | PatternField prec pSEMI
       | PatternField ";" "_"
       | PatternField ";" PatternFields
     nonterm SemiSuffix ::=
@@ -1135,7 +1135,7 @@ hocc
     nonterm Pattern ::=
       | "_"
       | Uident
-      | Pattern "as" Uident prec pAS
+      | Pattern "as" Uident
       | "(" Pattern ")"
       | CIDENT Pattern prec pCIDENT
       | ModulePath "." "(" Pattern ")"
