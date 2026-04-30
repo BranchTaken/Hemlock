@@ -1,7 +1,7 @@
 Hocc grammar
 
 Precedences
-    right pCIDENT
+    neutral pCIDENT
     left pDOT
     left pCOMMA < pCIDENT
     right pSEMI
@@ -46,7 +46,7 @@ Tokens
     token UIDENT
         First: {UIDENT}
         Follow: {"hocc", "nonterm", "epsilon", "start", "token", "neutral", "left", "right", "nonassoc", "prec", UIDENT, CIDENT, "_", ISTRING, "::=", "of", ":", ".", "->", "|", "<", "=", ",", ";", "as", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", OTHER_TOKEN, EOI}
-    token CIDENT prec pCIDENT
+    token CIDENT
         First: {CIDENT}
         Follow: {"hocc", "nonterm", "epsilon", "start", "token", "neutral", "left", "right", "nonassoc", "prec", UIDENT, CIDENT, "_", ISTRING, "::=", "of", ":", ".", "->", "|", "<", "=", ",", ";", "as", LINE_DELIM, INDENT, DEDENT, "(", ")", "(|", "|)", "[", "]", "[|", "|]", "{", "}", OTHER_TOKEN, EOI}
     token USCORE "_"
@@ -289,8 +289,8 @@ Non-terminals
         Follow: {";", "}"}
         Productions
             PatternFields ::= PatternField prec pSEMI
-            PatternFields ::= PatternField ";" "_" prec pSEMI
-            PatternFields ::= PatternField ";" PatternFields prec pSEMI
+            PatternFields ::= PatternField ";" "_"
+            PatternFields ::= PatternField ";" PatternFields
     nonterm SemiSuffix
         First: {"ε", ";"}
         Follow: {"}"}
@@ -543,7 +543,7 @@ APLR(1) States
             "nonassoc" : ShiftPrefix 9
             "prec" : ShiftPrefix 10
             UIDENT : ShiftPrefix 11
-            CIDENT : ShiftPrefix 12 prec pCIDENT
+            CIDENT : ShiftPrefix 12
             "_" : ShiftPrefix 13
             ISTRING : ShiftPrefix 14
             "::=" : ShiftPrefix 15
@@ -634,7 +634,7 @@ APLR(1) States
             "nonassoc" : ShiftPrefix 9
             "prec" : ShiftPrefix 10
             UIDENT : ShiftPrefix 11
-            CIDENT : ShiftPrefix 12 prec pCIDENT
+            CIDENT : ShiftPrefix 12
             "_" : ShiftPrefix 13
             ISTRING : ShiftPrefix 14
             "::=" : ShiftPrefix 15
@@ -2440,7 +2440,7 @@ APLR(1) States
             "nonassoc" : ShiftPrefix 9
             "prec" : ShiftPrefix 10
             UIDENT : ShiftPrefix 11
-            CIDENT : ShiftPrefix 12 prec pCIDENT
+            CIDENT : ShiftPrefix 12
             "_" : ShiftPrefix 13
             ISTRING : ShiftPrefix 14
             "::=" : ShiftPrefix 15
@@ -2564,7 +2564,7 @@ APLR(1) States
             "nonassoc" : ShiftPrefix 9
             "prec" : ShiftPrefix 10
             UIDENT : ShiftPrefix 11
-            CIDENT : ShiftPrefix 12 prec pCIDENT
+            CIDENT : ShiftPrefix 12
             "_" : ShiftPrefix 13
             ISTRING : ShiftPrefix 14
             "::=" : ShiftPrefix 15
@@ -2658,7 +2658,7 @@ APLR(1) States
             "nonassoc" : ShiftPrefix 9
             "prec" : ShiftPrefix 10
             UIDENT : ShiftPrefix 11
-            CIDENT : ShiftPrefix 12 prec pCIDENT
+            CIDENT : ShiftPrefix 12
             "_" : ShiftPrefix 13
             ISTRING : ShiftPrefix 14
             "::=" : ShiftPrefix 15
@@ -2754,7 +2754,7 @@ APLR(1) States
         Kernel
             [Token ::= "token" · CIDENT TokenAlias SymbolType0 PrecRef, {LINE_DELIM, DEDENT}]
         Actions
-            CIDENT : ShiftPrefix 71 prec pCIDENT
+            CIDENT : ShiftPrefix 71
     State 58 [58.0]
         Kernel
             [PrecType ::= "neutral" ·, {"hocc", "nonterm", "epsilon", "start", "token", "neutral", "left", "right", "nonassoc", "prec", UIDENT}]
@@ -2863,7 +2863,7 @@ APLR(1) States
             [Nonterm ::= NontermType · CIDENT PrecRef "::=" Prods, {LINE_DELIM, DEDENT}]
             [Nonterm ::= NontermType · CIDENT SymbolType PrecRef "::=" Reductions, {LINE_DELIM, DEDENT}]
         Actions
-            CIDENT : ShiftPrefix 85 prec pCIDENT
+            CIDENT : ShiftPrefix 85
     State 66 [66.0]
         Kernel
             [Stmt ::= Nonterm ·, {LINE_DELIM, DEDENT}]
@@ -3646,7 +3646,7 @@ APLR(1) States
             "nonassoc" : Reduce SymbolTypeQualifier ::= epsilon
             "prec" : Reduce SymbolTypeQualifier ::= epsilon
             UIDENT : Reduce SymbolTypeQualifier ::= epsilon
-            CIDENT : ShiftPrefix 105 prec pCIDENT
+            CIDENT : ShiftPrefix 105
         Gotos
             SymbolTypeQualifier : 106
     State 97 [97.0]
@@ -3806,7 +3806,7 @@ APLR(1) States
             "nonassoc" : ShiftPrefix 80
             "prec" : ShiftPrefix 81
             UIDENT : ShiftPrefix 82
-            CIDENT : ShiftPrefix 116 prec pCIDENT
+            CIDENT : ShiftPrefix 116
             "_" : ShiftPrefix 117
             ISTRING : ShiftPrefix 118
             "|" : ShiftPrefix 119
@@ -3857,7 +3857,7 @@ APLR(1) States
             "nonassoc" : Reduce SymbolTypeQualifier ::= epsilon
             "prec" : Reduce SymbolTypeQualifier ::= epsilon
             UIDENT : Reduce SymbolTypeQualifier ::= epsilon
-            CIDENT : ShiftPrefix 105 prec pCIDENT
+            CIDENT : ShiftPrefix 105
         Gotos
             SymbolTypeQualifier : 130
     State 113 [113.0]
@@ -3914,7 +3914,7 @@ APLR(1) States
             "nonassoc" : ShiftPrefix 80
             "prec" : ShiftPrefix 81
             UIDENT : ShiftPrefix 82
-            CIDENT : ShiftPrefix 116 prec pCIDENT
+            CIDENT : ShiftPrefix 116
             "_" : ShiftPrefix 117
             ISTRING : ShiftPrefix 118
             "|" : ShiftPrefix 119
@@ -4044,7 +4044,7 @@ APLR(1) States
             "nonassoc" : ShiftPrefix 80
             "prec" : ShiftPrefix 81
             UIDENT : ShiftPrefix 82
-            CIDENT : ShiftPrefix 116 prec pCIDENT
+            CIDENT : ShiftPrefix 116
             "_" : ShiftPrefix 117
             ISTRING : ShiftPrefix 118
             "(" : ShiftPrefix 120
@@ -4095,7 +4095,7 @@ APLR(1) States
             "nonassoc" : ShiftPrefix 80
             "prec" : ShiftPrefix 81
             UIDENT : ShiftPrefix 82
-            CIDENT : ShiftPrefix 137 prec pCIDENT
+            CIDENT : ShiftPrefix 137
             "_" : ShiftPrefix 138
             "(" : ShiftPrefix 139
             "{" : ShiftPrefix 140
@@ -4121,8 +4121,8 @@ APLR(1) States
             [PatternField ::= · Uident, {";", "}"}]
             [PatternField ::= · Uident "=" Pattern, {";", "}"}]
             [PatternFields ::= · PatternField, {";", "}"}] prec pSEMI
-            [PatternFields ::= · PatternField ";" "_", {";", "}"}] prec pSEMI
-            [PatternFields ::= · PatternField ";" PatternFields, {";", "}"}] prec pSEMI
+            [PatternFields ::= · PatternField ";" "_", {";", "}"}]
+            [PatternFields ::= · PatternField ";" PatternFields, {";", "}"}]
         Actions
             "hocc" : ShiftPrefix 72
             "nonterm" : ShiftPrefix 73
@@ -4217,7 +4217,7 @@ APLR(1) States
             "nonassoc" : ShiftPrefix 80
             "prec" : ShiftPrefix 149
             UIDENT : ShiftPrefix 82
-            CIDENT : ShiftPrefix 116 prec pCIDENT
+            CIDENT : ShiftPrefix 116
             "_" : ShiftPrefix 117
             ISTRING : ShiftPrefix 118
             "->" : Reduce PrecRef ::= epsilon
@@ -4321,7 +4321,7 @@ APLR(1) States
             [ProdParamSymbol ::= · CIDENT, {"hocc", "nonterm", "epsilon", "start", "token", "neutral", "left", "right", "nonassoc", "prec", UIDENT, CIDENT, "_", ISTRING, "->", "|", LINE_DELIM, DEDENT, "(", "{"}]
             [ProdParamSymbol ::= · ISTRING, {"hocc", "nonterm", "epsilon", "start", "token", "neutral", "left", "right", "nonassoc", "prec", UIDENT, CIDENT, "_", ISTRING, "->", "|", LINE_DELIM, DEDENT, "(", "{"}]
         Actions
-            CIDENT : ShiftPrefix 158 prec pCIDENT
+            CIDENT : ShiftPrefix 158
             ISTRING : ShiftPrefix 118
         Gotos
             ProdParamSymbol : 159
@@ -4377,7 +4377,7 @@ APLR(1) States
             "nonassoc" : ShiftPrefix 80
             "prec" : ShiftPrefix 81
             UIDENT : ShiftPrefix 82
-            CIDENT : ShiftPrefix 137 prec pCIDENT
+            CIDENT : ShiftPrefix 137
             "_" : ShiftPrefix 138
             "." : Reduce ModulePath ::= CIDENT
             "(" : ShiftPrefix 139
@@ -4433,7 +4433,7 @@ APLR(1) States
             "nonassoc" : ShiftPrefix 80
             "prec" : ShiftPrefix 81
             UIDENT : ShiftPrefix 82
-            CIDENT : ShiftPrefix 137 prec pCIDENT
+            CIDENT : ShiftPrefix 137
             "_" : ShiftPrefix 138
             "(" : ShiftPrefix 139
             "{" : ShiftPrefix 140
@@ -4459,8 +4459,8 @@ APLR(1) States
             [PatternField ::= · Uident, {";", "}"}]
             [PatternField ::= · Uident "=" Pattern, {";", "}"}]
             [PatternFields ::= · PatternField, {";", "}"}] prec pSEMI
-            [PatternFields ::= · PatternField ";" "_", {";", "}"}] prec pSEMI
-            [PatternFields ::= · PatternField ";" PatternFields, {";", "}"}] prec pSEMI
+            [PatternFields ::= · PatternField ";" "_", {";", "}"}]
+            [PatternFields ::= · PatternField ";" PatternFields, {";", "}"}]
         Actions
             "hocc" : ShiftPrefix 72
             "nonterm" : ShiftPrefix 73
@@ -4513,8 +4513,8 @@ APLR(1) States
     State 145 [145.0]
         Kernel
             [PatternFields ::= PatternField ·, {";", "}"}] prec pSEMI
-            [PatternFields ::= PatternField · ";" "_", {";", "}"}] prec pSEMI
-            [PatternFields ::= PatternField · ";" PatternFields, {";", "}"}] prec pSEMI
+            [PatternFields ::= PatternField · ";" "_", {";", "}"}]
+            [PatternFields ::= PatternField · ";" PatternFields, {";", "}"}]
         Actions
             ";" : ShiftPrefix 169 prec pSEMI
             "}" : Reduce PatternFields ::= PatternField prec pSEMI
@@ -4536,7 +4536,7 @@ APLR(1) States
             [ProdParamSymbol ::= · CIDENT, {"hocc", "nonterm", "epsilon", "start", "token", "neutral", "left", "right", "nonassoc", "prec", UIDENT, CIDENT, "_", ISTRING, "->", "|", LINE_DELIM, DEDENT, "(", "{"}]
             [ProdParamSymbol ::= · ISTRING, {"hocc", "nonterm", "epsilon", "start", "token", "neutral", "left", "right", "nonassoc", "prec", UIDENT, CIDENT, "_", ISTRING, "->", "|", LINE_DELIM, DEDENT, "(", "{"}]
         Actions
-            CIDENT : ShiftPrefix 158 prec pCIDENT
+            CIDENT : ShiftPrefix 158
             ISTRING : ShiftPrefix 118
         Gotos
             ProdParamSymbol : 172
@@ -4549,7 +4549,7 @@ APLR(1) States
             [ModulePath ::= · CIDENT, {"."}]
             [ModulePath ::= · ModulePath "." ModulePath, {"."}] prec pDOT
         Actions
-            CIDENT : ShiftPrefix 173 prec pCIDENT
+            CIDENT : ShiftPrefix 173
             "(" : ShiftPrefix 174
             "{" : ShiftPrefix 175
         Gotos
@@ -4635,7 +4635,7 @@ APLR(1) States
             "nonassoc" : ShiftPrefix 80
             "prec" : ShiftPrefix 149
             UIDENT : ShiftPrefix 82
-            CIDENT : ShiftPrefix 116 prec pCIDENT
+            CIDENT : ShiftPrefix 116
             "_" : ShiftPrefix 117
             ISTRING : ShiftPrefix 118
             "->" : Reduce PrecRef ::= epsilon
@@ -4701,7 +4701,7 @@ APLR(1) States
             "nonassoc" : ShiftPrefix 80
             "prec" : ShiftPrefix 81
             UIDENT : ShiftPrefix 82
-            CIDENT : ShiftPrefix 116 prec pCIDENT
+            CIDENT : ShiftPrefix 116
             "_" : ShiftPrefix 117
             ISTRING : ShiftPrefix 118
             "(" : ShiftPrefix 120
@@ -4770,7 +4770,7 @@ APLR(1) States
             "nonassoc" : ShiftPrefix 80
             "prec" : ShiftPrefix 81
             UIDENT : ShiftPrefix 82
-            CIDENT : ShiftPrefix 179 prec pCIDENT
+            CIDENT : ShiftPrefix 179
             "_" : ShiftPrefix 180
             ISTRING : ShiftPrefix 181
             "::=" : ShiftPrefix 182
@@ -4839,7 +4839,7 @@ APLR(1) States
             "nonassoc" : ShiftPrefix 80
             "prec" : ShiftPrefix 81
             UIDENT : ShiftPrefix 82
-            CIDENT : ShiftPrefix 116 prec pCIDENT
+            CIDENT : ShiftPrefix 116
             "_" : ShiftPrefix 117
             ISTRING : ShiftPrefix 118
             "|" : ShiftPrefix 119
@@ -4956,7 +4956,7 @@ APLR(1) States
             [ModulePath ::= · CIDENT, {"."}]
             [ModulePath ::= · ModulePath "." ModulePath, {"."}] prec pDOT
         Actions
-            CIDENT : ShiftPrefix 173 prec pCIDENT
+            CIDENT : ShiftPrefix 173
             "(" : ShiftPrefix 205
             "{" : ShiftPrefix 206
         Gotos
@@ -4999,7 +4999,7 @@ APLR(1) States
             "nonassoc" : ShiftPrefix 80
             "prec" : ShiftPrefix 81
             UIDENT : ShiftPrefix 82
-            CIDENT : ShiftPrefix 137 prec pCIDENT
+            CIDENT : ShiftPrefix 137
             "_" : ShiftPrefix 138
             "(" : ShiftPrefix 139
             "{" : ShiftPrefix 140
@@ -5079,7 +5079,7 @@ APLR(1) States
             "nonassoc" : ShiftPrefix 80
             "prec" : ShiftPrefix 81
             UIDENT : ShiftPrefix 82
-            CIDENT : ShiftPrefix 137 prec pCIDENT
+            CIDENT : ShiftPrefix 137
             "_" : ShiftPrefix 138
             "(" : ShiftPrefix 139
             "{" : ShiftPrefix 140
@@ -5089,8 +5089,8 @@ APLR(1) States
             Pattern : 210
     State 169 [169.0]
         Kernel
-            [PatternFields ::= PatternField ";" · "_", {";", "}"}] prec pSEMI
-            [PatternFields ::= PatternField ";" · PatternFields, {";", "}"}] prec pSEMI
+            [PatternFields ::= PatternField ";" · "_", {";", "}"}]
+            [PatternFields ::= PatternField ";" · PatternFields, {";", "}"}]
         Added
             [Uident ::= · "hocc", {"=", ";", "}"}]
             [Uident ::= · "nonterm", {"=", ";", "}"}]
@@ -5106,8 +5106,8 @@ APLR(1) States
             [PatternField ::= · Uident, {";", "}"}]
             [PatternField ::= · Uident "=" Pattern, {";", "}"}]
             [PatternFields ::= · PatternField, {";", "}"}] prec pSEMI
-            [PatternFields ::= · PatternField ";" "_", {";", "}"}] prec pSEMI
-            [PatternFields ::= · PatternField ";" PatternFields, {";", "}"}] prec pSEMI
+            [PatternFields ::= · PatternField ";" "_", {";", "}"}]
+            [PatternFields ::= · PatternField ";" PatternFields, {";", "}"}]
         Actions
             "hocc" : ShiftPrefix 72
             "nonterm" : ShiftPrefix 73
@@ -5202,7 +5202,7 @@ APLR(1) States
             "nonassoc" : ShiftPrefix 80
             "prec" : ShiftPrefix 81
             UIDENT : ShiftPrefix 82
-            CIDENT : ShiftPrefix 137 prec pCIDENT
+            CIDENT : ShiftPrefix 137
             "_" : ShiftPrefix 138
             "(" : ShiftPrefix 139
             "{" : ShiftPrefix 140
@@ -5228,8 +5228,8 @@ APLR(1) States
             [PatternField ::= · Uident, {";", "}"}]
             [PatternField ::= · Uident "=" Pattern, {";", "}"}]
             [PatternFields ::= · PatternField, {";", "}"}] prec pSEMI
-            [PatternFields ::= · PatternField ";" "_", {";", "}"}] prec pSEMI
-            [PatternFields ::= · PatternField ";" PatternFields, {";", "}"}] prec pSEMI
+            [PatternFields ::= · PatternField ";" "_", {";", "}"}]
+            [PatternFields ::= · PatternField ";" PatternFields, {";", "}"}]
         Actions
             "hocc" : ShiftPrefix 72
             "nonterm" : ShiftPrefix 73
@@ -5839,7 +5839,7 @@ APLR(1) States
             "nonassoc" : ShiftPrefix 80
             "prec" : ShiftPrefix 81
             UIDENT : ShiftPrefix 82
-            CIDENT : ShiftPrefix 179 prec pCIDENT
+            CIDENT : ShiftPrefix 179
             "_" : ShiftPrefix 180
             ISTRING : ShiftPrefix 181
             "::=" : ShiftPrefix 182
@@ -5916,7 +5916,7 @@ APLR(1) States
             "nonassoc" : ShiftPrefix 80
             "prec" : ShiftPrefix 81
             UIDENT : ShiftPrefix 82
-            CIDENT : ShiftPrefix 179 prec pCIDENT
+            CIDENT : ShiftPrefix 179
             "_" : ShiftPrefix 180
             ISTRING : ShiftPrefix 181
             "::=" : ShiftPrefix 182
@@ -5995,7 +5995,7 @@ APLR(1) States
             "nonassoc" : ShiftPrefix 80
             "prec" : ShiftPrefix 81
             UIDENT : ShiftPrefix 82
-            CIDENT : ShiftPrefix 179 prec pCIDENT
+            CIDENT : ShiftPrefix 179
             "_" : ShiftPrefix 180
             ISTRING : ShiftPrefix 181
             "::=" : ShiftPrefix 182
@@ -6074,7 +6074,7 @@ APLR(1) States
             "nonassoc" : ShiftPrefix 80
             "prec" : ShiftPrefix 81
             UIDENT : ShiftPrefix 82
-            CIDENT : ShiftPrefix 179 prec pCIDENT
+            CIDENT : ShiftPrefix 179
             "_" : ShiftPrefix 180
             ISTRING : ShiftPrefix 181
             "::=" : ShiftPrefix 182
@@ -6153,7 +6153,7 @@ APLR(1) States
             "nonassoc" : ShiftPrefix 80
             "prec" : ShiftPrefix 81
             UIDENT : ShiftPrefix 82
-            CIDENT : ShiftPrefix 179 prec pCIDENT
+            CIDENT : ShiftPrefix 179
             "_" : ShiftPrefix 180
             ISTRING : ShiftPrefix 181
             "::=" : ShiftPrefix 182
@@ -6232,7 +6232,7 @@ APLR(1) States
             "nonassoc" : ShiftPrefix 80
             "prec" : ShiftPrefix 81
             UIDENT : ShiftPrefix 82
-            CIDENT : ShiftPrefix 179 prec pCIDENT
+            CIDENT : ShiftPrefix 179
             "_" : ShiftPrefix 180
             ISTRING : ShiftPrefix 181
             "::=" : ShiftPrefix 182
@@ -6395,7 +6395,7 @@ APLR(1) States
             "nonassoc" : ShiftPrefix 80
             "prec" : ShiftPrefix 81
             UIDENT : ShiftPrefix 82
-            CIDENT : ShiftPrefix 179 prec pCIDENT
+            CIDENT : ShiftPrefix 179
             "_" : ShiftPrefix 180
             ISTRING : ShiftPrefix 181
             "::=" : ShiftPrefix 182
@@ -6478,7 +6478,7 @@ APLR(1) States
             "nonassoc" : ShiftPrefix 80
             "prec" : ShiftPrefix 81
             UIDENT : ShiftPrefix 82
-            CIDENT : ShiftPrefix 179 prec pCIDENT
+            CIDENT : ShiftPrefix 179
             "_" : ShiftPrefix 180
             ISTRING : ShiftPrefix 181
             "::=" : ShiftPrefix 182
@@ -6582,7 +6582,7 @@ APLR(1) States
             "nonassoc" : ShiftPrefix 80
             "prec" : ShiftPrefix 81
             UIDENT : ShiftPrefix 82
-            CIDENT : ShiftPrefix 137 prec pCIDENT
+            CIDENT : ShiftPrefix 137
             "_" : ShiftPrefix 138
             "(" : ShiftPrefix 139
             "{" : ShiftPrefix 140
@@ -6608,8 +6608,8 @@ APLR(1) States
             [PatternField ::= · Uident, {";", "}"}]
             [PatternField ::= · Uident "=" Pattern, {";", "}"}]
             [PatternFields ::= · PatternField, {";", "}"}] prec pSEMI
-            [PatternFields ::= · PatternField ";" "_", {";", "}"}] prec pSEMI
-            [PatternFields ::= · PatternField ";" PatternFields, {";", "}"}] prec pSEMI
+            [PatternFields ::= · PatternField ";" "_", {";", "}"}]
+            [PatternFields ::= · PatternField ";" PatternFields, {";", "}"}]
         Actions
             "hocc" : ShiftPrefix 72
             "nonterm" : ShiftPrefix 73
@@ -6653,7 +6653,7 @@ APLR(1) States
             [ProdParamSymbol ::= · CIDENT, {"hocc", "nonterm", "epsilon", "start", "token", "neutral", "left", "right", "nonassoc", "prec", UIDENT, CIDENT, "_", ISTRING, "->", "|", LINE_DELIM, DEDENT, "(", "{"}]
             [ProdParamSymbol ::= · ISTRING, {"hocc", "nonterm", "epsilon", "start", "token", "neutral", "left", "right", "nonassoc", "prec", UIDENT, CIDENT, "_", ISTRING, "->", "|", LINE_DELIM, DEDENT, "(", "{"}]
         Actions
-            CIDENT : ShiftPrefix 158 prec pCIDENT
+            CIDENT : ShiftPrefix 158
             ISTRING : ShiftPrefix 118
         Gotos
             ProdParamSymbol : 233
@@ -6669,16 +6669,16 @@ APLR(1) States
             "}" : Reduce PatternField ::= Uident "=" Pattern
     State 211 [211.0]
         Kernel
-            [PatternFields ::= PatternField ";" "_" ·, {";", "}"}] prec pSEMI
+            [PatternFields ::= PatternField ";" "_" ·, {";", "}"}]
         Actions
-            ";" : Reduce PatternFields ::= PatternField ";" "_" prec pSEMI
-            "}" : Reduce PatternFields ::= PatternField ";" "_" prec pSEMI
+            ";" : Reduce PatternFields ::= PatternField ";" "_"
+            "}" : Reduce PatternFields ::= PatternField ";" "_"
     State 212 [212.0]
         Kernel
-            [PatternFields ::= PatternField ";" PatternFields ·, {";", "}"}] prec pSEMI
+            [PatternFields ::= PatternField ";" PatternFields ·, {";", "}"}]
         Actions
-            ";" : Reduce PatternFields ::= PatternField ";" PatternFields prec pSEMI
-            "}" : Reduce PatternFields ::= PatternField ";" PatternFields prec pSEMI
+            ";" : Reduce PatternFields ::= PatternField ";" PatternFields
+            "}" : Reduce PatternFields ::= PatternField ";" PatternFields
     State 213 [213.0]
         Kernel
             [ProdParam ::= "{" PatternFields SemiSuffix "}" · ":" ProdParamSymbol, {"hocc", "nonterm", "epsilon", "start", "token", "neutral", "left", "right", "nonassoc", "prec", UIDENT, CIDENT, "_", ISTRING, "->", "|", LINE_DELIM, DEDENT, "(", "{"}]
@@ -6822,7 +6822,7 @@ APLR(1) States
             "nonassoc" : ShiftPrefix 80
             "prec" : ShiftPrefix 81
             UIDENT : ShiftPrefix 82
-            CIDENT : ShiftPrefix 179 prec pCIDENT
+            CIDENT : ShiftPrefix 179
             "_" : ShiftPrefix 180
             ISTRING : ShiftPrefix 181
             "::=" : ShiftPrefix 182
@@ -6905,7 +6905,7 @@ APLR(1) States
             "nonassoc" : ShiftPrefix 80
             "prec" : ShiftPrefix 81
             UIDENT : ShiftPrefix 82
-            CIDENT : ShiftPrefix 179 prec pCIDENT
+            CIDENT : ShiftPrefix 179
             "_" : ShiftPrefix 180
             ISTRING : ShiftPrefix 181
             "::=" : ShiftPrefix 182
@@ -7030,7 +7030,7 @@ APLR(1) States
             [ProdParamSymbol ::= · CIDENT, {"hocc", "nonterm", "epsilon", "start", "token", "neutral", "left", "right", "nonassoc", "prec", UIDENT, CIDENT, "_", ISTRING, "->", "|", LINE_DELIM, DEDENT, "(", "{"}]
             [ProdParamSymbol ::= · ISTRING, {"hocc", "nonterm", "epsilon", "start", "token", "neutral", "left", "right", "nonassoc", "prec", UIDENT, CIDENT, "_", ISTRING, "->", "|", LINE_DELIM, DEDENT, "(", "{"}]
         Actions
-            CIDENT : ShiftPrefix 158 prec pCIDENT
+            CIDENT : ShiftPrefix 158
             ISTRING : ShiftPrefix 118
         Gotos
             ProdParamSymbol : 249
@@ -7136,7 +7136,7 @@ APLR(1) States
             "nonassoc" : ShiftPrefix 80
             "prec" : ShiftPrefix 81
             UIDENT : ShiftPrefix 82
-            CIDENT : ShiftPrefix 179 prec pCIDENT
+            CIDENT : ShiftPrefix 179
             "_" : ShiftPrefix 180
             ISTRING : ShiftPrefix 181
             "::=" : ShiftPrefix 182
@@ -7456,7 +7456,7 @@ APLR(1) States
             [ProdParamSymbol ::= · CIDENT, {"hocc", "nonterm", "epsilon", "start", "token", "neutral", "left", "right", "nonassoc", "prec", UIDENT, CIDENT, "_", ISTRING, "->", "|", LINE_DELIM, DEDENT, "(", "{"}]
             [ProdParamSymbol ::= · ISTRING, {"hocc", "nonterm", "epsilon", "start", "token", "neutral", "left", "right", "nonassoc", "prec", UIDENT, CIDENT, "_", ISTRING, "->", "|", LINE_DELIM, DEDENT, "(", "{"}]
         Actions
-            CIDENT : ShiftPrefix 158 prec pCIDENT
+            CIDENT : ShiftPrefix 158
             ISTRING : ShiftPrefix 118
         Gotos
             ProdParamSymbol : 254
@@ -7527,7 +7527,7 @@ APLR(1) States
             [ProdParamSymbol ::= · CIDENT, {"hocc", "nonterm", "epsilon", "start", "token", "neutral", "left", "right", "nonassoc", "prec", UIDENT, CIDENT, "_", ISTRING, "->", "|", LINE_DELIM, DEDENT, "(", "{"}]
             [ProdParamSymbol ::= · ISTRING, {"hocc", "nonterm", "epsilon", "start", "token", "neutral", "left", "right", "nonassoc", "prec", UIDENT, CIDENT, "_", ISTRING, "->", "|", LINE_DELIM, DEDENT, "(", "{"}]
         Actions
-            CIDENT : ShiftPrefix 158 prec pCIDENT
+            CIDENT : ShiftPrefix 158
             ISTRING : ShiftPrefix 118
         Gotos
             ProdParamSymbol : 257
