@@ -1557,7 +1557,7 @@ let expand_hm_states states ~indentation formatter =
     let indent = mk_indent indentation in
     let formatter, _first = Array.fold ~init:(formatter, true)
       ~f:(fun (formatter, first)
-        State.{statenub={lr1itemsetclosure={index; kernel; _}; _}; actions; gotos} ->
+        State.{statenub={lr1itemsetclosure={index; kernel; _}; _}; actions; gotos; _} ->
         formatter
         |> (fun formatter ->
           match first with
@@ -3511,7 +3511,7 @@ let expand_ml_states states ~indentation formatter =
     let indent = mk_indent indentation in
     let formatter, _first = Array.fold ~init:(formatter, true)
       ~f:(fun (formatter, first)
-        State.{statenub={lr1itemsetclosure={index; kernel; _}; _}; actions; gotos} ->
+        State.{statenub={lr1itemsetclosure={index; kernel; _}; _}; actions; gotos; _} ->
         formatter
         |> (fun formatter ->
           match first with

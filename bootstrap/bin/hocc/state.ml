@@ -64,6 +64,9 @@ end
 module T = struct
   type t = {
     statenub: StateNub.t;
+    actions_raw:
+      (Symbol.Index.t, (Action.t, Action.cmper_witness) Ordset.t, Symbol.Index.cmper_witness)
+        Ordmap.t;
     actions:
       (Symbol.Index.t, (Action.t, Action.cmper_witness) Ordset.t, Symbol.Index.cmper_witness)
         Ordmap.t;
@@ -76,9 +79,10 @@ module T = struct
   let cmp {statenub=s0; _} {statenub=s1; _} =
     StateNub.cmp s0 s1
 
-  let pp {statenub; actions; gotos} formatter =
+  let pp {statenub; actions_raw; actions; gotos} formatter =
     formatter
     |> Fmt.fmt "{statenub=" |> StateNub.pp statenub
+    |> Fmt.fmt "; actions_raw=" |> Ordmap.pp Ordset.pp actions_raw
     |> Fmt.fmt "; actions=" |> Ordmap.pp Ordset.pp actions
     |> Fmt.fmt "; gotos=" |> Ordmap.pp Index.pp gotos
     |> Fmt.fmt "}"
@@ -308,11 +312,13 @@ let resolve_actions precs symbols prods actions =
 
 let init ~resolve precs symbols prods isocores ~gotonub_of_statenub_goto
     (StateNub.{lr1itemsetclosure; _} as statenub) =
-  let actions =
-    actions symbols isocores ~gotonub_of_statenub_goto statenub in
-  let precs, symbols, prods, actions = match resolve with
-    | false -> precs, symbols, prods, actions
-    | true -> resolve_actions precs symbols prods actions
+  let actions_raw = actions symbols isocores ~gotonub_of_statenub_goto statenub in
+  let actions = match resolve with
+    | false -> actions_raw
+    | true -> begin
+        let _precs, _symbols, _prods, actions = resolve_actions precs symbols prods actions_raw in
+        actions
+      end
   in
   let gotos =
     Lr1ItemsetClosure.nonterm_gotos symbols lr1itemsetclosure
@@ -322,7 +328,7 @@ let init ~resolve precs symbols prods isocores ~gotonub_of_statenub_goto
         gotos
     )
   in
-  precs, symbols, prods, {statenub; actions; gotos}
+  {statenub; actions_raw; actions; gotos}
 
 let normalize_state_index remergeable_index_map state_index =
   Ordmap.get state_index remergeable_index_map
@@ -339,23 +345,46 @@ let normalize_action_set remergeable_index_map action_set =
     Ordset.insert action' action_set'
   ) action_set
 
-let remerge symbols remergeable_index_map {statenub=sn0; actions=a0; gotos=g0}
-  {statenub=sn1; actions=a1; gotos=g1} =
+let remerge symbols remergeable_index_map
+    {statenub=sn0; actions_raw=ar0; actions=a0; gotos=g0}
+    {statenub=sn1; actions_raw=ar1; actions=a1; gotos=g1} =
   let statenub = StateNub.remerge symbols sn0 sn1 in
-  let actions = Ordmap.fold ~init:a1 ~f:(fun actions (symbol_index, action_set0) ->
-    let action_set0 = normalize_action_set remergeable_index_map action_set0 in
-    Ordmap.amend symbol_index ~f:(fun actions_opt ->
-      match actions_opt with
-      | None -> Some action_set0
-      | Some action_set1 -> Some (Ordset.union action_set0 action_set1)
-    ) actions
-  ) a0 in
+  let actions_raw = Ordmap.union ~vunion:(fun _symbol_index action_set0 action_set1 ->
+    (* Take care not to create an action set with multiple shift actions. *)
+    Ordset.fold ~init:action_set1 ~f:(fun action_set action ->
+      let open Action in
+      match action with
+      | ShiftPrefix _
+      | ShiftAccept _ -> begin
+          (* Shift actions always come first in action sets. *)
+          let shift_in_action_set1 = match Ordset.nth 0L action_set1 with
+            | ShiftPrefix _
+            | ShiftAccept _ -> true
+            | Reduce _ -> false
+          in
+          match shift_in_action_set1 with
+          | true -> action_set
+          | false -> Ordset.insert action action_set
+        end
+      | Reduce _ -> Ordset.insert action action_set
+    ) action_set0
+  ) ar0 ar1 in
+  let actions =
+    Ordmap.fold ~init:a1 ~f:(fun actions (symbol_index, action_set0) ->
+      let action_set0 = normalize_action_set remergeable_index_map action_set0 in
+      Ordmap.amend symbol_index ~f:(fun actions_opt ->
+        match actions_opt with
+        | None -> Some action_set0
+        | Some action_set1 -> Some (Ordset.union action_set0 action_set1)
+      ) actions
+    ) a0
+  in
   let gotos = Ordmap.fold ~init:g1 ~f:(fun gotos (symbol_index, goto) ->
     Ordmap.insert ~k:symbol_index ~v:(normalize_state_index remergeable_index_map goto) gotos
   ) g0 in
-  {statenub; actions; gotos}
+  {statenub; actions_raw; actions; gotos}
 
-let reindex state_index_map reachable_action_symbols_opt {statenub; actions; gotos} =
+let reindex state_index_map reachable_action_symbols_opt ({statenub; actions; gotos; _} as t) =
   let reachable_action_symbols = match reachable_action_symbols_opt with
     | None -> Ordmap.fold ~init:(Ordset.empty (module Symbol.Index))
       ~f:(fun reachable_action_symbols (symbol_index, _actions) ->
@@ -378,7 +407,15 @@ let reindex state_index_map reachable_action_symbols_opt {statenub; actions; got
   let gotos = Ordmap.filter_map ~f:(fun (_symbol_index, statenub_index) ->
     StateIndexMap.reindexed_state_index_opt statenub_index state_index_map
   ) gotos in
-  {statenub; actions; gotos}
+  {t with statenub; actions; gotos}
+
+let use_resolve ~resolve precs symbols prods {actions_raw; _} =
+  match resolve with
+  | false -> precs, symbols, prods
+  | true -> begin
+      let precs, symbols, prods, _actions = resolve_actions precs symbols prods actions_raw in
+      precs, symbols, prods
+    end
 
 let index {statenub={lr1itemsetclosure={index; _}; _}; _} =
   index
