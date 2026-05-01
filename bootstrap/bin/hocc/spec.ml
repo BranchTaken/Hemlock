@@ -962,7 +962,7 @@ let rec isocores_init algorithm ~resolve io precs symbols prods callbacks =
           |> Fmt.fmt "hocc: Generating LALR(1) specification as IELR(1) prerequisite\n"
           |> Io.with_log io
         in
-        let io, lalr_isocores, _precs, _symbols, _prods, lalr_states =
+        let io, lalr_isocores, lalr_states =
           init_inner Conf.Lalr ~resolve:false io precs symbols prods callbacks in
         let io = log_conflicts io ~resolve:false lalr_states in
         Ielr.gen_gotonub_of_statenub_goto ~resolve io precs symbols prods lalr_isocores lalr_states
@@ -994,14 +994,13 @@ and states_init io ~resolve precs symbols prods isocores ~gotonub_of_statenub_go
     |> (fun formatter -> match nstates with 1L -> formatter | _ -> formatter |> Fmt.fmt "s")
     |> Io.with_log io
   in
-  let precs, symbols, prods, states_set =
-    Isocores.fold ~init:(precs, symbols, prods, Ordset.empty (module State))
-      ~f:(fun (precs, symbols, prods, states) lr1itemsetclosure ->
-        let precs, symbols, prods, state =
-          State.init ~resolve precs symbols prods isocores ~gotonub_of_statenub_goto
+  let states_set =
+    Isocores.fold ~init:(Ordset.empty (module State))
+      ~f:(fun states lr1itemsetclosure ->
+        let state = State.init ~resolve precs symbols prods isocores ~gotonub_of_statenub_goto
             lr1itemsetclosure in
         let states' = Ordset.insert state states in
-        precs, symbols, prods, states'
+        states'
       ) isocores
   in
   let states = states_set |> Ordset.to_array in
@@ -1010,7 +1009,7 @@ and states_init io ~resolve precs symbols prods isocores ~gotonub_of_statenub_go
     |> Fmt.fmt "\n"
     |> Io.with_log io
   in
-  io, precs, symbols, prods, states
+  io, states
 
 and hmh_extract io hmh =
   let io, precs = precs_init io hmh in
@@ -1078,7 +1077,7 @@ and log_conflicts io ~resolve states =
   in
   io
 
-and log_unused io precs symbols prods states =
+and log_unused io ~resolve precs symbols prods states =
   let rec mark_prec precs ~precs_used prec = begin
     match prec with
     | None -> precs_used
@@ -1148,6 +1147,10 @@ and log_unused io precs symbols prods states =
     |> Fmt.fmt "precedences/associativities/tokens/non-terminals/productions"
     |> Io.with_log io
   in
+  let precs, symbols, prods = Array.fold ~init:(precs, symbols, prods)
+    ~f:(fun (precs, symbols, prods) state ->
+      State.use_resolve ~resolve precs symbols prods state
+    ) states in
   let precs_used, tokens_used, nonterms_used, prods_used = mark_states symbols prods states in
   let precs_nunused = (Precs.length precs) - (Set.length precs_used) in
   let tokens_nunused = (Symbols.tokens_length symbols) - (Set.length tokens_used) in
@@ -1341,9 +1344,8 @@ and log_unused io precs symbols prods states =
 and init_inner algorithm ~resolve io precs symbols prods callbacks =
   let io, isocores, gotonub_of_statenub_goto =
     isocores_init algorithm ~resolve io precs symbols prods callbacks in
-  let io, precs, symbols, prods, states =
-    states_init io ~resolve precs symbols prods isocores ~gotonub_of_statenub_goto in
-  io, isocores, precs, symbols, prods, states
+  let io, states = states_init io ~resolve precs symbols prods isocores ~gotonub_of_statenub_goto in
+  io, isocores, states
 
 and init algorithm ~resolve ~gc ~remerge io hmh =
   let io =
@@ -1360,8 +1362,7 @@ and init algorithm ~resolve ~gc ~remerge io hmh =
     |> Io.with_log io
   in
   let io, precs, symbols, prods, callbacks = hmh_extract io hmh in
-  let io, isocores, precs, symbols, prods, states =
-    init_inner algorithm ~resolve io precs symbols prods callbacks in
+  let io, isocores, states = init_inner algorithm ~resolve io precs symbols prods callbacks in
   let io, isocores, states = match gc with
     | Conf.PreRemerge -> Trace.gc_states io prods isocores states
     | PostRemerge
@@ -1399,7 +1400,7 @@ and init algorithm ~resolve ~gc ~remerge io hmh =
     | No -> io, isocores, states
   in
   let io = log_conflicts io ~resolve states in
-  let io = log_unused io precs symbols prods states in
+  let io = log_unused io ~resolve precs symbols prods states in
   io, {algorithm; precs; symbols; prods; callbacks; states}
 
 let conflicts {states; _} =

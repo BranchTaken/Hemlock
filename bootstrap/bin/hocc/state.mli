@@ -22,20 +22,28 @@ type t = {
   statenub: StateNub.t;
   (** State nub, which contains the LR(1) item set closure and inadequacy attributions. *)
 
+  actions_raw:
+    (Symbol.Index.t, (Action.t, Action.cmper_witness) Ordset.t, Symbol.Index.cmper_witness)
+      Ordmap.t;
+  (** Per symbol action sets (i.e. potentially ambiguous) with no conflict resolution,
+      reindexing, nor unreachable action filtering performed. *)
+
   actions:
     (Symbol.Index.t, (Action.t, Action.cmper_witness) Ordset.t, Symbol.Index.cmper_witness)
       Ordmap.t;
-  (** Per symbol action sets (i.e. potentially ambiguous). *)
+  (** Per symbol action sets (i.e. potentially ambiguous) with conflict resolution if the [~resolve]
+      parameter to [init] was true, as well as reindexing and unreachable action filtering depending
+      on phase of automaton construction. *)
 
   gotos: (Symbol.Index.t, Lr1ItemsetClosure.Index.t, Symbol.Index.cmper_witness) Ordmap.t;
-  (** Per symbol gotos, which are consulted during reduction state transitions. *)
+  (** Per symbol gotos, which are consulted during reduction state transitions, with unreachable
+      goto filtering depending on phase of automaton construction. *)
 }
 
 include IdentifiableIntf.S with type t := t
 
 val init: resolve:bool -> Precs.t -> Symbols.t -> Prods.t -> Isocores.t
-  -> gotonub_of_statenub_goto:(StateNub.t -> Lr1Itemset.t -> GotoNub.t) -> StateNub.t
-  -> Precs.t * Symbols.t * Prods.t * t
+  -> gotonub_of_statenub_goto:(StateNub.t -> Lr1Itemset.t -> GotoNub.t) -> StateNub.t -> t
 (** [init ~resolve precs symbols prods isocores ~gotonub_of_statenub_goto statenub] creates a state
     based on [statenub]. *)
 
@@ -48,6 +56,12 @@ val reindex: StateIndexMap.t ->  (Symbol.Index.t, Symbol.Index.cmper_witness) Or
 (** [reindex state_index_map reachable_action_symbols_opt t] creates a state with all LR(1) item set
     closure, state nub, and state indexes translated according to [state_index_map], and reachable
     actions specified by [reachable_action_symbols_opt] if there are any unreachable actions. *)
+
+val use_resolve: resolve:bool -> Precs.t -> Symbols.t -> Prods.t -> t
+  -> Precs.t * Symbols.t * Prods.t
+(** [use_resolve ~resolve precs symbols prods] computes conflict resolutions for the raw actions in
+    [t] and updates [precs]/[symbols]/[prods] to note useful token associativities and/or
+    token/production precedence specifications. *)
 
 val index: t -> Index.t
 (** [index t] returns the index of the contained unique LR(1) item set closure. *)

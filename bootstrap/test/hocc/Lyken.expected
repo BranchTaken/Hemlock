@@ -58,11 +58,13 @@ hocc:    ExprSuffix ::= ExprSuffix "." ID prec pExprSuffix
 hocc:    ExprSuffix ::= ExprSuffix "." ID ExprSlice
 hocc:    Expr ::= Expr "." LvalSuffix prec pExpr2
 hocc:    Expr ::= Lval "." LvalSuffix prec pExpr2
-hocc: 57 unused production precedences:
+hocc: 61 unused production precedences:
 hocc:    GenericParamOne ::= epsilon prec pGenericParamOne
 hocc:    OptionalGenericParamList ::= "«" ParamTypeList "»" prec pOptionalGenericParamList
 hocc:    OptionalGenericParamList ::= "«" ParamTypeList "where" DerivationConstraintList "»" prec pOptionalGenericParamList
 hocc:    TypeNameSuffix ::= TypeNameSuffixElm prec pTypeNameSuffix1
+hocc:    LvalSubscript ::= "[" Slice "]" prec pLvalSubscript
+hocc:    LvalSubscript ::= "[" "]" prec pLvalSubscript
 hocc:    LvalListBody ::= Var "," Lval prec pLvalListBody
 hocc:    LvalListBody ::= Var "," Var prec pLvalListBody
 hocc:    ProcParmRequired ::= Annotations TypeSpec ID prec pProcParmRequired2
@@ -115,4 +117,6 @@ hocc:    InfixExpr ::= Lval PlusOp "(" LvalListBody ")" prec pPlusOp
 hocc:    AssnExprLeft ::= Var "," "[" "]" GenericParamOne ":" Lval prec pAssnExprLeft2
 hocc:    VarRestId ::= "[" "]" GenericParamOne ID prec pVarRestId
 hocc:    VarRestId ::= "[" "]" GenericParamOne "_" prec pVarRestId
+hocc:    ExprSlice ::= "[" Slice "]" prec pExprSlice
+hocc:    ExprSlice ::= "[" "]" prec pExprSlice
 hocc:    Stmt ::= ExprList prec pStmt
