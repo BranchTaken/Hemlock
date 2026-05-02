@@ -22,11 +22,8 @@ type t = {
   statenub: StateNub.t;
   (** State nub, which contains the LR(1) item set closure and inadequacy attributions. *)
 
-  actions_raw:
-    (Symbol.Index.t, (Action.t, Action.cmper_witness) Ordset.t, Symbol.Index.cmper_witness)
-      Ordmap.t;
-  (** Per symbol action sets (i.e. potentially ambiguous) with no conflict resolution,
-      reindexing, nor unreachable action filtering performed. *)
+  resolvers: Resolvers.t;
+  (** Sets of associativities/precedences that were useful for conflict resolution. *)
 
   actions:
     (Symbol.Index.t, (Action.t, Action.cmper_witness) Ordset.t, Symbol.Index.cmper_witness)
@@ -56,12 +53,6 @@ val reindex: StateIndexMap.t ->  (Symbol.Index.t, Symbol.Index.cmper_witness) Or
 (** [reindex state_index_map reachable_action_symbols_opt t] creates a state with all LR(1) item set
     closure, state nub, and state indexes translated according to [state_index_map], and reachable
     actions specified by [reachable_action_symbols_opt] if there are any unreachable actions. *)
-
-val use_resolve: resolve:bool -> Precs.t -> Symbols.t -> Prods.t -> t
-  -> Precs.t * Symbols.t * Prods.t
-(** [use_resolve ~resolve precs symbols prods] computes conflict resolutions for the raw actions in
-    [t] and updates [precs]/[symbols]/[prods] to note useful token associativities and/or
-    token/production precedence specifications. *)
 
 val index: t -> Index.t
 (** [index t] returns the index of the contained unique LR(1) item set closure. *)

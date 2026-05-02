@@ -25,12 +25,6 @@ let insert ~names ~assoc ~doms ~stmt ({names=names_map; prec_sets} as t) =
   let prec_sets' = Ordmap.insert_hlt ~k:index ~v:prec_set prec_sets in
   {names=names_map'; prec_sets=prec_sets'}
 
-let use_assoc Prec.{prec_set_index; _} ({prec_sets; _} as t) =
-  let prec_set = Ordmap.get_hlt prec_set_index prec_sets in
-  let prec_set' = PrecSet.use_assoc prec_set in
-  let prec_sets' = Ordmap.update_hlt ~k:prec_set.index ~v:prec_set' prec_sets in
-  {t with prec_sets=prec_sets'}
-
 let prec_index_of_name name {names; _} =
   Map.get name names
 

@@ -23,9 +23,6 @@ type t = {
   prec: Prec.t option;
   (** Optional precedence. *)
 
-  prec_useful: bool;
-  (** True if precedence used for conflict resolution. *)
-
   stmt: stmt option;
   (** Optional declaration AST ([None] for synthetic symbols). *)
 
@@ -104,6 +101,3 @@ val follow_has_diff: Bitset.t -> t -> bool
 val follow_union: Bitset.t -> t -> t
 (** [follow_union symbol_indexes t] returns a symbol equivalent to [t] with all symbols in
     [symbol_indexes] inserted into the follow set. *)
-
-val use_prec: t -> t
-(** [use_prec t] returns a derivative of [t] with [prec_useful] set to true. *)

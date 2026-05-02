@@ -64,9 +64,7 @@ end
 module T = struct
   type t = {
     statenub: StateNub.t;
-    actions_raw:
-      (Symbol.Index.t, (Action.t, Action.cmper_witness) Ordset.t, Symbol.Index.cmper_witness)
-        Ordmap.t;
+    resolvers: Resolvers.t;
     actions:
       (Symbol.Index.t, (Action.t, Action.cmper_witness) Ordset.t, Symbol.Index.cmper_witness)
         Ordmap.t;
@@ -79,10 +77,10 @@ module T = struct
   let cmp {statenub=s0; _} {statenub=s1; _} =
     StateNub.cmp s0 s1
 
-  let pp {statenub; actions_raw; actions; gotos} formatter =
+  let pp {statenub; resolvers; actions; gotos} formatter =
     formatter
     |> Fmt.fmt "{statenub=" |> StateNub.pp statenub
-    |> Fmt.fmt "; actions_raw=" |> Ordmap.pp Ordset.pp actions_raw
+    |> Fmt.fmt "; resolvers=" |> Resolvers.pp resolvers
     |> Fmt.fmt "; actions=" |> Ordmap.pp Ordset.pp actions
     |> Fmt.fmt "; gotos=" |> Ordmap.pp Index.pp gotos
     |> Fmt.fmt "}"
@@ -151,7 +149,7 @@ let resolve_symbol precs symbols prods symbol_index action_set =
     | Some PrecSet.{assoc; _} -> assoc
   end in
   match Ordset.length action_set with
-  | 1L -> precs, symbols, prods, action_set
+  | 1L -> Resolvers.empty, action_set
   | _ -> begin
       (* Compute the subset of actions with maximal precedence, if any. Disjoint precedences are
        * incomparable, i.e. there is no maximal precedence in the presence of disjoint
@@ -201,21 +199,21 @@ let resolve_symbol precs symbols prods symbol_index action_set =
               end
           ) action_set
       in
-      let symbols', prods' = match Ordset.is_empty max_prec_action_set with
-        | true -> symbols, prods
+      let resolvers = match Ordset.is_empty max_prec_action_set with
+        | true -> Resolvers.empty
         | false -> begin
-            Ordset.fold ~init:(symbols, prods) ~f:(fun (symbols, prods) action ->
+            Ordset.fold ~init:Resolvers.empty ~f:(fun resolvers action ->
               let open Action in
               match action with
               | ShiftPrefix _
-              | ShiftAccept _ -> Symbols.use_prec symbol_index symbols, prods
-              | Reduce prod_index -> symbols, Prods.use_prec prod_index prods
+              | ShiftAccept _ -> Resolvers.use_token_prec symbol_index resolvers
+              | Reduce prod_index -> Resolvers.use_prod_prec prod_index resolvers
             ) action_set
           end
       in
       match Ordset.length max_prec_action_set with
-      | 0L -> precs, symbols, prods, action_set
-      | 1L -> precs, symbols', prods', max_prec_action_set
+      | 0L -> Resolvers.empty, action_set
+      | 1L -> resolvers, max_prec_action_set
       | _ -> begin
           (* Determine whether the subset of actions with maximal precedence has homogeneous
            * associativity. *)
@@ -228,12 +226,12 @@ let resolve_symbol precs symbols prods symbol_index action_set =
             | true -> true, false
           ) max_prec_action_set in
           match homogeneous with
-          | false -> precs, symbols, prods, action_set
+          | false -> Resolvers.empty, action_set
           | true -> begin
-              let precs' = match Uns.(Ordset.length max_prec_action_set > 1L) with
-                | false -> precs
+              let resolvers = match Uns.(Ordset.length max_prec_action_set > 1L) with
+                | false -> resolvers
                 | true -> begin
-                    Ordset.fold ~init:precs ~f:(fun precs action ->
+                    Ordset.fold ~init:resolvers ~f:(fun resolvers action ->
                       let open Action in
                       let prec_opt = match action with
                         | ShiftPrefix _
@@ -246,8 +244,8 @@ let resolve_symbol precs symbols prods symbol_index action_set =
                               Prod.{prec; _} -> prec
                           end
                       in
-                      let prec = Option.value_hlt prec_opt in
-                      Precs.use_assoc prec precs
+                      let Prec.{prec_set_index; _} = Option.value_hlt prec_opt in
+                      Resolvers.use_assoc prec_set_index resolvers
                     ) max_prec_action_set
                   end
               in
@@ -255,8 +253,8 @@ let resolve_symbol precs symbols prods symbol_index action_set =
               | None -> begin
                   (* Resolve a singleton. *)
                   match Ordset.length max_prec_action_set with
-                  | 1L -> precs, symbols', prods', max_prec_action_set
-                  | _ -> precs, symbols, prods, action_set
+                  | 1L -> resolvers, max_prec_action_set
+                  | _ -> Resolvers.empty, action_set
                 end
               | Some Left -> begin
                   (* Resolve a single reduce action. *)
@@ -274,8 +272,8 @@ let resolve_symbol precs symbols prods symbol_index action_set =
                           end
                       ) max_prec_action_set in
                   match Ordset.length reduce_action_set with
-                  | 1L -> precs', symbols', prods', reduce_action_set
-                  | _ -> precs, symbols, prods, action_set
+                  | 1L -> resolvers, reduce_action_set
+                  | _ -> Resolvers.empty, action_set
                 end
               | Some Right -> begin
                   (* Resolve a (single) shift action. *)
@@ -289,36 +287,34 @@ let resolve_symbol precs symbols prods symbol_index action_set =
                         | Reduce _ -> shift_action_set, false
                       ) max_prec_action_set in
                   match Ordset.length shift_action_set with
-                  | 1L -> precs', symbols', prods', shift_action_set
-                  | _ -> precs, symbols, prods, action_set
+                  | 1L -> resolvers, shift_action_set
+                  | _ -> Resolvers.empty, action_set
                 end
-              | Some Nonassoc -> precs', symbols', prods', (Ordset.empty (module Action))
+              | Some Nonassoc -> resolvers, (Ordset.empty (module Action))
             end
         end
     end
 
 let resolve_actions precs symbols prods actions =
-  Ordmap.fold ~init:(precs, symbols, prods, Ordmap.empty (module Symbol.Index))
-    ~f:(fun (precs, symbols, prods, actions) (symbol_index, action_set) ->
-      let precs, symbols, prods, action_set' =
+  Ordmap.fold ~init:(Resolvers.empty, Ordmap.empty (module Symbol.Index))
+    ~f:(fun (resolvers, actions) (symbol_index, action_set) ->
+      let symbol_resolvers, action_set' =
         resolve_symbol precs symbols prods symbol_index action_set in
+      let resolvers = Resolvers.union symbol_resolvers resolvers in
       (* Nonassoc can cause empty action sets; drop them from actions. *)
       let actions = match Ordset.is_empty action_set' with
         | true -> actions
         | false -> Ordmap.insert_hlt ~k:symbol_index ~v:action_set' actions
       in
-      precs, symbols, prods, actions
+      resolvers, actions
     ) actions
 
 let init ~resolve precs symbols prods isocores ~gotonub_of_statenub_goto
     (StateNub.{lr1itemsetclosure; _} as statenub) =
   let actions_raw = actions symbols isocores ~gotonub_of_statenub_goto statenub in
-  let actions = match resolve with
-    | false -> actions_raw
-    | true -> begin
-        let _precs, _symbols, _prods, actions = resolve_actions precs symbols prods actions_raw in
-        actions
-      end
+  let resolvers, actions = match resolve with
+    | false -> Resolvers.empty, actions_raw
+    | true -> resolve_actions precs symbols prods actions_raw
   in
   let gotos =
     Lr1ItemsetClosure.nonterm_gotos symbols lr1itemsetclosure
@@ -328,7 +324,7 @@ let init ~resolve precs symbols prods isocores ~gotonub_of_statenub_goto
         gotos
     )
   in
-  {statenub; actions_raw; actions; gotos}
+  {statenub; resolvers; actions; gotos}
 
 let normalize_state_index remergeable_index_map state_index =
   Ordmap.get state_index remergeable_index_map
@@ -346,29 +342,10 @@ let normalize_action_set remergeable_index_map action_set =
   ) action_set
 
 let remerge symbols remergeable_index_map
-    {statenub=sn0; actions_raw=ar0; actions=a0; gotos=g0}
-    {statenub=sn1; actions_raw=ar1; actions=a1; gotos=g1} =
+    {statenub=sn0; resolvers=r0; actions=a0; gotos=g0}
+    {statenub=sn1; resolvers=r1; actions=a1; gotos=g1} =
   let statenub = StateNub.remerge symbols sn0 sn1 in
-  let actions_raw = Ordmap.union ~vunion:(fun _symbol_index action_set0 action_set1 ->
-    (* Take care not to create an action set with multiple shift actions. *)
-    Ordset.fold ~init:action_set1 ~f:(fun action_set action ->
-      let open Action in
-      match action with
-      | ShiftPrefix _
-      | ShiftAccept _ -> begin
-          (* Shift actions always come first in action sets. *)
-          let shift_in_action_set1 = match Ordset.nth 0L action_set1 with
-            | ShiftPrefix _
-            | ShiftAccept _ -> true
-            | Reduce _ -> false
-          in
-          match shift_in_action_set1 with
-          | true -> action_set
-          | false -> Ordset.insert action action_set
-        end
-      | Reduce _ -> Ordset.insert action action_set
-    ) action_set0
-  ) ar0 ar1 in
+  let resolvers = Resolvers.union r0 r1 in
   let actions =
     Ordmap.fold ~init:a1 ~f:(fun actions (symbol_index, action_set0) ->
       let action_set0 = normalize_action_set remergeable_index_map action_set0 in
@@ -382,7 +359,7 @@ let remerge symbols remergeable_index_map
   let gotos = Ordmap.fold ~init:g1 ~f:(fun gotos (symbol_index, goto) ->
     Ordmap.insert ~k:symbol_index ~v:(normalize_state_index remergeable_index_map goto) gotos
   ) g0 in
-  {statenub; actions_raw; actions; gotos}
+  {statenub; resolvers; actions; gotos}
 
 let reindex state_index_map reachable_action_symbols_opt ({statenub; actions; gotos; _} as t) =
   let reachable_action_symbols = match reachable_action_symbols_opt with
@@ -408,14 +385,6 @@ let reindex state_index_map reachable_action_symbols_opt ({statenub; actions; go
     StateIndexMap.reindexed_state_index_opt statenub_index state_index_map
   ) gotos in
   {t with statenub; actions; gotos}
-
-let use_resolve ~resolve precs symbols prods {actions_raw; _} =
-  match resolve with
-  | false -> precs, symbols, prods
-  | true -> begin
-      let precs, symbols, prods, _actions = resolve_actions precs symbols prods actions_raw in
-      precs, symbols, prods
-    end
 
 let index {statenub={lr1itemsetclosure={index; _}; _}; _} =
   index
