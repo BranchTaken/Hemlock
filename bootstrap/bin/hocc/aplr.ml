@@ -360,28 +360,34 @@ let remerge_states io symbols isocores states =
             Isocores.remerge symbols index0 index1 remerged_isocores
           ) remergeable_index_map
         |> Isocores.reindex state_index_map in
-      (* Remerge states. *)
-      let remerged_states = Ordmap.fold ~init:states
-          ~f:(fun remerged_states (index0, index1) ->
-            assert State.Index.(index0 > index1);
-            let state0 = Array.get index0 remerged_states in
-            let state1 = Array.get index1 remerged_states in
-            let state1' = State.remerge symbols state0 state1 in
-            let remerged_states = Array.set index1 state1' remerged_states in
-            remerged_states
-          ) remergeable_index_map in
+      (* Remerge remergeable states. *)
+      let remerged_states = Ordmap.fold ~init:(Ordmap.empty (module State.Index))
+        ~f:(fun remerged_states (index0, index1) ->
+          assert State.Index.(index0 > index1);
+          let state0 = Array.get index0 states in
+          let state1 = match Ordmap.get index1 remerged_states with
+            | None -> Array.get index1 states
+            | Some state1 -> state1
+          in
+          let state1' = State.remerge symbols state0 state1 in
+          let remerged_states = Ordmap.upsert ~k:index1 ~v:state1' remerged_states in
+          remerged_states
+        ) remergeable_index_map in
       let io =
         io.log
         |> Fmt.fmt "hocc: Reindexing " |> Uns.pp nremaining |> Fmt.fmt " LR(1) state"
         |> (fun formatter -> match nremaining with 1L -> formatter | _ -> formatter |> Fmt.fmt "s")
         |> Io.with_log io
       in
-      (* Create a new set of reindexed states. *)
+      (* Create a new set of reindexed states. The states corresponding to `remaining_state_indexes`
+       * are in `remerged_states` if remergeable, in `states` otherwise. *)
       let reindexed_states =
         Ordset.fold ~init:(Ordset.empty (module State)) ~f:(fun reindexed_states state_index ->
-          let reindexed_state =
-            Array.get state_index remerged_states
-            |> State.reindex state_index_map None in
+          let state = match Ordmap.get state_index remerged_states with
+            | None -> Array.get state_index states
+            | Some state -> state
+          in
+          let reindexed_state = State.reindex state_index_map None state in
           Ordset.insert reindexed_state reindexed_states
         ) remaining_state_indexes
         |> Ordset.to_array in
