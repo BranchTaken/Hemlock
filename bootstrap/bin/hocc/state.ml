@@ -61,13 +61,131 @@ module Action = struct
     | Reduce _ as reduce -> reduce
 end
 
+module ActionSet = struct
+  module T = struct
+    type t = {
+      shift: Action.t option;
+      reduces: (Action.t, Action.cmper_witness) Ordset.t;
+    }
+
+    let hash_fold {shift; reduces} state =
+      state
+      |> Option.hash_fold Action.hash_fold shift
+      |> Ordset.hash_fold reduces
+
+    let cmp {shift=s0; reduces=r0} {shift=s1; reduces=r1} =
+      let open Cmp in
+      match Option.cmp Action.cmp s0 s1 with
+      | Lt -> Lt
+      | Eq -> Ordset.cmp r0 r1
+      | Gt -> Gt
+
+    let pp {shift; reduces} formatter =
+      formatter
+      |> Fmt.fmt "{shift=" |> Option.pp Action.pp shift
+      |> Fmt.fmt "; reduces=" |> Ordset.pp reduces
+      |> Fmt.fmt "}"
+  end
+  include T
+  include Identifiable.Make(T)
+
+  let empty = {
+    shift=None;
+    reduces=Ordset.empty (module Action)
+  }
+
+  let singleton action =
+    let open Action in
+    match action with
+    | ShiftPrefix _
+    | ShiftAccept _ -> {shift=Some action; reduces=Ordset.empty (module Action)}
+    | Reduce _ -> {shift=None; reduces=Ordset.singleton (module Action) action}
+
+  let length {shift; reduces} =
+    Bool.to_uns (Option.is_some shift) + Ordset.length reduces
+
+  let is_empty {shift; reduces} =
+    Option.is_none shift && Ordset.is_empty reduces
+
+  let choose_hlt {shift; reduces} =
+    match shift with
+    | Some action -> action
+    | None -> Ordset.choose_hlt reduces
+
+  let insert action {shift; reduces} =
+    let open Action in
+    match action with
+    | ShiftPrefix _
+    | ShiftAccept _ -> begin
+        assert (Option.is_none shift || Action.( = ) action (Option.value_hlt shift));
+        {shift=Some action; reduces}
+      end
+    | Reduce _ -> {shift; reduces=Ordset.insert action reduces}
+
+  let equal {shift=s0; reduces=r0} {shift=s1; reduces=r1} =
+    Cmp.is_eq (Option.cmp Action.cmp s0 s1) && Ordset.equal r0 r1
+
+  let remerge {shift=s0; reduces=r0} {shift=s1; reduces=r1} =
+    (* Shift state indexes may differ between remergeable sets, and an arbitrary choice between the
+     * two is valid because reindexing will handle either correctly. *)
+    let shift = match s0, s1 with
+      | _, Some _ -> s1
+      | Some _, _ -> s0
+      | None, None -> None
+    in
+    {shift; reduces=Ordset.union r0 r1}
+
+  let fold_until ~init ~f {shift; reduces} =
+    let accum, until = match shift with
+      | None -> init, false
+      | Some action -> f init action
+    in
+    match until with
+    | true -> accum
+    | false -> Ordset.fold_until ~init:accum ~f reduces
+
+  let fold ~init ~f {shift; reduces} =
+    let accum = match shift with
+      | None -> init
+      | Some action -> f init action
+    in
+    Ordset.fold ~init:accum ~f reduces
+
+  let for_any ~f {shift; reduces} =
+    let for_shift = match shift with
+      | None -> false
+      | Some action -> f action
+    in
+    match for_shift with
+    | true -> true
+    | false -> Ordset.for_any ~f reduces
+
+  let for_all ~f {shift; reduces} =
+    let for_shift = match shift with
+      | None -> true
+      | Some action -> f action
+    in
+    match for_shift with
+    | false -> false
+    | true -> Ordset.for_all ~f reduces
+
+  let fold2_until ~init ~f {shift=s0; reduces=r0} {shift=s1; reduces=r1} =
+    (* Pair shift actions even if their destinations differ. *)
+    let accum, until = match s0, s1 with
+      | Some _, _
+      | _, Some _ -> f init s0 s1
+      | None, None -> init, false
+    in
+    match until with
+    | true -> accum
+    | false -> Ordset.fold2_until ~init:accum ~f r0 r1
+end
+
 module T = struct
   type t = {
     statenub: StateNub.t;
     resolvers: Resolvers.t;
-    actions:
-      (Symbol.Index.t, (Action.t, Action.cmper_witness) Ordset.t, Symbol.Index.cmper_witness)
-        Ordmap.t;
+    actions: (Symbol.Index.t, ActionSet.t, Symbol.Index.cmper_witness) Ordmap.t;
     gotos: (Symbol.Index.t, Index.t, Symbol.Index.cmper_witness) Ordmap.t;
   }
 
@@ -81,7 +199,7 @@ module T = struct
     formatter
     |> Fmt.fmt "{statenub=" |> StateNub.pp statenub
     |> Fmt.fmt "; resolvers=" |> Resolvers.pp resolvers
-    |> Fmt.fmt "; actions=" |> Ordmap.pp Ordset.pp actions
+    |> Fmt.fmt "; actions=" |> Ordmap.pp ActionSet.pp actions
     |> Fmt.fmt "; gotos=" |> Ordmap.pp Index.pp gotos
     |> Fmt.fmt "}"
 end
@@ -93,8 +211,8 @@ let actions symbols isocores ~gotonub_of_statenub_goto
   let actions_insert symbol_index action actions = begin
     Ordmap.amend symbol_index ~f:(fun action_set_opt ->
       let action_set' = match action_set_opt with
-        | None -> Ordset.singleton (module Action) action
-        | Some action_set -> Ordset.insert action action_set
+        | None -> ActionSet.singleton action
+        | Some action_set -> ActionSet.insert action action_set
       in
       Some action_set'
     ) actions
@@ -148,61 +266,60 @@ let resolve_symbol precs symbols prods symbol_index action_set =
     | None -> None
     | Some PrecSet.{assoc; _} -> assoc
   end in
-  match Ordset.length action_set with
+  match ActionSet.length action_set with
   | 1L -> Resolvers.empty, action_set
   | _ -> begin
       (* Compute the subset of actions with maximal precedence, if any. Disjoint precedences are
        * incomparable, i.e. there is no maximal precedence in the presence of disjoint
        * precedences. *)
       let max_prec_action_set =
-        Ordset.fold_until ~init:(Ordset.empty (module Action))
-          ~f:(fun max_prec_action_set action ->
-            match Ordset.is_empty max_prec_action_set with
-            | true -> Ordset.singleton (module Action) action, false
-            | false -> begin
-                let max_prec_set = prec_set_of_action precs symbols prods symbol_index
-                    (Ordset.choose_hlt max_prec_action_set) in
-                let action_prec_set = prec_set_of_action precs symbols prods symbol_index action in
-                match max_prec_set, action_prec_set with
-                | None, _
-                | _, None -> begin
-                    (* Disjoint lack of precedence(s). *)
-                    Ordset.empty (module Action), true
-                  end
-                | Some max_prec_set, Some action_prec_set -> begin
-                    match Uns.(=) max_prec_set.index action_prec_set.index with
-                    | false -> begin
-                        match Bitset.mem max_prec_set.index action_prec_set.doms with
-                        | false -> begin
-                            match Bitset.mem action_prec_set.index max_prec_set.doms
-                            with
-                            | false -> begin
-                                (* Disjoint precedence; no conflict resolution possible. *)
-                                Ordset.empty (module Action), true
-                              end
-                            | true -> begin
-                                (* Action's precedence exceeds current maximal precedence. Replace
-                                 * dominated set with the singleton set containing action. *)
-                                Ordset.singleton (module Action) action, false
-                              end
-                          end
-                        | true -> begin
-                            (* Current maximal precedence dominates action's precedence. *)
-                            max_prec_action_set, false
-                          end
-                      end
-                    | true -> begin
-                        (* Precedence equal to current maximal precedence. *)
-                        Ordset.insert action max_prec_action_set, false
-                      end
-                  end
-              end
-          ) action_set
+        ActionSet.fold_until ~init:ActionSet.empty ~f:(fun max_prec_action_set action ->
+          match ActionSet.is_empty max_prec_action_set with
+          | true -> ActionSet.singleton action, false
+          | false -> begin
+              let max_prec_set = prec_set_of_action precs symbols prods symbol_index
+                  (ActionSet.choose_hlt max_prec_action_set) in
+              let action_prec_set = prec_set_of_action precs symbols prods symbol_index action in
+              match max_prec_set, action_prec_set with
+              | None, _
+              | _, None -> begin
+                  (* Disjoint lack of precedence(s). *)
+                  ActionSet.empty, true
+                end
+              | Some max_prec_set, Some action_prec_set -> begin
+                  match Uns.(=) max_prec_set.index action_prec_set.index with
+                  | false -> begin
+                      match Bitset.mem max_prec_set.index action_prec_set.doms with
+                      | false -> begin
+                          match Bitset.mem action_prec_set.index max_prec_set.doms
+                          with
+                          | false -> begin
+                              (* Disjoint precedence; no conflict resolution possible. *)
+                              ActionSet.empty, true
+                            end
+                          | true -> begin
+                              (* Action's precedence exceeds current maximal precedence. Replace
+                               * dominated set with the singleton set containing action. *)
+                              ActionSet.singleton action, false
+                            end
+                        end
+                      | true -> begin
+                          (* Current maximal precedence dominates action's precedence. *)
+                          max_prec_action_set, false
+                        end
+                    end
+                  | true -> begin
+                      (* Precedence equal to current maximal precedence. *)
+                      ActionSet.insert action max_prec_action_set, false
+                    end
+                end
+            end
+        ) action_set
       in
-      let resolvers = match Ordset.is_empty max_prec_action_set with
+      let resolvers = match ActionSet.is_empty max_prec_action_set with
         | true -> Resolvers.empty
         | false -> begin
-            Ordset.fold ~init:Resolvers.empty ~f:(fun resolvers action ->
+            ActionSet.fold ~init:Resolvers.empty ~f:(fun resolvers action ->
               let open Action in
               match action with
               | ShiftPrefix _
@@ -211,15 +328,15 @@ let resolve_symbol precs symbols prods symbol_index action_set =
             ) action_set
           end
       in
-      match Ordset.length max_prec_action_set with
+      match ActionSet.length max_prec_action_set with
       | 0L -> Resolvers.empty, action_set
       | 1L -> resolvers, max_prec_action_set
       | _ -> begin
           (* Determine whether the subset of actions with maximal precedence has homogeneous
            * associativity. *)
           let assoc = assoc_of_action precs symbols prods symbol_index
-              (Ordset.choose_hlt max_prec_action_set) in
-          let homogeneous = Ordset.fold_until ~init:true ~f:(fun _ action ->
+              (ActionSet.choose_hlt max_prec_action_set) in
+          let homogeneous = ActionSet.fold_until ~init:true ~f:(fun _ action ->
             let action_assoc = assoc_of_action precs symbols prods symbol_index action in
             match Cmp.is_eq (Option.cmp Assoc.cmp assoc action_assoc) with
             | false -> false, true
@@ -228,10 +345,10 @@ let resolve_symbol precs symbols prods symbol_index action_set =
           match homogeneous with
           | false -> Resolvers.empty, action_set
           | true -> begin
-              let resolvers = match Uns.(Ordset.length max_prec_action_set > 1L) with
+              let resolvers = match Uns.(ActionSet.length max_prec_action_set > 1L) with
                 | false -> resolvers
                 | true -> begin
-                    Ordset.fold ~init:resolvers ~f:(fun resolvers action ->
+                    ActionSet.fold ~init:resolvers ~f:(fun resolvers action ->
                       let open Action in
                       let prec_opt = match action with
                         | ShiftPrefix _
@@ -252,45 +369,44 @@ let resolve_symbol precs symbols prods symbol_index action_set =
               match assoc with
               | None -> begin
                   (* Resolve a singleton. *)
-                  match Ordset.length max_prec_action_set with
+                  match ActionSet.length max_prec_action_set with
                   | 1L -> resolvers, max_prec_action_set
                   | _ -> Resolvers.empty, action_set
                 end
               | Some Left -> begin
                   (* Resolve a single reduce action. *)
-                  let reduce_action_set = Ordset.fold_until
-                      ~init:(Ordset.empty (module Action))
+                  let reduce_action_set = ActionSet.fold_until ~init:ActionSet.empty
                       ~f:(fun reduce_action_set action ->
                         let open Action in
                         match action with
                         | ShiftPrefix _
                         | ShiftAccept _ -> reduce_action_set, false
                         | Reduce _ -> begin
-                            match Ordset.is_empty reduce_action_set with
-                            | false -> Ordset.empty (module Action), true
-                            | true -> Ordset.singleton (module Action) action, false
+                            match ActionSet.is_empty reduce_action_set with
+                            | false -> ActionSet.empty, true
+                            | true -> ActionSet.singleton action, false
                           end
                       ) max_prec_action_set in
-                  match Ordset.length reduce_action_set with
+                  match ActionSet.length reduce_action_set with
                   | 1L -> resolvers, reduce_action_set
                   | _ -> Resolvers.empty, action_set
                 end
               | Some Right -> begin
                   (* Resolve a (single) shift action. *)
-                  let shift_action_set = Ordset.fold_until
-                      ~init:(Ordset.empty (module Action))
+                  let shift_action_set = ActionSet.fold_until
+                      ~init:ActionSet.empty
                       ~f:(fun shift_action_set action ->
                         let open Action in
                         match action with
                         | ShiftPrefix _
-                        | ShiftAccept _ -> Ordset.singleton (module Action) action, true
+                        | ShiftAccept _ -> ActionSet.singleton action, true
                         | Reduce _ -> shift_action_set, false
                       ) max_prec_action_set in
-                  match Ordset.length shift_action_set with
+                  match ActionSet.length shift_action_set with
                   | 1L -> resolvers, shift_action_set
                   | _ -> Resolvers.empty, action_set
                 end
-              | Some Nonassoc -> resolvers, (Ordset.empty (module Action))
+              | Some Nonassoc -> resolvers, ActionSet.empty
             end
         end
     end
@@ -302,7 +418,7 @@ let resolve_actions precs symbols prods actions =
         resolve_symbol precs symbols prods symbol_index action_set in
       let resolvers = Resolvers.union symbol_resolvers resolvers in
       (* Nonassoc can cause empty action sets; drop them from actions. *)
-      let actions = match Ordset.is_empty action_set' with
+      let actions = match ActionSet.is_empty action_set' with
         | true -> actions
         | false -> Ordmap.insert_hlt ~k:symbol_index ~v:action_set' actions
       in
@@ -326,39 +442,18 @@ let init ~resolve precs symbols prods isocores ~gotonub_of_statenub_goto
   in
   {statenub; resolvers; actions; gotos}
 
-let normalize_state_index remergeable_index_map state_index =
-  Ordmap.get state_index remergeable_index_map
-  |> Option.value ~default:state_index
-
-let normalize_action_set remergeable_index_map action_set =
-  Ordset.fold ~init:(Ordset.empty (module Action)) ~f:(fun action_set' action ->
-    let open Action in
-    let action' = match action with
-      | ShiftPrefix index -> ShiftPrefix (normalize_state_index remergeable_index_map index)
-      | ShiftAccept index -> ShiftAccept (normalize_state_index remergeable_index_map index)
-      | Reduce _ as reduce -> reduce
-    in
-    Ordset.insert action' action_set'
-  ) action_set
-
-let remerge symbols remergeable_index_map
+let remerge symbols
     {statenub=sn0; resolvers=r0; actions=a0; gotos=g0}
     {statenub=sn1; resolvers=r1; actions=a1; gotos=g1} =
   let statenub = StateNub.remerge symbols sn0 sn1 in
   let resolvers = Resolvers.union r0 r1 in
-  let actions =
-    Ordmap.fold ~init:a1 ~f:(fun actions (symbol_index, action_set0) ->
-      let action_set0 = normalize_action_set remergeable_index_map action_set0 in
-      Ordmap.amend symbol_index ~f:(fun actions_opt ->
-        match actions_opt with
-        | None -> Some action_set0
-        | Some action_set1 -> Some (Ordset.union action_set0 action_set1)
-      ) actions
-    ) a0
-  in
-  let gotos = Ordmap.fold ~init:g1 ~f:(fun gotos (symbol_index, goto) ->
-    Ordmap.insert ~k:symbol_index ~v:(normalize_state_index remergeable_index_map goto) gotos
-  ) g0 in
+  let actions = Ordmap.union ~vunion:(fun _symbol_index action_set0 action_set1 ->
+    ActionSet.remerge action_set0 action_set1
+  ) a0 a1 in
+  let gotos = Ordmap.union ~vunion:(fun _symbol_index _goto0 goto1 ->
+    (* Arbitrarily choose; reindexing will handle either correctly. *)
+    goto1
+  ) g0 g1 in
   {statenub; resolvers; actions; gotos}
 
 let reindex state_index_map reachable_action_symbols_opt ({statenub; actions; gotos; _} as t) =
@@ -374,11 +469,11 @@ let reindex state_index_map reachable_action_symbols_opt ({statenub; actions; go
     match Ordset.mem symbol_index reachable_action_symbols with
     | false -> None
     | true -> begin
-        Some (Ordset.fold ~init:(Ordset.empty (module Action))
-          ~f:(fun reindexed_actions action ->
-            let reindexed_action = Action.reindex state_index_map action in
-            Ordset.insert reindexed_action reindexed_actions
-          ) actions )
+        Some (ActionSet.fold ~init:ActionSet.empty
+            ~f:(fun reindexed_actions action ->
+              let reindexed_action = Action.reindex state_index_map action in
+              ActionSet.insert reindexed_action reindexed_actions
+            ) actions )
       end
   ) actions in
   let gotos = Ordmap.filter_map ~f:(fun (_symbol_index, statenub_index) ->
@@ -403,20 +498,20 @@ let has_pseudo_end_conflict {actions; _} =
   | true, _ -> true
 
 let conflicts_alist ~resolve precs symbols prods {actions; _} =
-  Ordmap.fold ~init:[] ~f:(fun symbol_index_actions (symbol_index, actions) ->
-    match Ordset.length actions with
+  Ordmap.fold ~init:[] ~f:(fun symbol_index_actions (symbol_index, action_set) ->
+    match ActionSet.length action_set with
     | 0L -> not_reached ()
     | 1L -> symbol_index_actions
-    | _ -> (symbol_index, actions) :: symbol_index_actions
+    | _ -> (symbol_index, action_set) :: symbol_index_actions
   ) actions
-  |> List.fold ~init:[] ~f:(fun symbol_index_conflict (symbol_index, actions) ->
-    let conflict = Ordset.fold ~init:Contrib.empty ~f:(fun conflict action ->
+  |> List.fold ~init:[] ~f:(fun symbol_index_conflict (symbol_index, action_set) ->
+    let conflict = ActionSet.fold ~init:Contrib.empty ~f:(fun conflict action ->
       let open Action in
       match action with
       | ShiftPrefix _
       | ShiftAccept _ -> Contrib.(union shift conflict)
       | Reduce prod_index -> Contrib.(union (init_reduce prod_index) conflict)
-    ) actions in
+    ) action_set in
     match resolve with
     | false -> (symbol_index, conflict) :: symbol_index_conflict
     | true -> begin
@@ -454,7 +549,7 @@ let conflicts ?(filter_pseudo_end=true) ({actions; _} as t) =
         | true -> Ordset.singleton (module Symbol.Index) Symbol.pseudo_end.index)
     (Ordmap.fold ~init:(Ordset.empty (module Symbol.Index))
         ~f:(fun symbol_indexes (symbol_index, action_set) ->
-          match (Ordset.length action_set) with
+          match (ActionSet.length action_set) with
           | 1L -> symbol_indexes
           | _ -> Ordset.insert symbol_index symbol_indexes
         ) actions)
@@ -462,7 +557,7 @@ let conflicts ?(filter_pseudo_end=true) ({actions; _} as t) =
 
 let sr_conflicts {actions; _} =
   Ordmap.count ~f:(fun (_, action_set) ->
-    let shifts, reduces = Ordset.fold_until ~init:(0L, 0L) ~f:(fun (shifts, reduces) action ->
+    let shifts, reduces = ActionSet.fold_until ~init:(0L, 0L) ~f:(fun (shifts, reduces) action ->
       let open Action in
       let shifts', reduces' = match action with
         | ShiftPrefix _
@@ -477,7 +572,7 @@ let sr_conflicts {actions; _} =
 
 let rr_conflicts {actions; _} =
   Ordmap.count ~f:(fun (_, action_set) ->
-    let reduces = Ordset.fold_until ~init:0L ~f:(fun reduces action ->
+    let reduces = ActionSet.fold_until ~init:0L ~f:(fun reduces action ->
       let open Action in
       let reduces' = match action with
         | ShiftPrefix _

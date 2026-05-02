@@ -1118,7 +1118,7 @@ and log_unused io precs symbols prods states =
           let symbol = Symbols.symbol_of_symbol_index symbol_index symbols in
           let precs_used, tokens_used, nonterms_used =
             mark_symbol precs ~precs_used ~tokens_used ~nonterms_used symbol in
-          Ordset.fold ~init:(precs_used, tokens_used, nonterms_used, prods_used)
+          State.ActionSet.fold ~init:(precs_used, tokens_used, nonterms_used, prods_used)
             ~f:(fun (precs_used, tokens_used, nonterms_used, prods_used) action ->
               let open State.Action in
               match action with

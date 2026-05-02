@@ -1589,8 +1589,8 @@ let expand_hm_states states ~indentation formatter =
               let indentation = indentation + 4L in
               let indent = mk_indent indentation in
               Ordmap.fold ~init:formatter ~f:(fun formatter (symbol_index, action_set) ->
-                assert (Ordset.length action_set = 1L);
-                let action = Ordset.choose_hlt action_set in
+                assert (State.ActionSet.length action_set = 1L);
+                let action = State.ActionSet.choose_hlt action_set in
                 formatter
                 |> indent
                 |> Symbol.Index.pp symbol_index
@@ -3545,8 +3545,8 @@ let expand_ml_states states ~indentation formatter =
               let indentation = indentation + 4L in
               let indent = mk_indent indentation in
               Ordmap.fold ~init:formatter ~f:(fun formatter (symbol_index, action_set) ->
-                assert (Ordset.length action_set = 1L);
-                let action = Ordset.choose_hlt action_set in
+                assert (State.ActionSet.length action_set = 1L);
+                let action = State.ActionSet.choose_hlt action_set in
                 formatter
                 |> indent
                 |> Fmt.fmt "("

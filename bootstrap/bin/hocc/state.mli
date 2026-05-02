@@ -18,6 +18,40 @@ module Action : sig
   (** Formatter which outputs action in human-readable form. *)
 end
 
+module ActionSet : sig
+  type t
+
+  val length: t -> uns
+  (** [length t] returns the number of elements in [t]. *)
+
+  val choose_hlt: t -> Action.t
+  (** [choose_hlt t] returns an arbitrary member of [t] if the set is non-empty, halts otherwise. *)
+
+  val equal: t -> t -> bool
+  (** [equal t0 t1] returns [true] if [t0] and [t1] contain identical sets of elements, [false]
+      otherwise. *)
+
+  val fold: init:'accum -> f:('accum -> Action.t -> 'accum) -> t -> 'accum
+  (** [fold ~init ~f t] folds [t] from left to right, using [init] as the initial accumulator value.
+  *)
+
+  val for_any: f:(Action.t -> bool) -> t -> bool
+  (** [for_any ~f t] iterates from left to right over [t] and returns [true] if any invocation of
+      [f] returns [true]. *)
+
+  val for_all: f:(Action.t -> bool) -> t -> bool
+  (** [for_all ~f t] iterates from left to right over [t] and returns [true] if all invocations of
+      [f] return [true]. *)
+
+  val fold2_until: init:'accum ->
+    f:('accum -> Action.t option -> Action.t option -> 'accum * bool) -> t -> t -> 'accum
+  (** [fold2_until ~init ~f t0 t1] folds over the union of t0 and t1 from left to right and calls
+      [~f accum elm0_opt elm1_opt] once for each element in the union such that if the element is
+      absent from one of the input sets, the corresponding parameter is [None]. Note that shift
+      actions are paired even if their destinations differ. Folding terminates early if [~f] returns
+      [(_, true)]. *)
+end
+
 type t = {
   statenub: StateNub.t;
   (** State nub, which contains the LR(1) item set closure and inadequacy attributions. *)
@@ -25,9 +59,7 @@ type t = {
   resolvers: Resolvers.t;
   (** Sets of associativities/precedences that were useful for conflict resolution. *)
 
-  actions:
-    (Symbol.Index.t, (Action.t, Action.cmper_witness) Ordset.t, Symbol.Index.cmper_witness)
-      Ordmap.t;
+  actions: (Symbol.Index.t, ActionSet.t, Symbol.Index.cmper_witness) Ordmap.t;
   (** Per symbol action sets (i.e. potentially ambiguous) with conflict resolution if the [~resolve]
       parameter to [init] was true, as well as reindexing and unreachable action filtering depending
       on phase of automaton construction. *)
@@ -44,9 +76,9 @@ val init: resolve:bool -> Precs.t -> Symbols.t -> Prods.t -> Isocores.t
 (** [init ~resolve precs symbols prods isocores ~gotonub_of_statenub_goto statenub] creates a state
     based on [statenub]. *)
 
-val remerge: Symbols.t -> (Index.t, Index.t, Index.cmper_witness) Ordmap.t-> t -> t -> t
-(** [remerge symbols index_map t0 t1] re-merges state [t0] into [t1], where [t0] has a higher index
-    than [t1]. *)
+val remerge: Symbols.t -> t -> t -> t
+(** [remerge symbols t0 t1] re-merges state [t0] into [t1], where [t0] has a higher index than [t1].
+*)
 
 val reindex: StateIndexMap.t ->  (Symbol.Index.t, Symbol.Index.cmper_witness) Ordset.t option -> t
   -> t

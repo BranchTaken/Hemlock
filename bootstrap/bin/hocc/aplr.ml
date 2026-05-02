@@ -15,61 +15,45 @@ let bool_of_remergeable remergeable =
   | NotRemergeable _ -> false
   | Remergeable -> true
 
-let remergeable_action_set_shifts states remergeables frontiers spines action_set0 action_set1 =
-  (* Check whether the sets have equivalent shift actions (or no shift actions). This implementation
-   * takes advantage of action comparison order putting shift actions before reduce actions, i.e. if
-   * there is a shift action, it is the first set element. *)
-  let open State.Action in
-  match Ordset.nth 0L action_set0, Ordset.nth 0L action_set1 with
-  | ShiftPrefix index0, ShiftPrefix index1
-  | ShiftAccept index0, ShiftAccept index1 -> begin
-      match State.Index.(index0 = index1) with
-      | true -> remergeables, frontiers, Remergeable
-      | false -> begin
-          let State.{statenub=statenub0; _} = Array.get index0 states in
-          let State.{statenub=statenub1; _} = Array.get index1 states in
-          let spines = (statenub0, statenub1) :: spines in
-          match Remergeables.rel statenub0 statenub1 remergeables with
-          | Unknown -> begin
-              let frontiers = spines :: frontiers in
-              remergeables, frontiers, Remergeable
-            end
-          | Distinct -> remergeables, frontiers, NotRemergeable spines
-          | Mergeable -> remergeables, frontiers, Remergeable
-        end
-    end
-  | Reduce _, Reduce _ ->
-    remergeables, frontiers, Remergeable (* Handled in `remergeable_action_set_reduces`. *)
-  | _ -> remergeables, frontiers, NotRemergeable spines (* Shift in one set but not the other. *)
-
-let remergeable_action_set_reduces spines action_set0 action_set1 =
-  (* Check whether the sets have equivalent reduce actions. Shift actions are handled above, since
-   * they only show up together in fold2 if they shift to the same state index. *)
-  let open State.Action in
-  Ordset.fold2_until ~init:Remergeable ~f:(fun _remergeable kv0_opt kv1_opt ->
-    match kv0_opt, kv1_opt with
-    | Some _, Some _ (* fold2 guarantees equality. *)
-    | Some (ShiftPrefix _|ShiftAccept _), None (* Handled in `remergeable_action_set_shifts`. *)
-    | None, Some (ShiftPrefix _|ShiftAccept _)
-      -> Remergeable, false
-    | Some (Reduce _), None (* Reduce in one set but not the other. *)
-    | None, Some (Reduce _)
-      -> NotRemergeable spines, true
-    | None, None -> not_reached ()
-  ) action_set0 action_set1
-
 let remergeable_action_sets states remergeables frontiers spines action_set0 action_set1 =
-  let remergeables, frontiers, remergeable =
-    remergeable_action_set_shifts states remergeables frontiers spines action_set0 action_set1 in
-  match remergeable with
-  | NotRemergeable _ -> remergeables, frontiers, remergeable
-  | Remergeable ->
-    remergeables, frontiers, remergeable_action_set_reduces spines action_set0 action_set1
+  let open State.Action in
+  State.ActionSet.fold2_until ~init:(remergeables, frontiers, Remergeable)
+    ~f:(fun (remergeables, frontiers, _remergeable) kv0_opt kv1_opt ->
+      match kv0_opt, kv1_opt with
+      | Some (ShiftPrefix index0), Some (ShiftPrefix index1)
+      | Some (ShiftAccept index0), Some (ShiftAccept index1) -> begin
+          match State.Index.(index0 = index1) with
+          | true -> (remergeables, frontiers, Remergeable), false
+          | false -> begin
+              let State.{statenub=statenub0; _} = Array.get index0 states in
+              let State.{statenub=statenub1; _} = Array.get index1 states in
+              let spines = (statenub0, statenub1) :: spines in
+              match Remergeables.rel statenub0 statenub1 remergeables with
+              | Unknown -> begin
+                  let frontiers = spines :: frontiers in
+                  (remergeables, frontiers, Remergeable), false
+                end
+              | Distinct -> (remergeables, frontiers, NotRemergeable spines), true
+              | Mergeable -> (remergeables, frontiers, Remergeable), false
+            end
+        end
+      | Some (ShiftPrefix _), Some (ShiftAccept _)
+      | Some (ShiftAccept _), Some (ShiftPrefix _)
+        -> not_reached ()
+      | Some _, Some _ (* fold2 guarantees equality for reduces. *)
+      | Some (ShiftPrefix _|ShiftAccept _), None
+      | None, Some (ShiftPrefix _|ShiftAccept _)
+        -> (remergeables, frontiers, Remergeable), false
+      | Some (Reduce _), None (* Reduce in one set but not the other. *)
+      | None, Some (Reduce _)
+        -> (remergeables, frontiers, NotRemergeable spines), true
+      | None, None -> not_reached ()
+    ) action_set0 action_set1
 
 let remergeable_actions states remergeables frontiers spines =
   let reduces_only action_set = begin
     let open State.Action in
-    Ordset.for_all
+    State.ActionSet.for_all
       ~f:(fun action ->
         match action with
         | ShiftPrefix _
@@ -110,7 +94,7 @@ let remergeable_actions states remergeables frontiers spines =
                         match Ordmap.get symbol_index actions with
                         | None -> Remergeable, false
                         | Some mergeable_action_set -> begin
-                            match Ordset.equal action_set mergeable_action_set with
+                            match State.ActionSet.equal action_set mergeable_action_set with
                             | false -> NotRemergeable spines, true
                             | true -> Remergeable, false
                           end
@@ -382,7 +366,7 @@ let remerge_states io symbols isocores states =
             assert State.Index.(index0 > index1);
             let state0 = Array.get index0 remerged_states in
             let state1 = Array.get index1 remerged_states in
-            let state1' = State.remerge symbols remergeable_index_map state0 state1 in
+            let state1' = State.remerge symbols state0 state1 in
             let remerged_states = Array.set index1 state1' remerged_states in
             remerged_states
           ) remergeable_index_map in

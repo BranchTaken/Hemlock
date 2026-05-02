@@ -43,7 +43,7 @@ let init_ipreds states =
     ~f:(fun ipreds
       State.{statenub={lr1itemsetclosure={index=ipred_state_index; _}; _}; actions; gotos; _} ->
       let ipreds = Ordmap.fold ~init:ipreds ~f:(fun ipreds (_, action_set) ->
-        Ordset.fold ~init:ipreds ~f:(fun ipreds action ->
+        State.ActionSet.fold ~init:ipreds ~f:(fun ipreds action ->
           let open State.Action in
           match action with
           | ShiftPrefix state_index

@@ -379,18 +379,18 @@ let generate_txt conf io Spec.{algorithm; precs; symbols; prods; states; _} =
               )
               |> pp_symbol_index symbol_index |> Fmt.fmt " :"
               |> (fun formatter ->
-                match Ordset.length action_set with
+                match State.ActionSet.length action_set with
                 | 1L -> begin
                     formatter
                     |> Fmt.fmt " "
-                    |> pp_action symbol_index (Ordset.choose_hlt action_set)
+                    |> pp_action symbol_index (State.ActionSet.choose_hlt action_set)
                     |> Fmt.fmt "\n"
                   end
                 | _ -> begin
                     formatter
                     |> Fmt.fmt "\n"
                     |> (fun formatter ->
-                      Ordset.fold ~init:formatter ~f:(fun formatter action ->
+                      State.ActionSet.fold ~init:formatter ~f:(fun formatter action ->
                         formatter
                         |> Fmt.fmt "CONFLICT        "
                         |> pp_action symbol_index action

@@ -151,7 +151,7 @@ let depth_pred_lookahead_gotos prods states adjs ~filter state_index =
   let depth_pred_lookahead_gotos, _reachable_preds_cache =
     Ordmap.fold ~init:(depth_pred_lookahead_gotos, reachable_preds_cache)
       ~f:(fun (depth_pred_lookahead_gotos, reachable_preds_cache) (symbol_index, action_set) ->
-        Ordset.fold ~init:(depth_pred_lookahead_gotos, reachable_preds_cache)
+        State.ActionSet.fold ~init:(depth_pred_lookahead_gotos, reachable_preds_cache)
           ~f:(fun (depth_pred_lookahead_gotos, reachable_preds_cache) action ->
             let open State.Action in
             match action with
@@ -204,7 +204,7 @@ let reachable_depth_pred_lookahead_gotos states adjs ~traced untraced_depth_pred
                 | Shift -> true
                 | Follows follows -> Ordset.mem symbol_index follows
               )
-              && action_set |> Ordset.for_any ~f:(fun action ->
+              && action_set |> State.ActionSet.for_any ~f:(fun action ->
                 let open State.Action in
                 match action with
                 | ShiftPrefix isucc_state_index
@@ -254,7 +254,7 @@ let trace_actions states ~traced ~frontier =
     let state = Array.get state_index states in
     let reached_actions = reached_actions state reach in
     Ordmap.fold ~init:frontier ~f:(fun frontier (_symbol_index, action_set) ->
-      Ordset.fold ~init:frontier ~f:(fun frontier action ->
+      State.ActionSet.fold ~init:frontier ~f:(fun frontier action ->
         let open State.Action in
         match action with
         | ShiftPrefix isucc_state_index
@@ -276,7 +276,7 @@ let reached_lookaheads states state_index reach =
   let reached_actions = reached_actions state reach in
   Ordmap.fold ~init:(Ordset.empty (module Symbol.Index))
     ~f:(fun reached_lookaheads (symbol_index, action_set) ->
-      Ordset.fold ~init:reached_lookaheads ~f:(fun reached_lookaheads action ->
+      State.ActionSet.fold ~init:reached_lookaheads ~f:(fun reached_lookaheads action ->
         let open State.Action in
         match action with
         | ShiftPrefix _isucc_state_index
