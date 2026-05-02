@@ -19,9 +19,6 @@ type t = {
       is [Some p] regardless of whether precedence is specified for just this prod versus all of the
       nonterm (LHS symbol) prods. *)
 
-  prec_useful: bool;
-  (** True if precedence used for conflict resolution. *)
-
   stmt: Parse.nonterm_prod option;
   (** Declaration AST. *)
 
@@ -41,6 +38,3 @@ val is_synthetic: t -> bool
 
 val is_epsilon: t -> bool
 (** [is_epsilon t] returns true if [t] is an ε production, i.e. it has an empty RHS. *)
-
-val use_prec: t -> t
-(** [use_prec t] returns a derivative of [t] with [prec_useful] set to true. *)

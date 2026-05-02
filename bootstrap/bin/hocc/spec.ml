@@ -1077,7 +1077,7 @@ and log_conflicts io ~resolve states =
   in
   io
 
-and log_unused io ~resolve precs symbols prods states =
+and log_unused io precs symbols prods states =
   let rec mark_prec precs ~precs_used prec = begin
     match prec with
     | None -> precs_used
@@ -1147,9 +1147,9 @@ and log_unused io ~resolve precs symbols prods states =
     |> Fmt.fmt "precedences/associativities/tokens/non-terminals/productions"
     |> Io.with_log io
   in
-  let precs, symbols, prods = Array.fold ~init:(precs, symbols, prods)
-    ~f:(fun (precs, symbols, prods) state ->
-      State.use_resolve ~resolve precs symbols prods state
+  let resolvers =
+    Array.fold ~init:Resolvers.empty ~f:(fun resolvers State.{resolvers=state_resolvers; _} ->
+      Resolvers.union state_resolvers resolvers
     ) states in
   let precs_used, tokens_used, nonterms_used, prods_used = mark_states symbols prods states in
   let precs_nunused = (Precs.length precs) - (Set.length precs_used) in
@@ -1185,8 +1185,8 @@ and log_unused io ~resolve precs symbols prods states =
       end
   in
   let prec_sets_assoc_unused = Precs.fold_prec_sets ~init:(Ordset.empty (module PrecSet))
-    ~f:(fun prec_sets_assoc_unused (PrecSet.{names; assoc; assoc_useful; _} as prec_set) ->
-      match Option.is_none assoc || assoc_useful with
+    ~f:(fun prec_sets_assoc_unused (PrecSet.{index; names; assoc; _} as prec_set) ->
+      match Option.is_none assoc || Resolvers.is_assoc_useful index resolvers with
       | true -> prec_sets_assoc_unused
       | false -> begin
           let any_prec_used = Array.for_any ~f:(fun name -> Set.mem name precs_used) names in
@@ -1234,8 +1234,9 @@ and log_unused io ~resolve precs symbols prods states =
       end
   in
   let tokens_prec_unused = Symbols.tokens_fold ~init:(Ordset.empty (module Symbol))
-    ~f:(fun tokens_prec_unused (Symbol.{index; prec; prec_useful; _} as token) ->
-      match (not (Set.mem index tokens_used)) || Option.is_none prec || prec_useful with
+    ~f:(fun tokens_prec_unused (Symbol.{index; prec; _} as token) ->
+      match (not (Set.mem index tokens_used)) || Option.is_none prec ||
+            Resolvers.is_token_prec_useful index resolvers with
       | true -> tokens_prec_unused
       | false -> Ordset.insert token tokens_prec_unused
     ) symbols
@@ -1314,8 +1315,9 @@ and log_unused io ~resolve precs symbols prods states =
       end
   in
   let prods_prec_unused = Prods.fold ~init:(Ordset.empty (module Prod))
-    ~f:(fun prods_prec_unused (Prod.{index; prec; prec_useful; _} as prod) ->
-      match (not (Set.mem index prods_used)) || Option.is_none prec || prec_useful with
+    ~f:(fun prods_prec_unused (Prod.{index; prec; _} as prod) ->
+      match (not (Set.mem index prods_used)) || Option.is_none prec ||
+            Resolvers.is_prod_prec_useful index resolvers with
       | true -> prods_prec_unused
       | false -> Ordset.insert prod prods_prec_unused
     ) prods
@@ -1400,7 +1402,7 @@ and init algorithm ~resolve ~gc ~remerge io hmh =
     | No -> io, isocores, states
   in
   let io = log_conflicts io ~resolve states in
-  let io = log_unused io ~resolve precs symbols prods states in
+  let io = log_unused io precs symbols prods states in
   io, {algorithm; precs; symbols; prods; callbacks; states}
 
 let conflicts {states; _} =

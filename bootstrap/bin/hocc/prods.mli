@@ -22,10 +22,6 @@ module Builder : sig
   (** [build t] builds a [Prods.t]. *)
 end
 
-val use_prec: Prod.Index.t -> t -> t
-(** [use_prec prod_index t] returns a derivative of [t] with the precedence for the production
-    corresponding to [prod_index] marked as useful. *)
-
 val length: t -> uns
 (** [length t] returns the number of productions in [t]. *)
 

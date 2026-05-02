@@ -117,12 +117,6 @@ module Builder = struct
     {names=names'; symbols=symbols'; ntokens}
 end
 
-let use_prec symbol_index ({symbols; _} as t) =
-  let symbol = Array.get symbol_index symbols in
-  let symbol' = Symbol.use_prec symbol in
-  let symbols' = Array.set symbol_index symbol' symbols in
-  {t with symbols=symbols'}
-
 let symbol_of_name name {names; symbols; _} =
   match Map.get name names with
   | None -> None

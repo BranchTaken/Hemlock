@@ -81,10 +81,6 @@ module Builder : sig
   (** [build t] builds a [Symbols.t]. *)
 end
 
-val use_prec: Symbol.Index.t -> t -> t
-(** [use_prec symbol_index t] returns a derivative of [t] with the precedence for the symbol
-    corresponding to [symbol_index] marked as useful. *)
-
 val symbol_of_name: string -> t -> Symbol.t option
 (** [symbol_index_of_name name t] returns [Some index] if a symbol with the specified [name] exists,
     halts otherwise. *)

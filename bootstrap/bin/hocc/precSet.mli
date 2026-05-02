@@ -16,9 +16,6 @@ type t = {
   assoc: Assoc.t option;
   (** Corresponding associativity, if any. *)
 
-  assoc_useful: bool;
-  (** True if assoc used for conflict resolution. *)
-
   doms: Bitset.t;
   (** Set of precedence sets which dominate this precedence. *)
 
@@ -40,6 +37,3 @@ val init: index:Index.t -> names:string array -> assoc:(Assoc.t option) -> doms:
 
 val name_of_name_index: PrecIndex.t -> t -> string
 (** [name_of_name_index name_index t] returns the precedence name corresponding to [name_index]. *)
-
-val use_assoc: t -> t
-(** [use_assoc t] returns a derivative ot [t] with [assoc_useful] set to true. *)

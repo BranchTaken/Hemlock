@@ -15,10 +15,6 @@ val insert: names:string array -> assoc:(Assoc.t option) -> doms:Bitset.t
 (** [insert ~names ~assoc ~doms ~stmt t] creates a [PrecSet.t] with unique index and returns a new
     [t] with the precedence set inserted. *)
 
-val use_assoc: Prec.t -> t -> t
-(** [use_assoc prec t] returns a derivative of [t] with [assoc_useful] set to true for the
-    precedence set containing [prec]. *)
-
 val prec_index_of_name: string -> t -> PrecSet.Index.t option
 (** [prec_index_of_name s t] returns [Some index] of the precedence with name [s], or [None] if no
     such precedence name exists. *)

@@ -18,12 +18,6 @@ module Builder = struct
     Array.init (0L =:< Ordmap.length t) ~f:(fun index -> Ordmap.get_hlt index t)
 end
 
-let use_prec prod_index t =
-  let prod = Array.get prod_index t in
-  let prod' = Prod.use_prec prod in
-  let t' = Array.set prod_index prod' t in
-  t'
-
 let length = Array.length
 
 let prod_of_prod_index = Array.get

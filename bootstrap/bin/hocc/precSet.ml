@@ -8,7 +8,6 @@ module T = struct
     index: Index.t;
     names: string array;
     assoc: Assoc.t option;
-    assoc_useful: bool;
     doms: Bitset.t;
     stmt: Parse.nonterm_prec_set;
   }
@@ -20,12 +19,11 @@ module T = struct
   let cmp {index=i0; _} {index=i1; _} =
     Index.cmp i0 i1
 
-  let pp {index; names; assoc; assoc_useful; doms; stmt} formatter =
+  let pp {index; names; assoc; doms; stmt} formatter =
     formatter
     |> Fmt.fmt "{index=" |> Index.pp index
     |> Fmt.fmt "; names=" |> Array.pp String.pp names
     |> Fmt.fmt "; assoc=" |> (Option.pp Assoc.pp) assoc
-    |> Fmt.fmt "; assoc_useful=" |> Bool.pp assoc_useful
     |> Fmt.fmt "; doms=" |> Bitset.pp doms
     |> Fmt.fmt "; stmt=" |> Parse.fmt_prec_set stmt
     |> Fmt.fmt "}"
@@ -71,10 +69,7 @@ let src_fmt {names; assoc; stmt; _} formatter =
   |> Fmt.fmt "\n"
 
 let init ~index ~names ~assoc ~doms ~stmt =
-  {index; names; assoc; assoc_useful=false; doms; stmt}
+  {index; names; assoc; doms; stmt}
 
 let name_of_name_index name_index {names; _} =
   Array.get name_index names
-
-let use_assoc t =
-  {t with assoc_useful=true}
