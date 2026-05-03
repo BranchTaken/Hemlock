@@ -221,7 +221,7 @@ let actions symbols isocores ~gotonub_of_statenub_goto
   Lr1ItemsetClosure.fold ~init:(Ordmap.empty (module Symbol.Index))
     ~f:(fun actions {lr0item={prod={index; rhs_indexes; _}; dot}; follow} ->
       match Uns.(<) dot (Array.length rhs_indexes) with
-      (* X :: a·Ab *)
+      (* X ::= a·Ab *)
       | true -> begin
           let symbol_index = Array.get dot rhs_indexes in
           let symbol = Symbols.symbol_of_symbol_index symbol_index symbols in
@@ -265,6 +265,15 @@ let resolve_symbol precs symbols prods symbol_index action_set =
     match prec_set_of_action precs symbols prods symbol_index action with
     | None -> None
     | Some PrecSet.{assoc; _} -> assoc
+  end in
+  let resolvers_of_action_set symbol_index action_set = begin
+    ActionSet.fold ~init:Resolvers.empty ~f:(fun resolvers action ->
+      let open Action in
+      match action with
+      | ShiftPrefix _
+      | ShiftAccept _ -> Resolvers.use_token_prec symbol_index resolvers
+      | Reduce prod_index -> Resolvers.use_prod_prec prod_index resolvers
+    ) action_set
   end in
   match ActionSet.length action_set with
   | 1L -> Resolvers.empty, action_set
@@ -316,21 +325,9 @@ let resolve_symbol precs symbols prods symbol_index action_set =
             end
         ) action_set
       in
-      let resolvers = match ActionSet.is_empty max_prec_action_set with
-        | true -> Resolvers.empty
-        | false -> begin
-            ActionSet.fold ~init:Resolvers.empty ~f:(fun resolvers action ->
-              let open Action in
-              match action with
-              | ShiftPrefix _
-              | ShiftAccept _ -> Resolvers.use_token_prec symbol_index resolvers
-              | Reduce prod_index -> Resolvers.use_prod_prec prod_index resolvers
-            ) action_set
-          end
-      in
       match ActionSet.length max_prec_action_set with
       | 0L -> Resolvers.empty, action_set
-      | 1L -> resolvers, max_prec_action_set
+      | 1L -> resolvers_of_action_set symbol_index action_set, max_prec_action_set
       | _ -> begin
           (* Determine whether the subset of actions with maximal precedence has homogeneous
            * associativity. *)
@@ -346,24 +343,25 @@ let resolve_symbol precs symbols prods symbol_index action_set =
           | false -> Resolvers.empty, action_set
           | true -> begin
               let resolvers = match Uns.(ActionSet.length max_prec_action_set > 1L) with
-                | false -> resolvers
+                | false -> resolvers_of_action_set symbol_index action_set
                 | true -> begin
-                    ActionSet.fold ~init:resolvers ~f:(fun resolvers action ->
-                      let open Action in
-                      let prec_opt = match action with
-                        | ShiftPrefix _
-                        | ShiftAccept _ -> begin
-                            match Symbols.symbol_of_symbol_index symbol_index symbols with
-                              Symbol.{prec; _} -> prec
-                          end
-                        | Reduce prod_index -> begin
-                            match Prods.prod_of_prod_index prod_index prods with
-                              Prod.{prec; _} -> prec
-                          end
-                      in
-                      let Prec.{prec_set_index; _} = Option.value_hlt prec_opt in
-                      Resolvers.use_assoc prec_set_index resolvers
-                    ) max_prec_action_set
+                    ActionSet.fold ~init:(resolvers_of_action_set symbol_index action_set)
+                      ~f:(fun resolvers action ->
+                        let open Action in
+                        let prec_opt = match action with
+                          | ShiftPrefix _
+                          | ShiftAccept _ -> begin
+                              match Symbols.symbol_of_symbol_index symbol_index symbols with
+                                Symbol.{prec; _} -> prec
+                            end
+                          | Reduce prod_index -> begin
+                              match Prods.prod_of_prod_index prod_index prods with
+                                Prod.{prec; _} -> prec
+                            end
+                        in
+                        let Prec.{prec_set_index; _} = Option.value_hlt prec_opt in
+                        Resolvers.use_assoc prec_set_index resolvers
+                      ) max_prec_action_set
                   end
               in
               match assoc with
