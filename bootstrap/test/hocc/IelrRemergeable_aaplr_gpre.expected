@@ -1,4 +1,4 @@
-hocc: Parsing "./IelrRemergeable_aaplr.hmh"
+hocc: Parsing "./IelrRemergeable_aaplr_gpre.hmh"
 hocc: Generating APLR(1) specification
 hocc: 5 precedences, 13 tokens, 5 non-terminals (1 start), 15 productions
 hocc: LR(1) item set compatibility: lr
@@ -13,4 +13,4 @@ hocc: Reindexing 45 LR(1) states
 hocc: 0 unresolvable conflicts in 0 states
 hocc: Searching for unused precedences/associativities/tokens/non-terminals/productions
 hocc: Generating text report
-hocc: Writing "./hocc/IelrRemergeable_aaplr.txt"
+hocc: Writing "./hocc/IelrRemergeable_aaplr_gpre.txt"
