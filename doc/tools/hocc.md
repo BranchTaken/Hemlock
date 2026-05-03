@@ -56,8 +56,8 @@ Parameters:
 - `-[re]m[erge] (yes|no)`: Control compatible state subgraph remerging enablement. Defaults to `yes`
   for `aplr` algorithm, `no` otherwise.
 - `-g[c] (pre|post|no)`: Control unreachable state garbage collection enablement and ordering
-  relative to remerging. Defaults to `pre`-remerging, which is more thorough than `post`-remerging
-  but slower due to operating on a larger automaton.
+  relative to remerging. Defaults to `post`-remerging, which is less thorough than `pre`-remerging
+  but faster due to operating on a smaller automaton.
 - `-hm` | `-hemlock`: Generate a Hemlock-based parser implementation and write it to
   `<dstdir>/<module>.hm[i]`.
 - `-ml` | `-ocaml`: Generate an OCaml-based parser implementation and write it to

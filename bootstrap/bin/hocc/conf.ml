@@ -72,7 +72,7 @@ let default = {
   algorithm=Aplr;
   resolve_opt=None;
   remerge_opt=None;
-  gc=PreRemerge;
+  gc=PostRemerge;
   hemlock=false;
   ocaml=false;
   srcdir_opt=None;
@@ -126,7 +126,7 @@ Parameters:
                         Defaults to yes for aplr algorithm, no otherwise.
   -g[c] (pre|post|no) : Control unreachable state garbage collection enablement
                         and ordering relative to remerging. Defaults to
-                        pre-remerging.
+                        post-remerging.
        -hm | -hemlock : Generate a Hemlock-based parser implementation and write
                         it to "<dstdir>/<module>.hm[i]".
          -ml | -ocaml : Generate an OCaml-based parser implementation and write

@@ -451,16 +451,16 @@
  (deps
   (glob_files IelrRemergeable.hmh*)
   %{bin:hocc})
- (targets IelrRemergeable_aaplr.out.txt)
+ (targets IelrRemergeable_aaplr_gpre.out.txt)
  (action
   (with-accepted-exit-codes 0
-   (with-outputs-to IelrRemergeable_aaplr.out (run ./hocc_test %{bin:hocc} IelrRemergeable -algorithm aplr -v -txt)))))
+   (with-outputs-to IelrRemergeable_aaplr_gpre.out (run ./hocc_test %{bin:hocc} IelrRemergeable -algorithm aplr -gc pre -v -txt)))))
 (rule
  (alias runtest)
  (action
   (progn
-   (diff IelrRemergeable_aaplr.expected IelrRemergeable_aaplr.out)
-   (diff IelrRemergeable_aaplr.expected.txt IelrRemergeable_aaplr.out.txt))))
+   (diff IelrRemergeable_aaplr_gpre.expected IelrRemergeable_aaplr_gpre.out)
+   (diff IelrRemergeable_aaplr_gpre.expected.txt IelrRemergeable_aaplr_gpre.out.txt))))
 
 (rule
  (deps
@@ -474,8 +474,8 @@
  (alias runtest)
  (action
   (progn
-   (diff IelrRemergeable_aaplr_post.expected IelrRemergeable_aaplr_gpost.out)
-   (diff IelrRemergeable_aaplr_post.expected.txt IelrRemergeable_aaplr_gpost.out.txt))))
+   (diff IelrRemergeable_aaplr_gpost.expected IelrRemergeable_aaplr_gpost.out)
+   (diff IelrRemergeable_aaplr_gpost.expected.txt IelrRemergeable_aaplr_gpost.out.txt))))
 
 (rule
  (deps
