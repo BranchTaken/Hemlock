@@ -5,7 +5,6 @@ hocc: LR(1) item set compatibility: lalr
 hocc: Generating LR(1) item set closures (workq/total) 230/1_000 0/1_878
 hocc: Generating 1_878 LR(1) states
 hocc: 0 unresolvable conflicts in 0 states
-hocc: Searching for unused precedences/associativities/tokens/non-terminals/productions
 hocc: 23 unused precedence set associativities:
 hocc:    nonassoc p_BACKQUOTE, p_BANG, p_BEGIN, p_CHAR, p_FALSE, p_FLOAT, p_INT, p_LBRACE, p_LBRACELESS, p_LBRACKET, p_LBRACKETBAR, p_LBRACKETPERCENT, p_LIDENT, p_LPAREN, p_NEW, p_OBJECT, p_PREFIXOP, p_QUOTED_STRING_EXPR, p_STRING, p_TRUE, p_UIDENT
 hocc:    nonassoc p_DOT, p_DOTOP < p_BACKQUOTE

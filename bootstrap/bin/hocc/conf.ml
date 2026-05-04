@@ -35,6 +35,7 @@ type remerge =
 
 type t = {
   verbose: bool;
+  warn: bool;
   text: bool;
   hocc: bool;
   algorithm: algorithm;
@@ -48,10 +49,11 @@ type t = {
   dstdir_opt: Path.t option;
 }
 
-let pp {verbose; text; hocc; algorithm; resolve_opt; remerge_opt; gc; hemlock; ocaml; srcdir_opt;
-  module_opt; dstdir_opt} formatter =
+let pp {verbose; warn; text; hocc; algorithm; resolve_opt; remerge_opt; gc; hemlock; ocaml;
+  srcdir_opt; module_opt; dstdir_opt} formatter =
   formatter
   |> Fmt.fmt "{verbose=" |> Bool.pp verbose
+  |> Fmt.fmt "; warn=" |> Bool.pp warn
   |> Fmt.fmt "; text=" |> Bool.pp text
   |> Fmt.fmt "; hocc=" |> Bool.pp hocc
   |> Fmt.fmt "; algorithm=" |> pp_algorithm algorithm
@@ -67,6 +69,7 @@ let pp {verbose; text; hocc; algorithm; resolve_opt; remerge_opt; gc; hemlock; o
 
 let default = {
   verbose=false;
+  warn=false;
   text=false;
   hocc=false;
   algorithm=Aplr;
@@ -109,6 +112,7 @@ Parameters:
               -h[elp] : Print command usage and exit.
         -V | -version : Print version and exit.
            -v[erbose] : Print progress information during parser generation.
+              -w[arn] : Warn about unused grammar constructs.
          -txt | -text : Write a detailed automaton description in plain text
                         format to "<dstdir>/hocc/<module>.txt".
          -hmh | -hocc : Write a complete grammar specification in hocc format to
@@ -206,6 +210,7 @@ let of_argv argv =
         | "-h" | "-help" -> usage false
         | "-V" | "-version" -> version ()
         | "-v" | "-verbose" -> f {t with verbose=true} argv (succ i)
+        | "-w" | "-warn" -> f {t with warn=true} argv (succ i)
         | "-txt" | "-text" -> f {t with text=true} argv (succ i)
         | "-hmh" | "-hocc" -> f {t with hocc=true} argv (succ i)
         | "-a" | "-algorithm" -> begin
@@ -314,6 +319,9 @@ let of_argv argv =
 
 let verbose {verbose; _} =
   verbose
+
+let warn {warn; _} =
+  warn
 
 let text {text; _} =
   text

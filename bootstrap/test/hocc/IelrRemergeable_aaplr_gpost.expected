@@ -10,6 +10,5 @@ hocc: Reindexing 45 LR(1) states
 hocc: Tracing automaton (.+=actions[+gotos])+.+..+.+.+..+.+.+.+
 hocc: 0 unreachable states
 hocc: 0 unresolvable conflicts in 0 states
-hocc: Searching for unused precedences/associativities/tokens/non-terminals/productions
 hocc: Generating text report
 hocc: Writing "./hocc/IelrRemergeable_aaplr_gpost.txt"

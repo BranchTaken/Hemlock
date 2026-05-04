@@ -5,6 +5,5 @@ hocc: LR(1) item set compatibility: weak
 hocc: Generating LR(1) item set closures (workq/total) 0/27
 hocc: Generating 27 LR(1) states
 hocc: 0 conflicts in 0 states
-hocc: Searching for unused precedences/associativities/tokens/non-terminals/productions
 hocc: Generating text report
 hocc: Writing "./hocc/PagerG2_gno.txt"

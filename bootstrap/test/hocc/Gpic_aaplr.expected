@@ -11,7 +11,6 @@ hocc: Searching for remergeable state subgraphs (mergeable/max[worklst]) 0/4_411
 hocc: Remerging 4_406 LR(1) states
 hocc: Reindexing 428 LR(1) states
 hocc: 239 unresolvable conflicts in 239 states (239 ⊥, 0 shift-reduce, 0 reduce-reduce)
-hocc: Searching for unused precedences/associativities/tokens/non-terminals/productions
 hocc: 17 unused precedence set associativities:
 hocc:    right pXmark < pCarat
 hocc:    left pAnd < pAdd

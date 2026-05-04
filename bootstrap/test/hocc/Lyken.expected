@@ -8,7 +8,6 @@ hocc: Tracing automaton (.+=actions[+gotos])+........+.....+.....+.....+...+....
 hocc: 35 unreachable states
 hocc: Reindexing 1_340 LR(1) states
 hocc: 0 unresolvable conflicts in 0 states
-hocc: Searching for unused precedences/associativities/tokens/non-terminals/productions
 hocc: 15 unused precedence set associativities:
 hocc:    left pColon < pGenericParamOne
 hocc:    left pRparen < pProcParmBody

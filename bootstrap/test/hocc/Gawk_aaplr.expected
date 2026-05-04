@@ -10,7 +10,6 @@ hocc: Reindexing 2_359 LR(1) states
 hocc: State subgraph remerging disabled due to unresolvable conflicts
 hocc: Explicitly enable remerging (-remerge yes) to override
 hocc: 308 unresolvable conflicts in 210 states (43 ⊥, 265 shift-reduce, 0 reduce-reduce)
-hocc: Searching for unused precedences/associativities/tokens/non-terminals/productions
 hocc: 11 unused precedence set associativities:
 hocc:    left pParen
 hocc:    left pDollar < pParen
