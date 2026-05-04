@@ -13,7 +13,6 @@ hocc: Generating 21 LR(1) states
 hocc: Tracing automaton (.+=actions[+gotos])+...+.+.+
 hocc: 0 unreachable states
 hocc: 2 conflicts in 2 states (0 ⊥, 0 shift-reduce, 2 reduce-reduce) (conflict resolution disabled)
-hocc: Searching for unused precedences/associativities/tokens/non-terminals/productions
 hocc: 3 unused production precedences:
 hocc:    A ::= Ta Ta prec p1
 hocc:    B ::= Ta Ta prec p2

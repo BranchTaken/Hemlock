@@ -9,7 +9,6 @@ hocc: 0 unreachable states
 hocc: Searching for remergeable state subgraphs (mergeable/max[worklst]) 0/0[0]
 hocc: 0 remergeable states
 hocc: 4 unresolvable conflicts in 4 states (4 ⊥, 0 shift-reduce, 0 reduce-reduce)
-hocc: Searching for unused precedences/associativities/tokens/non-terminals/productions
 hocc: Generating text report
 hocc: Generating hocc report
 hocc: Writing "./hocc/PSEUDO_END_conflict.txt"

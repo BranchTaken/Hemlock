@@ -9,7 +9,6 @@ hocc: 0 unreachable states
 hocc: State subgraph remerging disabled due to unresolvable conflicts
 hocc: Explicitly enable remerging (-remerge yes) to override
 hocc: 8 conflicts in 2 states (0 ⊥, 8 shift-reduce, 0 reduce-reduce) (conflict resolution disabled)
-hocc: Searching for unused precedences/associativities/tokens/non-terminals/productions
 hocc: 2 unused precedence set associativities:
 hocc:    left mul
 hocc:    left add < mul

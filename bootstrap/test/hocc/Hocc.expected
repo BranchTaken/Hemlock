@@ -11,7 +11,6 @@ hocc: Searching for remergeable state subgraphs (mergeable/max[worklst]) 0/601[7
 hocc: Remerging 601 LR(1) states
 hocc: Reindexing 258 LR(1) states
 hocc: 0 unresolvable conflicts in 0 states
-hocc: Searching for unused precedences/associativities/tokens/non-terminals/productions
 hocc: Generating text report
 hocc: Generating hocc report
 hocc: Writing "./hocc/Hocc.txt"

@@ -14,7 +14,6 @@ hocc: Tracing automaton (.+=actions[+gotos])+.+....+....+..+.+.+.+++
 hocc: 3 unreachable states
 hocc: Reindexing 447 LR(1) states
 hocc: 239 unresolvable conflicts in 239 states (239 ⊥, 0 shift-reduce, 0 reduce-reduce)
-hocc: Searching for unused precedences/associativities/tokens/non-terminals/productions
 hocc: 17 unused precedence set associativities:
 hocc:    right pXmark < pCarat
 hocc:    left pAnd < pAdd

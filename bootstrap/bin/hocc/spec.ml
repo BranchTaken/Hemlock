@@ -1077,7 +1077,7 @@ and log_conflicts io ~resolve states =
   in
   io
 
-and log_unused io precs symbols prods states =
+and warn_unused io precs symbols prods states =
   let rec mark_prec precs ~precs_used prec = begin
     match prec with
     | None -> precs_used
@@ -1141,12 +1141,6 @@ and log_unused io precs symbols prods states =
         mark_state precs symbols prods ~precs_used ~tokens_used ~nonterms_used ~prods_used state
       ) states
   end in
-  let io =
-    io.log
-    |> Fmt.fmt "hocc: Searching for unused "
-    |> Fmt.fmt "precedences/associativities/tokens/non-terminals/productions"
-    |> Io.with_log io
-  in
   let resolvers =
     Array.fold ~init:Resolvers.empty ~f:(fun resolvers State.{resolvers=state_resolvers; _} ->
       Resolvers.union state_resolvers resolvers
@@ -1156,14 +1150,10 @@ and log_unused io precs symbols prods states =
   let tokens_nunused = (Symbols.tokens_length symbols) - (Set.length tokens_used) in
   let nonterms_nunused = (Symbols.nonterms_length symbols) - (Set.length nonterms_used) in
   let prods_nunused = (Prods.length prods) - (Set.length prods_used) in
-  let io =
-    io.log |> Fmt.fmt "\n"
-    |> Io.with_log io
-  in
   let io = match precs_nunused with
     | 0L -> io
     | _ -> begin
-        io.log
+        io.err
         |> Fmt.fmt "hocc: " |> Uns.pp precs_nunused |> Fmt.fmt " unused precedence"
         |> (fun formatter ->
           match precs_nunused with 1L -> formatter | _ -> formatter |> Fmt.fmt "s"
@@ -1181,7 +1171,7 @@ and log_unused io precs symbols prods states =
             ) names
           ) precs
         )
-        |> Io.with_log io
+        |> Io.with_err io
       end
   in
   let prec_sets_assoc_unused = Precs.fold_prec_sets ~init:(Ordset.empty (module PrecSet))
@@ -1199,7 +1189,7 @@ and log_unused io precs symbols prods states =
     | true -> io
     | false -> begin
         let assoc_nunused = Ordset.length prec_sets_assoc_unused in
-        io.log
+        io.err
         |> Fmt.fmt "hocc: " |> Uns.pp assoc_nunused |> Fmt.fmt " unused precedence set associativit"
         |> (fun formatter ->
           match assoc_nunused with 1L -> formatter |> Fmt.fmt "y" | _ -> formatter |> Fmt.fmt "ies"
@@ -1211,13 +1201,13 @@ and log_unused io precs symbols prods states =
               formatter |> Fmt.fmt "hocc:" |> PrecSet.src_fmt prec_set
             ) prec_sets_assoc_unused
         )
-        |> Io.with_log io
+        |> Io.with_err io
       end
   in
   let io = match tokens_nunused with
     | 0L -> io
     | _ -> begin
-        io.log
+        io.err
         |> Fmt.fmt "hocc: " |> Uns.pp tokens_nunused |> Fmt.fmt " unused token"
         |> (fun formatter ->
           match tokens_nunused with 1L -> formatter | _ -> formatter |> Fmt.fmt "s"
@@ -1230,7 +1220,7 @@ and log_unused io precs symbols prods states =
             | false -> formatter |> Fmt.fmt "hocc:" |> Symbols.src_fmt precs token symbols
           ) symbols
         )
-        |> Io.with_log io
+        |> Io.with_err io
       end
   in
   let tokens_prec_unused = Symbols.tokens_fold ~init:(Ordset.empty (module Symbol))
@@ -1245,7 +1235,7 @@ and log_unused io precs symbols prods states =
     | true -> io
     | false -> begin
         let prec_nunused = Ordset.length tokens_prec_unused in
-        io.log
+        io.err
         |> Fmt.fmt "hocc: " |> Uns.pp prec_nunused |> Fmt.fmt " unused token precedence"
         |> (fun formatter ->
           match prec_nunused with 1L -> formatter | _ -> formatter |> Fmt.fmt "s"
@@ -1257,13 +1247,13 @@ and log_unused io precs symbols prods states =
               formatter |> Fmt.fmt "hocc:" |> Symbols.src_fmt precs token symbols
             ) tokens_prec_unused
         )
-        |> Io.with_log io
+        |> Io.with_err io
       end
   in
   let io = match nonterms_nunused with
     | 0L -> io
     | _ -> begin
-        io.log
+        io.err
         |> Fmt.fmt "hocc: " |> Uns.pp nonterms_nunused |> Fmt.fmt " unused non-terminal"
         |> (fun formatter ->
           match nonterms_nunused with 1L -> formatter | _ -> formatter |> Fmt.fmt "s"
@@ -1287,13 +1277,13 @@ and log_unused io precs symbols prods states =
               end
           ) symbols
         )
-        |> Io.with_log io
+        |> Io.with_err io
       end
   in
   let io = match prods_nunused with
     | 0L -> io
     | _ -> begin
-        io.log
+        io.err
         |> Fmt.fmt "hocc: " |> Uns.pp prods_nunused |> Fmt.fmt " unused production"
         |> (fun formatter ->
           match prods_nunused with 1L -> formatter | _ -> formatter |> Fmt.fmt "s"
@@ -1311,7 +1301,7 @@ and log_unused io precs symbols prods states =
                 end
             ) prods
         )
-        |> Io.with_log io
+        |> Io.with_err io
       end
   in
   let prods_prec_unused = Prods.fold ~init:(Ordset.empty (module Prod))
@@ -1326,7 +1316,7 @@ and log_unused io precs symbols prods states =
     | true -> io
     | false -> begin
         let prec_nunused = Ordset.length prods_prec_unused in
-        io.log
+        io.err
         |> Fmt.fmt "hocc: " |> Uns.pp prec_nunused |> Fmt.fmt " unused production precedence"
         |> (fun formatter ->
           match prec_nunused with 1L -> formatter | _ -> formatter |> Fmt.fmt "s"
@@ -1338,7 +1328,7 @@ and log_unused io precs symbols prods states =
               formatter |> Fmt.fmt "hocc:" |> Prods.src_fmt precs symbols prod
             ) prods_prec_unused
         )
-        |> Io.with_log io
+        |> Io.with_err io
       end
   in
   io
@@ -1349,7 +1339,7 @@ and init_inner algorithm ~resolve io precs symbols prods callbacks =
   let io, states = states_init io ~resolve precs symbols prods isocores ~gotonub_of_statenub_goto in
   io, isocores, states
 
-and init algorithm ~resolve ~gc ~remerge io hmh =
+and init algorithm ~resolve ~gc ~remerge ~warn io hmh =
   let io =
     io.log
     |> Fmt.fmt "hocc: Generating "
@@ -1402,7 +1392,10 @@ and init algorithm ~resolve ~gc ~remerge io hmh =
     | No -> io, isocores, states
   in
   let io = log_conflicts io ~resolve states in
-  let io = log_unused io precs symbols prods states in
+  let io = match warn with
+    | false -> io
+    | true -> warn_unused io precs symbols prods states
+  in
   io, {algorithm; precs; symbols; prods; callbacks; states}
 
 let conflicts {states; _} =

@@ -32,6 +32,9 @@ val of_argv: Bytes.t array -> t
 val verbose: t -> bool
 (** [verbose t] returns true if verbosity is enabled. *)
 
+val warn: t -> bool
+(** [warn t] returns true if warning is enabled. *)
+
 val text: t -> bool
 (** [text t] returns true if a plain-text automaton description is to be generated. *)
 
