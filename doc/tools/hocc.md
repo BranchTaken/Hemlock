@@ -1,26 +1,29 @@
-# hocc
+# Hocc
 
-`hocc` is an [LR(1) parser generator](https://en.wikipedia.org/wiki/Canonical_LR_parser). Its name
+Hocc is an [LR(1) parser generator](https://en.wikipedia.org/wiki/Canonical_LR_parser). Its name
 carries on a long tradition, to wit:
 
-- [`yacc`](https://en.wikipedia.org/wiki/Yacc) stands for "Yet Another Compiler Compiler". Clearly
-  the name derives from "yack", as in, "Chuck's dinner didn't sit well and he yacked it."
-- `hocc` stands for "Hardly Original Compiler Compiler". The name derives from "hock", as in, "Hank
+- [Yacc](https://en.wikipedia.org/wiki/Yacc) stands for "Yet Another Compiler Compiler". Clearly the
+  name derives from "yack", as in, "Chuck's dinner didn't sit well and he yacked it."
+- Hocc stands for "Hardly Original Compiler Compiler". The name derives from "hock", as in, "Hank
   hocked a loogie."
 
 Both programs interpret high-level human-written parser descriptions and produce output unfit for
-human consumption. However `hocc` has several distinguishing features relative to `yacc`, aside from
+human consumption. However Hocc has several distinguishing features relative to Yacc, aside from
 integrating with [Hemlock](https://github.com/BranchTaken/Hemlock) rather than
 [C](https://en.wikipedia.org/wiki/The_C_Programming_Language).
 
-- `hocc` generates LR(1) rather than [LALR(1)](https://en.wikipedia.org/wiki/LALR_parser) parsers,
-  optionally using behavior-preserving algorithms that reduce the state machine size relative to the
-  canonical LR(1) algorithm [^knuth1965].
-- `hocc`'s precedence facilities are more precise and easier to use without inadvertently masking
-  grammar ambiguities. Whereas `yacc` supports only a single linear precedence ordering, `hocc`
-  supports arbitrarily many directed acyclic precedence graphs. Given this more powerful conflict
-  resolution mechanism, `hocc` refuses to generate parsers for ambiguous grammars.
-- `hocc` supports an automated error recovery algorithm [^diekmann2020] based on minimum-cost repair
+- Hocc defaults to generating compact LR(1) rather than
+  [LALR(1)](https://en.wikipedia.org/wiki/LALR_parser) parsers, using behavior-preserving algorithms
+  that reduce the state machine size relative to the canonical LR(1) algorithm [^knuth1965].
+- Hocc's precedence facilities are more precise and easier to use without inadvertently masking
+  grammar ambiguities. Whereas Yacc supports only a single linear precedence ordering, Hocc supports
+  arbitrarily many directed acyclic precedence graphs. Given this more powerful conflict resolution
+  mechanism, Hocc refuses to generate parsers for ambiguous grammars.
+- Hocc precisely traces automata to garbage-collect unreachable states, actions, and gotos. Aside
+  from reducing generated parser size, this enables more thorough reporting about unused grammar
+  constructs.
+- Hocc supports an automated error recovery algorithm [^diekmann2020] based on minimum-cost repair
   sequences. [XXX Not implemented.]
 
 ## Command usage
@@ -35,20 +38,20 @@ Parameters:
 - `-w[arn]`: Warn about unused grammar constructs.
 - `-txt` | `-text`: Write a detailed automaton description in plain text format to
   `<dstdir>/hocc/<module>.txt`.
-- `-hmh` | `-hocc`: Write a complete grammar specification in `hocc` format to
+- `-hmh` | `-hocc`: Write a complete grammar specification in Hocc format to
   `<dstdir>/hocc/<module>.hmh`, but with all non-terminal types and reduction code omitted.
 - `-a[lgorithm] <alg>`: Use the specified `<alg>`orithm for generating an automaton. Defaults to
   `aplr`.
   + `aplr`: Adequacy Preservation LR(1) compact automaton that recognizes valid inputs identically
-    to `lr` automatons. APLR(1) generates an LR(1) automaton and then remerges compatible state
+    to `lr` automata. APLR(1) generates an LR(1) automaton and then remerges compatible state
     subgraphs such that LR(1)-relative adequacy is preserved.
   + `ielr`: Inadequacy Elimination LR(1) compact automaton [^denny2010] that recognizes valid inputs
-    identically to `lr` automatons. IELR(1) analyzes an LALR(1) automaton and then uses resulting
+    identically to `lr` automata. IELR(1) analyzes an LALR(1) automaton and then uses resulting
     metadata to generate an automaton with LR(1)-relative inadequacies eliminated via state
     splitting.
   + `lr`: Canonical LR(1) automaton [^knuth1965].
   + `pgm`: Practical General Method LR(1) compact automaton [^pager1977] that recognizes valid
-    inputs identically to `lr` automatons, provided there are no precedence-resolved ambiguities in
+    inputs identically to `lr` automata, provided there are no precedence-resolved ambiguities in
     the grammar specification. PGM avoids LR(1)-relative inadequacy via preventative state splitting
     during automaton creation.
   + `lalr`: LALR(1) automaton [^deremer1969].
@@ -62,8 +65,7 @@ Parameters:
 - `-hm` | `-hemlock`: Generate a Hemlock-based parser implementation and write it to
   `<dstdir>/<module>.hm[i]`.
 - `-ml` | `-ocaml`: Generate an OCaml-based parser implementation and write it to
-  `<dstdir>/<module>.ml[i]`. This is brittle functionality intended only for Hemlock
-  bootstrapping.
+  `<dstdir>/<module>.ml[i]`. This is brittle functionality intended only for Hemlock bootstrapping.
 - `-s[rc] <src>`: Path and module name of input source, where inputs match `<src>.hmh[i]` and
   `<src>` comprises the source directory and module name, `[<srcdir>/]<module>`.
 - `-d[stdir] <dstdir>`: Path to directory in which to place generated output, such that output file
@@ -71,7 +73,7 @@ Parameters:
 
 Syntax errors in the input file may prevent file generation. Specification errors do not prevent
 report generation, but all specification errors must be resolved for parser generation to succeed.
-Some syntax errors in the embedded Hemlock code may pass through `hocc` unnoticed.
+Some syntax errors in the embedded Hemlock code may pass through Hocc unnoticed.
 
 Example invocations:
 
@@ -81,7 +83,7 @@ Example invocations:
 
 ## Parser specification
 
-The `hocc` specification grammar is layered onto Hemlock's grammar via the addition of several
+The Hocc specification grammar is layered onto Hemlock's grammar via the addition of several
 contextual keywords and one operator:
 
 - Parser: `hocc`
@@ -104,13 +106,13 @@ The `hocc` keyword introduces the `hocc` statement, and it cannot be otherwise u
 `hocc` statement. There are no other syntactic restrictions of note with regard to the keywords and
 operator.
 
-The following subsections document specification semantics. See the `hocc` [grammar](#grammar)
+The following subsections document specification semantics. See the Hocc [grammar](#grammar)
 specification for comprehensive syntax details.
 
 ### Tokens
 
 Token identifiers match `[_]*[A-Z][A-Za-z0-9_']*` in conformance with Hemlock's capitalized
-identifier syntax. By convention the `hocc` documentation restricts token identifiers to
+identifier syntax. By convention the Hocc documentation restricts token identifiers to
 `[A-Z][A-Z0-9_]*` to distinguish tokens from non-terminals, but other conventions can work just as
 well.
 
@@ -153,7 +155,7 @@ hocc
 ### Non-terminals
 
 Non-terminal identifiers match `[_]*[A-Z][A-Za-z0-9_']*` in conformance with Hemlock's capitalized
-identifier syntax. By convention the `hocc` documentation restricts non-terminal identifiers to
+identifier syntax. By convention the Hocc documentation restricts non-terminal identifiers to
 `[A-Z][A-Za-z0-9]*` to distinguish non-terminals from tokens, but other conventions can work just as
 well.
 
@@ -170,7 +172,7 @@ start symbol's name. For example, `start S ...` implies the `S'` wrapper symbol.
 
 Just as for tokens, non-terminals with variant contents must have a declared data type. A parser
 which universally utilizes implicitly typed non-terminals does not construct a parse tree, but it
-may still be useful as a recognizer, or as an abstract grammar specification which `hocc` can verify
+may still be useful as a recognizer, or as an abstract grammar specification which Hocc can verify
 without generating a parser.
 
 ```hocc
@@ -264,7 +266,7 @@ hocc
 
 The following example uses richer pattern binding syntax to reduce boilerplate. Patterns support
 relevant Hemlock pattern syntax, with the notable exception of type constraints, which are out of
-place in `hocc` proper because it makes no attempt at typing embedded code.
+place in Hocc proper because it makes no attempt at typing embedded code.
 
 ```hocc
 type point: point = {
@@ -298,8 +300,8 @@ hocc
 Ordinarily, the characteristic finite state machine (CFSM) corresponding to an LR(1) grammar delays
 each transition until the lookahead symbol becomes available. However this poses a challenge for
 start symbols because there is no concrete lookahead symbol past the end of input. The following
-invalid grammar would infinitely recurse, and `hocc` reports a conflicting action for the
-`PSEUDO_END` (`"⊥"`) symbol.
+invalid grammar would infinitely recurse, and Hocc reports a conflicting action for the `PSEUDO_END`
+(`"⊥"`) symbol.
 
 ```hocc
 # Invalid (infinite recursion).
@@ -311,7 +313,7 @@ hocc
 ```
 
 A typical solution to this challenge is to require the application to signal end of input to the
-CFSM via a dedicated API. However `hocc` uses the same approach as Menhir [^fpottier] and instead
+CFSM via a dedicated API. However Hocc uses the same approach as Menhir [^fpottier] and instead
 proactively (transitively) reduces when the current symbol unambiguously delimits a valid start
 symbol reduction. Some start symbols may trivially meet the requirements for proactive reduction,
 e.g. for a grammar which incrementally parses a file comprising newline-separated statements, each
@@ -347,7 +349,7 @@ hocc
 ### Precedence
 
 Precedence identifiers match `[_]*[a-z][A-Za-z0-9_']*` in conformance with Hemlock's uncapitalized
-identifier syntax. By convention the `hocc` documentation restricts precedence identifiers to
+identifier syntax. By convention the Hocc documentation restricts precedence identifiers to
 `p[A-Z][A-Za-z0-9]*`.
 
 ```hocc
@@ -359,11 +361,11 @@ hocc
 ```
 
 A parser specification may contain conflicts wherein a parser state encodes multiple valid actions
-for one or more inputs. `hocc` refuses to generate parsers which contain unresolved conflicts.
-Parser specifications can often be refactored or expanded to eliminate conflicts, but such revisions
-may reduce clarity and maintainability. Precedences provide a mechanism for conflict resolution,
-i.e. explicit choice of actions. `hocc` attempts to resolve conflicts based on the precedences
-assigned to tokens and productions.
+for one or more inputs. Hocc refuses to generate parsers which contain unresolved conflicts. Parser
+specifications can often be refactored or expanded to eliminate conflicts, but such revisions may
+reduce clarity and maintainability. Precedences provide a mechanism for conflict resolution, i.e.
+explicit choice of actions. Hocc attempts to resolve conflicts based on the precedences assigned to
+tokens and productions.
 
 Each production can specify its precedence, or if all of a non-terminal's productions are to have
 the same precedence, the precedence can be more succinctly specified for the non-terminal as a
@@ -882,7 +884,7 @@ parser states can be used as persistent reusable snapshots.
 
 ## Automaton description format
 
-Per the [Command usage](#command-usage) documentation, `hocc` can emit a detailed automaton
+Per the [Command usage](#command-usage) documentation, Hocc can emit a detailed automaton
 description. Following is a brief explanation of the automaton description format, using abridged
 output generated by `hocc -txt -a ielr1 -src Example`.
 
@@ -981,15 +983,15 @@ Of note:
 - The algorithm used to generate the state machine is specified in the `States` section header,
   `IELR(1)` in this case.
 - The n states are indexed [0..n-1], [0..14-1] in this case.
-- Isocore indexing is also reported for all algorithms that can generate non-singleton isocore
-  sets, i.e. all algorithms besides LALR(1). For a more complex grammar, the IELR(1) algorithm might
+- Isocore indexing is also reported for all algorithms that can generate non-singleton isocore sets,
+  i.e. all algorithms besides LALR(1). For a more complex grammar, the IELR(1) algorithm might
   generate indexes like the following:
     ```
     State 235 [234.0]
     State 297 [234.1]
     ```
   These states are isocoric because they both have isocore index 234. Furthermore, IELR(1) generates
-  LALR(1) states as preliminary metadata, and `hocc` assures that IELR(1) isocore indexes match
+  LALR(1) states as preliminary metadata, and Hocc assures that IELR(1) isocore indexes match
   LALR(1) state indexes.
 - Each state comprises the following subsections (empty subsections omitted in output):
   + `Kernel`: Kernel LR(1) items
@@ -1005,9 +1007,207 @@ Of note:
   lalr -resolve no -src Example`). This enables inspection of the conflicts which compel IELR(1)
   state splitting.
 
+## Algorithms
+
+Hocc implements five parser automaton creation algorithms in the [**L**eft-to-right **R**ightmost
+(LR) derivation family](https://en.wikipedia.org/wiki/LR_parser), all with one symbol of lookahead,
+i.e. LR(1). The best-known options implemented by Hocc — [LALR(1) (LookAhead
+LR(1))](https://en.wikipedia.org/wiki/LALR_parser) [^deremer1969] and [canonical
+LR(1)](https://en.wikipedia.org/wiki/Canonical_LR_parser) [^knuth1965] — are to be avoided. LALR(1)
+suffers algorithmic flaws, and canonical LR(1) generates relatively large automata. APLR(1)
+(Adequacy Preservation LR(1)) and IELR(1) (Inadequacy Elimination LR(1)) [^denny2010] generate
+compact automata that provide the full power of canonical LR(1) and can be used interchangeably, the
+only practical consideration being which algorithm is faster at generating an automaton for a
+particular input grammar. PGM LR(1) (Practical General Method LR(1)) [^pager1977] is a good choice
+only if the input grammar completely avoids precedence/associativity.
+
+Following are descriptions of the high-level differences between the algorithms, as well as guidance
+for how and when to utilize them.
+
+### Canonical LR(1)
+
+Canonical LR(k) automata (k lookahead symbols) are the most powerful [deterministic context-free
+grammar (DCFG)](https://en.wikipedia.org/wiki/Deterministic_context-free_grammar) recognizers at our
+disposal. LR(k) grammars can be reformulated as LR(1) grammars, so a single lookahead symbol poses
+minimal inconvenience at the same time as avoiding significant implementation and performance
+challenges.
+
+The canonical LR(1) algorithm (hereafter referred to just LR(1)) maintains precise information
+regarding lookahead, but this requires many nearly identical automaton states. In order for two
+states to be compatible, they must contain identical kernels (sets of LR(1) items, which in turn are
+composed of LR(0) items and lookahead symbol sets). Identical kernels generate identical states, so
+although LR(1) automata only have one state for each distinct kernel, there is typically a profusion
+of distinct kernels. At the time of discovery computers fell woefully short of the capacity
+necessary to make practical use of LR(1) automata, hence a rich literature pertaining to algorithms
+which merge automaton states in order to fit within practical computational bounds. Most such
+algorithms historically traded away some of the power inherent in LR(1), but there are some notable
+exceptions.
+
+- Pager's PGM algorithm (1977) generates automata with no LR(1)-relative inadequacies, with the
+  caveat that the LR(1) grammar must be conflict-free (i.e. precedence and associativity may not be
+  used to resolve conflicts).
+- IELR(1) (2009) generates automata with no LR(1)-relative inadequacies, with the caveat that the
+  algorithm assumes fully resolved LR(1) automata.
+- APLR(1) (2026) generates automata with no LR(1)-relative inadequacies, even if there are
+  unresolved conflicts in the corresponding LR(1) automaton.
+
+There is one subtle consequence of state merging that affects all of the above algorithms (as well
+as LALR(1) and many others), namely that it is possible for a sequence of reduce actions to lead to
+a state that contains no action for the lookahead symbol (a syntax error). This can confound error
+reporting because the parsing configuration of interest was that which existed prior to the first
+such reduce action. Fortunately there is a straightforward solution, which is to capture the parser
+state prior to reducing and restore the state if an error is encountered. Hocc supports only pure
+semantic actions (i.e. no side effects are allowed), so the mitigation for this problem is simple
+and inexpensive.
+
+### LALR(1)
+
+The **L**ook**A**head LR(1) algorithm takes an extreme approach and merges all states with equal
+cores (kernels stripped of all lookahead symbols). This can introduce invasive conflicts, in which
+case the resulting automaton may not recognize the same language as the corresponding LR(1)
+automaton, even if all the invasive conflicts are subsequently resolved.
+
+Hocc implements LALR(1) because it is a building block for IELR(1), and it is exposed only for
+diagnostic purposes. Do not use LALR(1) to generate parsers.
+
+### APLR(1)
+
+The Adequacy Preservation LR(1) algorithm originated in Hocc and is suitable for all practical uses.
+The basic idea is to generate an LR(1) automaton, then discover all state subgraphs which can be
+remerged without introducing LR(1)-relative inadequacies. Subgraph remergeability testing involves
+some implementation subtleties (transitive graph properties, combinatorial logic, oh my), but the
+underlying principle is just as simple as it sounds.
+
+APLR(1) is computationally challenged by large LR(1) automata, both because the LR(1) automaton is
+expensive to generate and because remergeability testing requires more work. Heavily conflicted
+LR(1) automata also complicate remergeability testing, so for some grammars it may be expedient to
+use LR(1) or IELR(1) while diagnosing and resolving conflicts.
+
+### IELR(1)
+
+The Inadequacy Elimination LR(1) algorithm was first implemented in
+[Bison](https://en.wikipedia.org/wiki/GNU_Bison), and Hocc implements a more general form of IELR(1)
+[^evans2024]. The basic idea is to generate an LALR(1) automaton, perform “lane tracing” analyses to
+determine what merged states may cause LR(1)-relative inadequacies, and then generate an IELR(1)
+automaton with just enough state splitting to eliminate all LR(1)-relative inadequacies. The
+original algorithm and Bison implementation assume that the corresponding canonical LR(1) automaton
+is fully resolved (i.e. no unresolvable conflicts); if this assumption does not hold then the
+algorithm effectively reverts to LALR(1) for the conflicted actions.
+
+Hocc's algorithm makes no assumptions about whether the corresponding canonical LR(1) automaton is
+fully resolved, which means that generated automata actually eliminate
+[GLR(1)](https://en.wikipedia.org/wiki/GLR_parser)-relative (Generalized LR(1)) inadequacies, thus
+making the generated automata suitable for nondeterministic parsing. That said, Hocc intentionally
+omits a GLR parsing API, so the main practical benefit of Hocc's algorithm is that there is no
+confusion about whether unresolved conflicts exist in the corresponding LR(1) automaton versus being
+mysterious conflicts. There are two disadvantages of Hocc's algorithm relative to Bison's. First,
+lane tracing is much more computationally intensive because the fixpoint conditions are less
+constrained. Second, due to the potential for cyclic interactions between state subgraphs it is
+sometimes necessary to proactively split states “just in case”, only to later discover that there
+were no interactions making the splits necessary. Fortunately the APLR(1) state remerging algorithm
+works just as well on IELR(1) automata as it does on canonical LR(1) automata, and remerging
+overhead is typically insignificant for IELR(1) automata because the IELR(1) automaton is typically
+much smaller.
+
+Hocc's IELR(1) algorithm is computationally challenged by complicated conflict resolutions, because
+the conflicts can cause a combinatorial explosion during lane tracing. That said, APLR(1) and
+IELR(1) tend not to bog down on the same grammars, and the algorithms generate interchangeable
+parsers (in practice usually identical), so choose the faster of IELR(1) and APLR(1) if parser
+generation performance is an issue.
+
+### PGM LR(1)
+
+The Practical General Method generates an automaton without any LR(1)-relative inadequacies, so long
+as precedence/associativity are not used to resolve conflicts. Hocc implements the “weak” state
+compatibility test, which predicts whether a state split is necessary to avoid subsequent invasive
+conflicts. The weak compatibility test is conservative, and in rare cases extra states may be
+generated. However the APLR(1) state remerging algorithm works for PGM LR(1) automata, so there is
+no need to resort to the more complicated “strong” state compatibility test to avoid unnecessary
+splits.
+
+Only use the PGM LR(1) algorithm with grammars that avoid all use of precedence/associativity. In
+other words, do not use the `prec`, `left`, `right`, nor `nonassoc` keywords.
+
+## Garbage collection
+
+Per the [Command usage](#command-usage) documentation, by default Hocc precisely traces and
+garbage-collects (GCs) unreachable states, actions, and gotos. The precise tracing algorithm is
+subtle and computationally intensive. Tracing uses the start states as the root set, and naïve
+tracing would then compute a fixpoint by traversing all shift actions and gotos. However, gotos are
+only reachable if a corresponding reduce action is reachable.
+
+Tracing tracks reachability at the granularity of individual actions and gotos rather than entire
+states. Furthermore, goto reachability is a function of reachable paths between goto-containing
+states and corresponding reduce actions, i.e. there must exist a reachable contiguous sequence of
+transits; it does not suffice for all interposing states to be arbitrarily reachable.
+
+Absent conflict resolution, reduce actions are reachable by construction (with the exception of the
+PGM algorithm), but practical grammars typically utilize precedence and/or associativity to resolve
+conflicts. Conflict resolution is fundamentally about removing actions from the automaton, and
+action removal can transitively cause entire states, individual actions, and individual gotos, to
+become unreachable.
+
+How to trace reachable actions and gotos? One obvious approach is to simulate inputs that exercise
+all possible paths through the automaton. Unfortunately this approach is computationally intractable
+for nontrivial grammars because even with optimizations that merge equivalent input prefixes,
+combinatorial explosions abound. Hocc avoids this quagmire by tracing bidirectionally. Shift actions
+are traced in a straightforward manner, but reduce-goto paths are traced backward from reduce
+actions to predecessor states which contain corresponding gotos.
+
+Tracing iterates toward a fixpoint by alternately tracing actions and gotos. Action tracing is
+relatively inexpensive (standard [tracing GC marking
+algorithm](https://en.wikipedia.org/wiki/Tracing_garbage_collection#Naive_mark-and-sweep)), so the
+implementation reaches an action tracing fixpoint before switching to goto tracing, thus minimizing
+the number of goto tracing phases required.
+
+The goto tracing phase iterates over transitively reachable reduce actions and attempts to trace
+backward to corresponding goto actions. For example, the following reduce action extracted from the
+`Example` automaton pops three right-hand side (RHS) elements off the stack (`Expr`, `MulOp`,
+`Expr`) and replaces them with the left-hand side (LHS) `Expr`.
+
+```hocc
+    "*" : Reduce Expr ::= Expr MulOp Expr prec mul
+```
+
+In this example the RHS symbols are all nonterminals; therefore each was originally placed on the
+stack by a reduce action, followed immediately by a goto state transition. Similarly, a token would
+be placed on the stack by a shift action. Each symbol on the stack corresponds to a state
+transition, and any goto corresponding to this reduce action must therefore be in a distance-three
+predecessor state.
+
+How to find all the reachable corresponding gotos? A naïve approach would be to perform a
+depth-limited backward traversal via traced transits and collect all the distance-three predecessors
+which contain a goto for `Expr`. However this is intractable (absent marking) because there may be
+many combinations of subpaths. The approach taken by Hocc is to perform what can be thought of as
+[memoized](https://en.wikipedia.org/wiki/Memoization) [iterative
+deepening](https://en.wikipedia.org/wiki/Iterative_deepening_depth-first_search). The reachable
+predecessors at each depth are collected as sets, and this serves to deduplicate results, thus
+requiring only a single traversal of each backward transit. Nonetheless, this is an expensive
+computation, and Hocc implements additional optimizations:
+
+- The memoized backward tracing state sets are incrementally computed and shared among all reduce
+  actions within a state. This works even for reduce actions of differing RHS length.
+- Most gotos are reachable, and it pays off to precalculate all reduce-goto correspondences as if
+  all transits were reachable so that a reduce action need no longer be traced once all of its
+  corresponding gotos have been reached.
+
+A reachable reduce-goto actually only extends to the successor state's action corresponding to the
+reduce action's lookahead symbol. In the example above, the lookahead symbol is `"*"`, so successful
+tracing marks only an action on `"*"`. That said, there may well be adjacent reduce actions on e.g.
+`"/"` that reach sibling successor state actions.
+
+Hocc defaults to performing GC `post`-remerging because tracing large automata is slower than
+tracing small automata, and GC can dominate total run time for grammars with huge state blowup (LR
+vs APLR). Unfortunately, remerging can increase reachability, via lengthened reduce cascades that
+culminate in syntax errors. Such cascades can be introduced by remerging regardless of whether GC is
+performed first, so the main advantage of performing garbage collection `pre`-remerging is that
+slightly more garbage may be collected, as opposed to becoming inadvertently reachable. A developer
+may wish to use `pre` for production builds, but there is little point in doing so during grammar
+development.
+
 ## Grammar
 
-The `hocc` specification language grammar is equivalent to the following specification.
+The Hocc specification language grammar is equivalent to the following specification.
 
 ```hocc
 hocc
@@ -1250,6 +1450,13 @@ hocc
 ```
 
 ## Citations
+
+[^evans2024]:
+    Jason Evans,
+    “IELR(1) as Implemented by Hocc”,
+    BranchTaken LLC,
+    [https://branchtaken.com/reports/ielr1.html](https://branchtaken.com/reports/ielr1.html),
+    July 2024.
 
 [^knuth1965]:
     Donald Knuth,
