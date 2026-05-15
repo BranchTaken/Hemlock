@@ -158,6 +158,9 @@ include sig
           | INT of Zint.t
           | EOI
 
+        val protos: t array
+          (** Token prototypes, one per variant. *)
+
         include IdentifiableIntf.S with type t := t
 
         val spec: t -> Spec.Symbol.t
@@ -265,4 +268,8 @@ include sig
     val next: Token.t -> t -> t
       (** `next token t` calls `feed token t` and fast-forwards via `step` calls to return a result
           with status in {`Prefix`, `Accept`, `Reject`}. `t.status` must be `Prefix`. *)
+
+    val expect: t -> (Token.t, Token.cmper_witness) Ordset.t
+      (** `expect t` returns the set of token (proto)types which `next token t` would not reject,
+          assuming status were `Prefix`. `t.status` must be in {`Prefix`, `Reject`}. *)
   end

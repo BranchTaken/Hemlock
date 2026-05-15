@@ -16,10 +16,10 @@ include hocc
     neutral add < mul
     token OP
     token PLUS "+"
-    token UNS of Uns.t
+    token UNS of Uns.t 0
     token MINUS prec add
     token STAR "*" prec mul
-    token SLASH "/" of Unit.t prec mul
+    token SLASH "/" of String.t "/" prec mul
 
     nonterm N1 of Unit.t ::= epsilon ->
         (a b)

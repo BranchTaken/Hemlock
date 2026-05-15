@@ -127,13 +127,18 @@ hocc
     token LPAREN "("
 ```
 
-Tokens with variant contents must have an optionally qualified declared data type.
+Tokens with variant contents must have an optionally qualified declared data type and a prototype
+constructor parameter value. Hocc constructs one token of each variant and makes the tokens
+available via `Token.protos`, which facilitates automaton exploration such as that of the `expect`
+function. Note that any use of `prec` as a token in the prototype constructor code must be delimited
+in order to avoid being interpreted as introducing the token precedence.
 
 ```hocc
 hocc
-    token T of t
-    token U of M.t
-    token V of M.N.t
+    token U of uns 0
+    token V of Zint.t Zint.zero
+    token W of String.C.Slice.t (String.Slice.of_string "")
+    token X of X.t (prec)
 ```
 
 Tokens may be assigned [precedence](#precedence) to aid in conflict resolution.
@@ -141,7 +146,8 @@ Tokens may be assigned [precedence](#precedence) to aid in conflict resolution.
 ```hocc
 hocc
     left p
-    token X prec p
+    token Y prec p
+    token Z of t (prec arg_to_prec_fn) prec p
 ```
 
 ### Non-terminals
@@ -756,6 +762,9 @@ parser states can be used as persistent reusable snapshots.
 
         include IdentifiableIntf.S with type t := t
 
+        protos: array t
+          [@@doc "Token prototypes, one per variant. "]
+
         spec: t -> Spec.Symbol.t
       }
 
@@ -859,9 +868,15 @@ parser states can be used as persistent reusable snapshots.
       [@@doc "`step t` returns the result of applying one state transition to `t`. `t.status` must
       be in {`ShiftPrefix`, `ShiftAccept`, `Reduce`}."]
 
-    next: -> Token.t -> t -> t
+    next: Token.t -> t -> t
       [@@doc "`next token t` calls `feed token t` and fast-forwards via `step` calls to return a
-      result with status in {`Prefix`, `Accept`, `Reject`}. `t.status` must be `Prefix`."]
+      result with status in {`Prefix`, `Accept`, `Reject`}. `t.status` must be `Prefix`. If the
+      resulting status is `Reject`, the stack remains in its initial state even if one or more
+      reduction steps lead to the syntax error."]
+
+    expect: t -> Ordset.t Token.t Token.cmper_witness
+      [@@doc "`expect t` returns the set of token (proto)types which `next token t` would not
+      reject, assuming status were `Prefix`. `t.status` must be in {`Prefix`, `Reject`}."]
   }
 ```
 
@@ -996,6 +1011,8 @@ The `hocc` specification language grammar is equivalent to the following specifi
 
 ```hocc
 hocc
+    neutral pCodeTlEpsilon
+    neutral pPrec < pCodeTlEpsilon
     neutral pCIDENT
     left pDOT
     left pCOMMA < pCIDENT
@@ -1010,7 +1027,7 @@ hocc
     token LEFT "left"
     token RIGHT "right"
     token NONASSOC "nonassoc"
-    token PREC "prec"
+    token PREC "prec" prec pPrec
     token UIDENT
     token CIDENT
     token USCORE "_"
@@ -1070,16 +1087,16 @@ hocc
       | CIDENT "." SymbolTypeQualifier
       | epsilon
     nonterm SymbolType ::= "of" SymbolTypeQualifier Uident
-    nonterm SymbolType0 ::=
-      | SymbolType
-      | epsilon
     nonterm PrecRef ::=
       | "prec" Uident
       | epsilon
-    nonterm TokenAlias ::=
+    nonterm Alias ::=
       | ISTRING
       | epsilon
-    nonterm Token ::= "token" CIDENT TokenAlias SymbolType0 PrecRef
+    nonterm TokenType ::=
+      | SymbolType Code
+      | epsilon
+    nonterm Token ::= "token" CIDENT Alias TokenType PrecRef
     nonterm Sep ::=
       | LINE_DELIM
       | ";"
@@ -1116,7 +1133,7 @@ hocc
     nonterm CodeTl ::=
       | Delimited CodeTl
       | CodeToken CodeTl
-      | epsilon
+      | epsilon prec pCodeTlEpsilon
     nonterm Code ::=
       | Delimited CodeTl
       | CodeToken CodeTl

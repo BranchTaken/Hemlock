@@ -150,18 +150,18 @@ type nonterm_uident =
   | SymbolTypeQualifierEpsilon
   and nonterm_symbol_type =
   | SymbolType of {symbol_type_qualifier: nonterm_symbol_type_qualifier; symbol_type: Scan.Token.t}
-  and nonterm_symbol_type0 =
-  | SymbolType0SymbolType of {symbol_type: nonterm_symbol_type}
-  | SymbolType0Epsilon
   and nonterm_prec_ref =
   | PrecRefUident of {uident: Scan.Token.t}
   | PrecRefEpsilon
-  and nonterm_token_alias =
-  | TokenAlias of {alias: token_istring}
-  | TokenAliasEpsilon
+  and nonterm_alias =
+  | Alias of {alias: token_istring}
+  | AliasEpsilon
+  and nonterm_token_type =
+  | TokenType of {symbol_type: nonterm_symbol_type; proto: nonterm_code}
+  | TokenTypeEpsilon
   and nonterm_token =
-  | Token of {cident: token_cident; token_alias: nonterm_token_alias;
-  symbol_type0: nonterm_symbol_type0; prec_ref: nonterm_prec_ref}
+  | Token of {cident: token_cident; alias: nonterm_alias; token_type: nonterm_token_type;
+  prec_ref: nonterm_prec_ref}
   and nonterm_sep =
   | SepLineDelim of {line_delim: token_line_delim}
   | SepSemi of {semi: token_semi}
@@ -268,6 +268,61 @@ type nonterm_uident =
   and nonterm_hmhi =
   | Hmhi of {prelude: nonterm_matter; hocc_: token_hocc; postlude: nonterm_matter; eoi: token_eoi}
 
+(* Fake prototype token payload. *)
+let fake_token =
+    let source =
+      ""
+      |> String.C.Slice.of_string
+      |> Text.of_string_slice
+      |> Hmc.Source.init
+      in
+    let base = Hmc.Source.Cursor.hd source in
+    let past = Hmc.Source.Cursor.tl source in
+    let slice = Hmc.Source.Slice.of_cursors ~base ~past in
+    Scan.Token.HmcToken (Hmc.Scan.Token.Tok_error {source=slice; error=[]})
+
+(* Prototype tokens. *)
+let proto_hocc = HOCC {token=fake_token}
+let proto_nonterm = NONTERM {token=fake_token}
+let proto_epsilon = EPSILON {token=fake_token}
+let proto_start = START {token=fake_token}
+let proto_token = TOKEN {token=fake_token}
+let proto_neutral = NEUTRAL {token=fake_token}
+let proto_left = LEFT {token=fake_token}
+let proto_right = RIGHT {token=fake_token}
+let proto_nonassoc = NONASSOC {token=fake_token}
+let proto_prec = PREC {token=fake_token}
+let proto_uident = UIDENT {token=fake_token}
+let proto_cident = CIDENT {token=fake_token}
+let proto_uscore = USCORE {token=fake_token}
+let proto_istring = ISTRING {token=fake_token}
+let proto_colon_colon_eq = COLON_COLON_EQ {token=fake_token}
+let proto_of = OF {token=fake_token}
+let proto_colon = COLON {token=fake_token}
+let proto_dot = DOT {token=fake_token}
+let proto_arrow = ARROW {token=fake_token}
+let proto_bar = BAR {token=fake_token}
+let proto_lt = LT {token=fake_token}
+let proto_eq = EQ {token=fake_token}
+let proto_comma = COMMA {token=fake_token}
+let proto_semi = SEMI {token=fake_token}
+let proto_as = AS {token=fake_token}
+let proto_line_delim = LINE_DELIM {token=fake_token}
+let proto_indent = INDENT {token=fake_token}
+let proto_dedent = DEDENT {token=fake_token}
+let proto_lparen = LPAREN {token=fake_token}
+let proto_rparen = RPAREN {token=fake_token}
+let proto_lcapture = LCAPTURE {token=fake_token}
+let proto_rcapture = RCAPTURE {token=fake_token}
+let proto_lbrack = LBRACK {token=fake_token}
+let proto_rbrack = RBRACK {token=fake_token}
+let proto_larray = LARRAY {token=fake_token}
+let proto_rarray = RARRAY {token=fake_token}
+let proto_lcurly = LCURLY {token=fake_token}
+let proto_rcurly = RCURLY {token=fake_token}
+let proto_other_token = OTHER_TOKEN {token=fake_token}
+let proto_eoi = EOI {token=fake_token}
+
 include struct
     module Spec = struct
         module Algorithm = struct
@@ -372,11 +427,13 @@ include struct
           end
 
         let prec_sets = [|
-            PrecSet.init ~index:0L ~names:[|"pCIDENT"|] ~assoc:None ~doms:(Bitset.empty);
-            PrecSet.init ~index:1L ~names:[|"pDOT"|] ~assoc:(Some Left) ~doms:(Bitset.empty);
-            PrecSet.init ~index:2L ~names:[|"pCOMMA"|] ~assoc:(Some Left) ~doms:(Bitset.singleton 0L);
-            PrecSet.init ~index:3L ~names:[|"pSEMI"|] ~assoc:(Some Right) ~doms:(Bitset.empty);
-            PrecSet.init ~index:4L ~names:[|"pAS"|] ~assoc:None ~doms:(Bitset.of_list [0L; 2L])
+            PrecSet.init ~index:0L ~names:[|"pCodeTlEpsilon"|] ~assoc:None ~doms:(Bitset.empty);
+            PrecSet.init ~index:1L ~names:[|"pPrec"|] ~assoc:None ~doms:(Bitset.singleton 0L);
+            PrecSet.init ~index:2L ~names:[|"pCIDENT"|] ~assoc:None ~doms:(Bitset.empty);
+            PrecSet.init ~index:3L ~names:[|"pDOT"|] ~assoc:(Some Left) ~doms:(Bitset.empty);
+            PrecSet.init ~index:4L ~names:[|"pCOMMA"|] ~assoc:(Some Left) ~doms:(Bitset.singleton 2L);
+            PrecSet.init ~index:5L ~names:[|"pSEMI"|] ~assoc:(Some Right) ~doms:(Bitset.empty);
+            PrecSet.init ~index:6L ~names:[|"pAS"|] ~assoc:None ~doms:(Bitset.of_list [2L; 4L])
           |]
 
         module Prec = struct
@@ -489,19 +546,19 @@ include struct
               ~prec:None ~callback:22L;
             Prod.init ~index:23L ~lhs_index:49L ~rhs_indexes:[|17L; 48L; 42L|]
               ~prec:None ~callback:23L;
-            Prod.init ~index:24L ~lhs_index:50L ~rhs_indexes:[|49L|]
+            Prod.init ~index:24L ~lhs_index:50L ~rhs_indexes:[|11L; 42L|]
               ~prec:None ~callback:24L;
             Prod.init ~index:25L ~lhs_index:50L ~rhs_indexes:[||]
               ~prec:None ~callback:25L;
-            Prod.init ~index:26L ~lhs_index:51L ~rhs_indexes:[|11L; 42L|]
+            Prod.init ~index:26L ~lhs_index:51L ~rhs_indexes:[|15L|]
               ~prec:None ~callback:26L;
             Prod.init ~index:27L ~lhs_index:51L ~rhs_indexes:[||]
               ~prec:None ~callback:27L;
-            Prod.init ~index:28L ~lhs_index:52L ~rhs_indexes:[|15L|]
+            Prod.init ~index:28L ~lhs_index:52L ~rhs_indexes:[|49L; 61L|]
               ~prec:None ~callback:28L;
             Prod.init ~index:29L ~lhs_index:52L ~rhs_indexes:[||]
               ~prec:None ~callback:29L;
-            Prod.init ~index:30L ~lhs_index:53L ~rhs_indexes:[|6L; 13L; 52L; 50L; 51L|]
+            Prod.init ~index:30L ~lhs_index:53L ~rhs_indexes:[|6L; 13L; 51L; 52L; 50L|]
               ~prec:None ~callback:30L;
             Prod.init ~index:31L ~lhs_index:54L ~rhs_indexes:[|27L|]
               ~prec:None ~callback:31L;
@@ -564,7 +621,7 @@ include struct
             Prod.init ~index:60L ~lhs_index:60L ~rhs_indexes:[|59L; 60L|]
               ~prec:None ~callback:60L;
             Prod.init ~index:61L ~lhs_index:60L ~rhs_indexes:[||]
-              ~prec:None ~callback:61L;
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:0L)) ~callback:61L;
             Prod.init ~index:62L ~lhs_index:61L ~rhs_indexes:[|58L; 60L|]
               ~prec:None ~callback:62L;
             Prod.init ~index:63L ~lhs_index:61L ~rhs_indexes:[|59L; 60L|]
@@ -574,7 +631,7 @@ include struct
             Prod.init ~index:65L ~lhs_index:62L ~rhs_indexes:[|42L; 23L; 66L|]
               ~prec:None ~callback:65L;
             Prod.init ~index:66L ~lhs_index:63L ~rhs_indexes:[|62L|]
-              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:3L)) ~callback:66L;
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:5L)) ~callback:66L;
             Prod.init ~index:67L ~lhs_index:63L ~rhs_indexes:[|62L; 25L; 14L|]
               ~prec:None ~callback:67L;
             Prod.init ~index:68L ~lhs_index:63L ~rhs_indexes:[|62L; 25L; 63L|]
@@ -586,7 +643,7 @@ include struct
             Prod.init ~index:71L ~lhs_index:65L ~rhs_indexes:[|13L|]
               ~prec:None ~callback:71L;
             Prod.init ~index:72L ~lhs_index:65L ~rhs_indexes:[|65L; 19L; 65L|]
-              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:1L)) ~callback:72L;
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:3L)) ~callback:72L;
             Prod.init ~index:73L ~lhs_index:66L ~rhs_indexes:[|14L|]
               ~prec:None ~callback:73L;
             Prod.init ~index:74L ~lhs_index:66L ~rhs_indexes:[|42L|]
@@ -596,11 +653,11 @@ include struct
             Prod.init ~index:76L ~lhs_index:66L ~rhs_indexes:[|30L; 66L; 31L|]
               ~prec:None ~callback:76L;
             Prod.init ~index:77L ~lhs_index:66L ~rhs_indexes:[|13L; 66L|]
-              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:0L)) ~callback:77L;
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:2L)) ~callback:77L;
             Prod.init ~index:78L ~lhs_index:66L ~rhs_indexes:[|65L; 19L; 30L; 66L; 31L|]
               ~prec:None ~callback:78L;
             Prod.init ~index:79L ~lhs_index:66L ~rhs_indexes:[|66L; 24L; 66L|]
-              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:2L)) ~callback:79L;
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:4L)) ~callback:79L;
             Prod.init ~index:80L ~lhs_index:66L ~rhs_indexes:[|38L; 63L; 64L; 39L|]
               ~prec:None ~callback:80L;
             Prod.init ~index:81L ~lhs_index:66L ~rhs_indexes:[|65L; 19L; 38L; 63L; 64L; 39L|]
@@ -625,13 +682,13 @@ include struct
               ~prec:None ~callback:90L;
             Prod.init ~index:91L ~lhs_index:69L ~rhs_indexes:[|68L; 69L|]
               ~prec:None ~callback:91L;
-            Prod.init ~index:92L ~lhs_index:69L ~rhs_indexes:[|51L|]
+            Prod.init ~index:92L ~lhs_index:69L ~rhs_indexes:[|50L|]
               ~prec:None ~callback:92L;
             Prod.init ~index:93L ~lhs_index:70L ~rhs_indexes:[|68L; 69L|]
               ~prec:None ~callback:93L;
             Prod.init ~index:94L ~lhs_index:71L ~rhs_indexes:[|70L|]
               ~prec:None ~callback:94L;
-            Prod.init ~index:95L ~lhs_index:71L ~rhs_indexes:[|4L; 51L|]
+            Prod.init ~index:95L ~lhs_index:71L ~rhs_indexes:[|4L; 50L|]
               ~prec:None ~callback:95L;
             Prod.init ~index:96L ~lhs_index:72L ~rhs_indexes:[|71L|]
               ~prec:None ~callback:96L;
@@ -655,9 +712,9 @@ include struct
               ~prec:None ~callback:105L;
             Prod.init ~index:106L ~lhs_index:78L ~rhs_indexes:[|5L|]
               ~prec:None ~callback:106L;
-            Prod.init ~index:107L ~lhs_index:79L ~rhs_indexes:[|78L; 13L; 51L; 16L; 74L|]
+            Prod.init ~index:107L ~lhs_index:79L ~rhs_indexes:[|78L; 13L; 50L; 16L; 74L|]
               ~prec:None ~callback:107L;
-            Prod.init ~index:108L ~lhs_index:79L ~rhs_indexes:[|78L; 13L; 49L; 51L; 16L; 77L|]
+            Prod.init ~index:108L ~lhs_index:79L ~rhs_indexes:[|78L; 13L; 49L; 50L; 16L; 77L|]
               ~prec:None ~callback:108L;
             Prod.init ~index:109L ~lhs_index:80L ~rhs_indexes:[|47L|]
               ~prec:None ~callback:109L;
@@ -857,7 +914,8 @@ include struct
               ~first:(Bitset.singleton 10L)
               ~follow:(Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn"));
             Symbol.init ~index:11L ~name:"PREC"
-              ~prec:None ~alias:(Some "prec") ~start:false
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:1L))
+              ~alias:(Some "prec") ~start:false
               ~prods:(Ordset.empty (module Prod))
               ~first:(Bitset.singleton 11L)
               ~follow:(Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn"));
@@ -897,7 +955,7 @@ include struct
               ~first:(Bitset.singleton 18L)
               ~follow:(Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn"));
             Symbol.init ~index:19L ~name:"DOT"
-              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:1L))
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:3L))
               ~alias:(Some ".") ~start:false
               ~prods:(Ordset.empty (module Prod))
               ~first:(Bitset.singleton 19L)
@@ -923,19 +981,19 @@ include struct
               ~first:(Bitset.singleton 23L)
               ~follow:(Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn"));
             Symbol.init ~index:24L ~name:"COMMA"
-              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:2L))
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:4L))
               ~alias:(Some ",") ~start:false
               ~prods:(Ordset.empty (module Prod))
               ~first:(Bitset.singleton 24L)
               ~follow:(Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn"));
             Symbol.init ~index:25L ~name:"SEMI"
-              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:3L))
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:5L))
               ~alias:(Some ";") ~start:false
               ~prods:(Ordset.empty (module Prod))
               ~first:(Bitset.singleton 25L)
               ~follow:(Bitset.of_nat (Nat.of_string "0x3ff_ffff_fffcn"));
             Symbol.init ~index:26L ~name:"AS"
-              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:4L))
+              ~prec:(Some (Prec.init ~name_index:0L ~prec_set_index:6L))
               ~alias:(Some "as") ~start:false
               ~prods:(Ordset.empty (module Prod))
               ~first:(Bitset.singleton 26L)
@@ -1080,31 +1138,31 @@ include struct
               ~prec:None ~alias:None ~start:false
               ~prods:(Ordset.singleton (module Prod) (Array.get 23L prods))
               ~first:(Bitset.singleton 17L)
-              ~follow:(Bitset.of_nat (Nat.of_string "0x2801_0800n"));
-            Symbol.init ~index:50L ~name:"SymbolType0"
+              ~follow:(Bitset.of_nat (Nat.of_string "0x155_55df_fffcn"));
+            Symbol.init ~index:50L ~name:"PrecRef"
               ~prec:None ~alias:None ~start:false
               ~prods:(Ordset.of_list (module Prod) [
                 Array.get 24L prods;
                 Array.get 25L prods;
               ])
-              ~first:(Bitset.of_nat (Nat.of_string "0x2_0001n"))
-              ~follow:(Bitset.of_nat (Nat.of_string "0x2800_0800n"));
-            Symbol.init ~index:51L ~name:"PrecRef"
+              ~first:(Bitset.of_nat (Nat.of_string "0x801n"))
+              ~follow:(Bitset.of_nat (Nat.of_string "0x2831_0000n"));
+            Symbol.init ~index:51L ~name:"Alias"
               ~prec:None ~alias:None ~start:false
               ~prods:(Ordset.of_list (module Prod) [
                 Array.get 26L prods;
                 Array.get 27L prods;
               ])
-              ~first:(Bitset.of_nat (Nat.of_string "0x801n"))
-              ~follow:(Bitset.of_nat (Nat.of_string "0x2831_0000n"));
-            Symbol.init ~index:52L ~name:"TokenAlias"
+              ~first:(Bitset.of_nat (Nat.of_string "0x8001n"))
+              ~follow:(Bitset.of_nat (Nat.of_string "0x2802_0800n"));
+            Symbol.init ~index:52L ~name:"TokenType"
               ~prec:None ~alias:None ~start:false
               ~prods:(Ordset.of_list (module Prod) [
                 Array.get 28L prods;
                 Array.get 29L prods;
               ])
-              ~first:(Bitset.of_nat (Nat.of_string "0x8001n"))
-              ~follow:(Bitset.of_nat (Nat.of_string "0x2802_0800n"));
+              ~first:(Bitset.of_nat (Nat.of_string "0x2_0001n"))
+              ~follow:(Bitset.of_nat (Nat.of_string "0x2800_0800n"));
             Symbol.init ~index:53L ~name:"Token"
               ~prec:None ~alias:None ~start:false
               ~prods:(Ordset.singleton (module Prod) (Array.get 30L prods))
@@ -1180,7 +1238,7 @@ include struct
                 Array.get 61L prods;
               ])
               ~first:(Bitset.of_nat (Nat.of_string "0x155_55df_fffdn"))
-              ~follow:(Bitset.of_nat (Nat.of_string "0xaa_aa20_0000n"));
+              ~follow:(Bitset.of_nat (Nat.of_string "0xaa_aa20_0800n"));
             Symbol.init ~index:61L ~name:"Code"
               ~prec:None ~alias:None ~start:false
               ~prods:(Ordset.of_list (module Prod) [
@@ -1188,7 +1246,7 @@ include struct
                 Array.get 63L prods;
               ])
               ~first:(Bitset.of_nat (Nat.of_string "0x155_55df_fffcn"))
-              ~follow:(Bitset.of_nat (Nat.of_string "0xaa_aa20_0000n"));
+              ~follow:(Bitset.of_nat (Nat.of_string "0xaa_aa20_0800n"));
             Symbol.init ~index:62L ~name:"PatternField"
               ~prec:None ~alias:None ~start:false
               ~prods:(Ordset.of_list (module Prod) [
@@ -5270,16 +5328,16 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (11L, Action.Reduce 29L);
+                    (11L, Action.Reduce 27L);
                     (15L, Action.ShiftPrefix 89L);
-                    (17L, Action.Reduce 29L);
-                    (27L, Action.Reduce 29L);
-                    (29L, Action.Reduce 29L);
+                    (17L, Action.Reduce 27L);
+                    (27L, Action.Reduce 27L);
+                    (29L, Action.Reduce 27L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (52L, 90L);
+                    (51L, 90L);
                   ]
               );
             (* 72 *) State.init
@@ -6047,14 +6105,14 @@ include struct
               ~actions:(
                 Map.of_alist (module Uns) [
                     (11L, Action.ShiftPrefix 95L);
-                    (16L, Action.Reduce 27L);
+                    (16L, Action.Reduce 25L);
                     (17L, Action.ShiftPrefix 96L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
                     (49L, 97L);
-                    (51L, 98L);
+                    (50L, 98L);
                   ]
               );
             (* 86 *) State.init
@@ -6187,7 +6245,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 28L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 26L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x2802_0800n")
                               ) in
@@ -6198,10 +6256,10 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (11L, Action.Reduce 28L);
-                    (17L, Action.Reduce 28L);
-                    (27L, Action.Reduce 28L);
-                    (29L, Action.Reduce 28L);
+                    (11L, Action.Reduce 26L);
+                    (17L, Action.Reduce 26L);
+                    (27L, Action.Reduce 26L);
+                    (29L, Action.Reduce 26L);
                   ]
               )
               ~gotos:(
@@ -6225,16 +6283,16 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (11L, Action.Reduce 25L);
+                    (11L, Action.Reduce 29L);
                     (17L, Action.ShiftPrefix 96L);
-                    (27L, Action.Reduce 25L);
-                    (29L, Action.Reduce 25L);
+                    (27L, Action.Reduce 29L);
+                    (29L, Action.Reduce 29L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
                     (49L, 100L);
-                    (50L, 101L);
+                    (52L, 101L);
                   ]
               );
             (* 91 *) State.init
@@ -6368,7 +6426,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 26L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 24L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x2831_0000n")
                               ) in
@@ -6406,7 +6464,7 @@ include struct
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 23L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2801_0800n")
+                                Bitset.of_nat (Nat.of_string "0x155_55df_fffcn")
                               ) in
                             lr0item, lr1item
                           );
@@ -6453,12 +6511,12 @@ include struct
               ~actions:(
                 Map.of_alist (module Uns) [
                     (11L, Action.ShiftPrefix 95L);
-                    (16L, Action.Reduce 27L);
+                    (16L, Action.Reduce 25L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (51L, 107L);
+                    (50L, 107L);
                   ]
               );
             (* 98 *) State.init
@@ -6519,7 +6577,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 24L prods) ~dot:1L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 28L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x2800_0800n")
                               ) in
@@ -6530,13 +6588,45 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (11L, Action.Reduce 24L);
-                    (27L, Action.Reduce 24L);
-                    (29L, Action.Reduce 24L);
+                    (2L, Action.ShiftPrefix 72L);
+                    (3L, Action.ShiftPrefix 73L);
+                    (4L, Action.ShiftPrefix 74L);
+                    (5L, Action.ShiftPrefix 75L);
+                    (6L, Action.ShiftPrefix 76L);
+                    (7L, Action.ShiftPrefix 77L);
+                    (8L, Action.ShiftPrefix 78L);
+                    (9L, Action.ShiftPrefix 79L);
+                    (10L, Action.ShiftPrefix 80L);
+                    (11L, Action.ShiftPrefix 81L);
+                    (12L, Action.ShiftPrefix 82L);
+                    (13L, Action.ShiftPrefix 110L);
+                    (14L, Action.ShiftPrefix 111L);
+                    (15L, Action.ShiftPrefix 112L);
+                    (16L, Action.ShiftPrefix 113L);
+                    (17L, Action.ShiftPrefix 114L);
+                    (18L, Action.ShiftPrefix 115L);
+                    (19L, Action.ShiftPrefix 116L);
+                    (20L, Action.ShiftPrefix 117L);
+                    (22L, Action.ShiftPrefix 118L);
+                    (23L, Action.ShiftPrefix 119L);
+                    (24L, Action.ShiftPrefix 120L);
+                    (26L, Action.ShiftPrefix 121L);
+                    (28L, Action.ShiftPrefix 122L);
+                    (30L, Action.ShiftPrefix 123L);
+                    (32L, Action.ShiftPrefix 124L);
+                    (34L, Action.ShiftPrefix 125L);
+                    (36L, Action.ShiftPrefix 126L);
+                    (38L, Action.ShiftPrefix 127L);
+                    (40L, Action.ShiftPrefix 128L);
                   ]
               )
               ~gotos:(
-                Map.empty (module Uns)
+                Map.of_alist (module Uns) [
+                    (42L, 129L);
+                    (58L, 130L);
+                    (59L, 131L);
+                    (61L, 132L);
+                  ]
               );
             (* 101 *) State.init
               ~lr1ItemsetClosure:(
@@ -6557,13 +6647,13 @@ include struct
               ~actions:(
                 Map.of_alist (module Uns) [
                     (11L, Action.ShiftPrefix 95L);
-                    (27L, Action.Reduce 27L);
-                    (29L, Action.Reduce 27L);
+                    (27L, Action.Reduce 25L);
+                    (29L, Action.Reduce 25L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (51L, 110L);
+                    (50L, 133L);
                   ]
               );
             (* 102 *) State.init
@@ -6592,7 +6682,7 @@ include struct
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (43L, 111L);
+                    (43L, 134L);
                   ]
               );
             (* 103 *) State.init
@@ -6627,7 +6717,7 @@ include struct
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 26L prods) ~dot:2L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 24L prods) ~dot:2L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x2831_0000n")
                               ) in
@@ -6638,11 +6728,11 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (16L, Action.Reduce 26L);
-                    (20L, Action.Reduce 26L);
-                    (21L, Action.Reduce 26L);
-                    (27L, Action.Reduce 26L);
-                    (29L, Action.Reduce 26L);
+                    (16L, Action.Reduce 24L);
+                    (20L, Action.Reduce 24L);
+                    (21L, Action.Reduce 24L);
+                    (27L, Action.Reduce 24L);
+                    (29L, Action.Reduce 24L);
                   ]
               )
               ~gotos:(
@@ -6666,7 +6756,7 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (19L, Action.ShiftPrefix 112L);
+                    (19L, Action.ShiftPrefix 135L);
                   ]
               )
               ~gotos:(
@@ -6681,7 +6771,7 @@ include struct
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 23L prods) ~dot:2L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2801_0800n")
+                                Bitset.of_nat (Nat.of_string "0x155_55df_fffcn")
                               ) in
                             lr0item, lr1item
                           );
@@ -6705,7 +6795,7 @@ include struct
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (42L, 113L);
+                    (42L, 136L);
                   ]
               );
             (* 107 *) State.init
@@ -6726,7 +6816,7 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (16L, Action.ShiftPrefix 114L);
+                    (16L, Action.ShiftPrefix 137L);
                   ]
               )
               ~gotos:(
@@ -6752,7 +6842,7 @@ include struct
                 Map.of_alist (module Uns) [
                     (2L, Action.ShiftPrefix 72L);
                     (3L, Action.ShiftPrefix 73L);
-                    (4L, Action.ShiftPrefix 115L);
+                    (4L, Action.ShiftPrefix 138L);
                     (5L, Action.ShiftPrefix 75L);
                     (6L, Action.ShiftPrefix 76L);
                     (7L, Action.ShiftPrefix 77L);
@@ -6761,24 +6851,24 @@ include struct
                     (10L, Action.ShiftPrefix 80L);
                     (11L, Action.ShiftPrefix 81L);
                     (12L, Action.ShiftPrefix 82L);
-                    (13L, Action.ShiftPrefix 116L);
-                    (14L, Action.ShiftPrefix 117L);
-                    (15L, Action.ShiftPrefix 118L);
-                    (21L, Action.ShiftPrefix 119L);
-                    (30L, Action.ShiftPrefix 120L);
-                    (38L, Action.ShiftPrefix 121L);
+                    (13L, Action.ShiftPrefix 139L);
+                    (14L, Action.ShiftPrefix 140L);
+                    (15L, Action.ShiftPrefix 141L);
+                    (21L, Action.ShiftPrefix 142L);
+                    (30L, Action.ShiftPrefix 143L);
+                    (38L, Action.ShiftPrefix 144L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (42L, 122L);
-                    (65L, 123L);
-                    (67L, 124L);
-                    (68L, 125L);
-                    (70L, 126L);
-                    (71L, 127L);
-                    (72L, 128L);
-                    (74L, 129L);
+                    (42L, 145L);
+                    (65L, 146L);
+                    (67L, 147L);
+                    (68L, 148L);
+                    (70L, 149L);
+                    (71L, 150L);
+                    (72L, 151L);
+                    (74L, 152L);
                   ]
               );
             (* 109 *) State.init
@@ -6809,2433 +6899,6 @@ include struct
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
                   ~index:110L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 30L prods) ~dot:5L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2800_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (27L, Action.Reduce 30L);
-                    (29L, Action.Reduce 30L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 111 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:111L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 11L prods) ~dot:3L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2840_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (22L, Action.Reduce 11L);
-                    (27L, Action.Reduce 11L);
-                    (29L, Action.Reduce 11L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 112 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:112L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 21L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.Reduce 22L);
-                    (3L, Action.Reduce 22L);
-                    (4L, Action.Reduce 22L);
-                    (5L, Action.Reduce 22L);
-                    (6L, Action.Reduce 22L);
-                    (7L, Action.Reduce 22L);
-                    (8L, Action.Reduce 22L);
-                    (9L, Action.Reduce 22L);
-                    (10L, Action.Reduce 22L);
-                    (11L, Action.Reduce 22L);
-                    (12L, Action.Reduce 22L);
-                    (13L, Action.ShiftPrefix 105L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (48L, 130L);
-                  ]
-              );
-            (* 113 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:113L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 23L prods) ~dot:3L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2801_0800n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (11L, Action.Reduce 23L);
-                    (16L, Action.Reduce 23L);
-                    (27L, Action.Reduce 23L);
-                    (29L, Action.Reduce 23L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 114 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:114L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 108L prods) ~dot:5L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2800_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.ShiftPrefix 72L);
-                    (3L, Action.ShiftPrefix 73L);
-                    (4L, Action.ShiftPrefix 115L);
-                    (5L, Action.ShiftPrefix 75L);
-                    (6L, Action.ShiftPrefix 76L);
-                    (7L, Action.ShiftPrefix 77L);
-                    (8L, Action.ShiftPrefix 78L);
-                    (9L, Action.ShiftPrefix 79L);
-                    (10L, Action.ShiftPrefix 80L);
-                    (11L, Action.ShiftPrefix 81L);
-                    (12L, Action.ShiftPrefix 82L);
-                    (13L, Action.ShiftPrefix 116L);
-                    (14L, Action.ShiftPrefix 117L);
-                    (15L, Action.ShiftPrefix 118L);
-                    (21L, Action.ShiftPrefix 119L);
-                    (30L, Action.ShiftPrefix 120L);
-                    (38L, Action.ShiftPrefix 121L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (42L, 122L);
-                    (65L, 123L);
-                    (67L, 124L);
-                    (68L, 125L);
-                    (70L, 126L);
-                    (71L, 127L);
-                    (72L, 128L);
-                    (74L, 131L);
-                    (75L, 132L);
-                    (77L, 133L);
-                  ]
-              );
-            (* 115 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:115L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 95L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (11L, Action.ShiftPrefix 95L);
-                    (18L, Action.Reduce 2L);
-                    (20L, Action.Reduce 27L);
-                    (21L, Action.Reduce 27L);
-                    (27L, Action.Reduce 27L);
-                    (29L, Action.Reduce 27L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (51L, 134L);
-                  ]
-              );
-            (* 116 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:116L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 19L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.Reduce 82L);
-                    (3L, Action.Reduce 82L);
-                    (4L, Action.Reduce 82L);
-                    (5L, Action.Reduce 82L);
-                    (6L, Action.Reduce 82L);
-                    (7L, Action.Reduce 82L);
-                    (8L, Action.Reduce 82L);
-                    (9L, Action.Reduce 82L);
-                    (10L, Action.Reduce 82L);
-                    (11L, Action.Reduce 82L);
-                    (12L, Action.Reduce 82L);
-                    (13L, Action.Reduce 82L);
-                    (14L, Action.Reduce 82L);
-                    (15L, Action.Reduce 82L);
-                    (19L, Action.Reduce 71L);
-                    (20L, Action.Reduce 82L);
-                    (21L, Action.Reduce 82L);
-                    (27L, Action.Reduce 82L);
-                    (29L, Action.Reduce 82L);
-                    (30L, Action.Reduce 82L);
-                    (38L, Action.Reduce 82L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 117 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:117L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 89L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (18L, Action.ShiftPrefix 135L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 118 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:118L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 83L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.Reduce 83L);
-                    (3L, Action.Reduce 83L);
-                    (4L, Action.Reduce 83L);
-                    (5L, Action.Reduce 83L);
-                    (6L, Action.Reduce 83L);
-                    (7L, Action.Reduce 83L);
-                    (8L, Action.Reduce 83L);
-                    (9L, Action.Reduce 83L);
-                    (10L, Action.Reduce 83L);
-                    (11L, Action.Reduce 83L);
-                    (12L, Action.Reduce 83L);
-                    (13L, Action.Reduce 83L);
-                    (14L, Action.Reduce 83L);
-                    (15L, Action.Reduce 83L);
-                    (20L, Action.Reduce 83L);
-                    (21L, Action.Reduce 83L);
-                    (27L, Action.Reduce 83L);
-                    (29L, Action.Reduce 83L);
-                    (30L, Action.Reduce 83L);
-                    (38L, Action.Reduce 83L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 119 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:119L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 99L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2810_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.ShiftPrefix 72L);
-                    (3L, Action.ShiftPrefix 73L);
-                    (4L, Action.ShiftPrefix 115L);
-                    (5L, Action.ShiftPrefix 75L);
-                    (6L, Action.ShiftPrefix 76L);
-                    (7L, Action.ShiftPrefix 77L);
-                    (8L, Action.ShiftPrefix 78L);
-                    (9L, Action.ShiftPrefix 79L);
-                    (10L, Action.ShiftPrefix 80L);
-                    (11L, Action.ShiftPrefix 81L);
-                    (12L, Action.ShiftPrefix 82L);
-                    (13L, Action.ShiftPrefix 116L);
-                    (14L, Action.ShiftPrefix 117L);
-                    (15L, Action.ShiftPrefix 118L);
-                    (30L, Action.ShiftPrefix 120L);
-                    (38L, Action.ShiftPrefix 121L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (42L, 122L);
-                    (65L, 123L);
-                    (67L, 124L);
-                    (68L, 125L);
-                    (70L, 126L);
-                    (71L, 127L);
-                    (72L, 136L);
-                  ]
-              );
-            (* 120 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:120L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 85L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.ShiftPrefix 72L);
-                    (3L, Action.ShiftPrefix 73L);
-                    (4L, Action.ShiftPrefix 74L);
-                    (5L, Action.ShiftPrefix 75L);
-                    (6L, Action.ShiftPrefix 76L);
-                    (7L, Action.ShiftPrefix 77L);
-                    (8L, Action.ShiftPrefix 78L);
-                    (9L, Action.ShiftPrefix 79L);
-                    (10L, Action.ShiftPrefix 80L);
-                    (11L, Action.ShiftPrefix 81L);
-                    (12L, Action.ShiftPrefix 82L);
-                    (13L, Action.ShiftPrefix 137L);
-                    (14L, Action.ShiftPrefix 138L);
-                    (30L, Action.ShiftPrefix 139L);
-                    (38L, Action.ShiftPrefix 140L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (42L, 141L);
-                    (65L, 142L);
-                    (66L, 143L);
-                  ]
-              );
-            (* 121 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:121L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 87L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.ShiftPrefix 72L);
-                    (3L, Action.ShiftPrefix 73L);
-                    (4L, Action.ShiftPrefix 74L);
-                    (5L, Action.ShiftPrefix 75L);
-                    (6L, Action.ShiftPrefix 76L);
-                    (7L, Action.ShiftPrefix 77L);
-                    (8L, Action.ShiftPrefix 78L);
-                    (9L, Action.ShiftPrefix 79L);
-                    (10L, Action.ShiftPrefix 80L);
-                    (11L, Action.ShiftPrefix 81L);
-                    (12L, Action.ShiftPrefix 82L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (42L, 144L);
-                    (62L, 145L);
-                    (63L, 146L);
-                  ]
-              );
-            (* 122 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:122L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 84L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (18L, Action.ShiftPrefix 147L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 123 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:123L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 19L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 86L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 88L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (19L, Action.ShiftPrefix 148L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 124 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:124L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 90L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.Reduce 90L);
-                    (3L, Action.Reduce 90L);
-                    (4L, Action.Reduce 90L);
-                    (5L, Action.Reduce 90L);
-                    (6L, Action.Reduce 90L);
-                    (7L, Action.Reduce 90L);
-                    (8L, Action.Reduce 90L);
-                    (9L, Action.Reduce 90L);
-                    (10L, Action.Reduce 90L);
-                    (11L, Action.Reduce 90L);
-                    (12L, Action.Reduce 90L);
-                    (13L, Action.Reduce 90L);
-                    (14L, Action.Reduce 90L);
-                    (15L, Action.Reduce 90L);
-                    (20L, Action.Reduce 90L);
-                    (21L, Action.Reduce 90L);
-                    (27L, Action.Reduce 90L);
-                    (29L, Action.Reduce 90L);
-                    (30L, Action.Reduce 90L);
-                    (38L, Action.Reduce 90L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 125 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:125L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 93L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.ShiftPrefix 72L);
-                    (3L, Action.ShiftPrefix 73L);
-                    (4L, Action.ShiftPrefix 74L);
-                    (5L, Action.ShiftPrefix 75L);
-                    (6L, Action.ShiftPrefix 76L);
-                    (7L, Action.ShiftPrefix 77L);
-                    (8L, Action.ShiftPrefix 78L);
-                    (9L, Action.ShiftPrefix 79L);
-                    (10L, Action.ShiftPrefix 80L);
-                    (11L, Action.ShiftPrefix 149L);
-                    (12L, Action.ShiftPrefix 82L);
-                    (13L, Action.ShiftPrefix 116L);
-                    (14L, Action.ShiftPrefix 117L);
-                    (15L, Action.ShiftPrefix 118L);
-                    (20L, Action.Reduce 27L);
-                    (21L, Action.Reduce 27L);
-                    (27L, Action.Reduce 27L);
-                    (29L, Action.Reduce 27L);
-                    (30L, Action.ShiftPrefix 120L);
-                    (38L, Action.ShiftPrefix 121L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (42L, 122L);
-                    (51L, 150L);
-                    (65L, 123L);
-                    (67L, 124L);
-                    (68L, 151L);
-                    (69L, 152L);
-                  ]
-              );
-            (* 126 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:126L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 94L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (20L, Action.Reduce 94L);
-                    (21L, Action.Reduce 94L);
-                    (27L, Action.Reduce 94L);
-                    (29L, Action.Reduce 94L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 127 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:127L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 96L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (20L, Action.Reduce 96L);
-                    (21L, Action.Reduce 96L);
-                    (27L, Action.Reduce 96L);
-                    (29L, Action.Reduce 96L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 128 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:128L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 100L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2810_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (20L, Action.Reduce 98L);
-                    (21L, Action.ShiftPrefix 153L);
-                    (27L, Action.Reduce 98L);
-                    (29L, Action.Reduce 98L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (73L, 154L);
-                  ]
-              );
-            (* 129 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:129L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 107L prods) ~dot:5L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2800_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (27L, Action.Reduce 107L);
-                    (29L, Action.Reduce 107L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 130 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:130L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 21L prods) ~dot:3L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.Reduce 21L);
-                    (3L, Action.Reduce 21L);
-                    (4L, Action.Reduce 21L);
-                    (5L, Action.Reduce 21L);
-                    (6L, Action.Reduce 21L);
-                    (7L, Action.Reduce 21L);
-                    (8L, Action.Reduce 21L);
-                    (9L, Action.Reduce 21L);
-                    (10L, Action.Reduce 21L);
-                    (11L, Action.Reduce 21L);
-                    (12L, Action.Reduce 21L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 131 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:131L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 101L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2820_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (20L, Action.ShiftPrefix 155L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 132 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:132L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 104L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2800_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (21L, Action.ShiftPrefix 156L);
-                    (27L, Action.Reduce 103L);
-                    (29L, Action.Reduce 103L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (76L, 157L);
-                  ]
-              );
-            (* 133 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:133L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 108L prods) ~dot:6L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2800_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (27L, Action.Reduce 108L);
-                    (29L, Action.Reduce 108L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 134 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:134L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 95L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (20L, Action.Reduce 95L);
-                    (21L, Action.Reduce 95L);
-                    (27L, Action.Reduce 95L);
-                    (29L, Action.Reduce 95L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 135 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:135L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 89L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (13L, Action.ShiftPrefix 158L);
-                    (15L, Action.ShiftPrefix 118L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (67L, 159L);
-                  ]
-              );
-            (* 136 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:136L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 99L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2810_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (20L, Action.Reduce 98L);
-                    (21L, Action.ShiftPrefix 153L);
-                    (27L, Action.Reduce 98L);
-                    (29L, Action.Reduce 98L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (73L, 160L);
-                  ]
-              );
-            (* 137 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:137L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 19L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 77L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.ShiftPrefix 72L);
-                    (3L, Action.ShiftPrefix 73L);
-                    (4L, Action.ShiftPrefix 74L);
-                    (5L, Action.ShiftPrefix 75L);
-                    (6L, Action.ShiftPrefix 76L);
-                    (7L, Action.ShiftPrefix 77L);
-                    (8L, Action.ShiftPrefix 78L);
-                    (9L, Action.ShiftPrefix 79L);
-                    (10L, Action.ShiftPrefix 80L);
-                    (11L, Action.ShiftPrefix 81L);
-                    (12L, Action.ShiftPrefix 82L);
-                    (13L, Action.ShiftPrefix 137L);
-                    (14L, Action.ShiftPrefix 138L);
-                    (19L, Action.Reduce 71L);
-                    (30L, Action.ShiftPrefix 139L);
-                    (38L, Action.ShiftPrefix 140L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (42L, 141L);
-                    (65L, 142L);
-                    (66L, 161L);
-                  ]
-              );
-            (* 138 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:138L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 73L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (24L, Action.Reduce 73L);
-                    (25L, Action.Reduce 73L);
-                    (26L, Action.Reduce 73L);
-                    (31L, Action.Reduce 73L);
-                    (39L, Action.Reduce 73L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 139 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:139L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 76L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.ShiftPrefix 72L);
-                    (3L, Action.ShiftPrefix 73L);
-                    (4L, Action.ShiftPrefix 74L);
-                    (5L, Action.ShiftPrefix 75L);
-                    (6L, Action.ShiftPrefix 76L);
-                    (7L, Action.ShiftPrefix 77L);
-                    (8L, Action.ShiftPrefix 78L);
-                    (9L, Action.ShiftPrefix 79L);
-                    (10L, Action.ShiftPrefix 80L);
-                    (11L, Action.ShiftPrefix 81L);
-                    (12L, Action.ShiftPrefix 82L);
-                    (13L, Action.ShiftPrefix 137L);
-                    (14L, Action.ShiftPrefix 138L);
-                    (30L, Action.ShiftPrefix 139L);
-                    (38L, Action.ShiftPrefix 140L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (42L, 141L);
-                    (65L, 142L);
-                    (66L, 162L);
-                  ]
-              );
-            (* 140 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:140L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 80L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.ShiftPrefix 72L);
-                    (3L, Action.ShiftPrefix 73L);
-                    (4L, Action.ShiftPrefix 74L);
-                    (5L, Action.ShiftPrefix 75L);
-                    (6L, Action.ShiftPrefix 76L);
-                    (7L, Action.ShiftPrefix 77L);
-                    (8L, Action.ShiftPrefix 78L);
-                    (9L, Action.ShiftPrefix 79L);
-                    (10L, Action.ShiftPrefix 80L);
-                    (11L, Action.ShiftPrefix 81L);
-                    (12L, Action.ShiftPrefix 82L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (42L, 144L);
-                    (62L, 145L);
-                    (63L, 163L);
-                  ]
-              );
-            (* 141 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:141L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 74L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (24L, Action.Reduce 74L);
-                    (25L, Action.Reduce 74L);
-                    (26L, Action.Reduce 74L);
-                    (31L, Action.Reduce 74L);
-                    (39L, Action.Reduce 74L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 142 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:142L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 19L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 78L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 81L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (19L, Action.ShiftPrefix 164L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 143 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:143L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 75L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 79L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 85L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (24L, Action.ShiftPrefix 165L);
-                    (26L, Action.ShiftPrefix 166L);
-                    (31L, Action.ShiftPrefix 167L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 144 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:144L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 64L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 65L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (23L, Action.ShiftPrefix 168L);
-                    (25L, Action.Reduce 64L);
-                    (39L, Action.Reduce 64L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 145 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:145L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 66L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 67L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 68L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (25L, Action.ShiftPrefix 169L);
-                    (39L, Action.Reduce 66L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 146 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:146L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 87L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (25L, Action.ShiftPrefix 170L);
-                    (39L, Action.Reduce 70L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (64L, 171L);
-                  ]
-              );
-            (* 147 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:147L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 84L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (13L, Action.ShiftPrefix 158L);
-                    (15L, Action.ShiftPrefix 118L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (67L, 172L);
-                  ]
-              );
-            (* 148 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:148L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 19L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 86L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 88L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (13L, Action.ShiftPrefix 173L);
-                    (30L, Action.ShiftPrefix 174L);
-                    (38L, Action.ShiftPrefix 175L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (65L, 176L);
-                  ]
-              );
-            (* 149 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:149L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 18L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 26L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.ShiftPrefix 72L);
-                    (3L, Action.ShiftPrefix 73L);
-                    (4L, Action.ShiftPrefix 74L);
-                    (5L, Action.ShiftPrefix 75L);
-                    (6L, Action.ShiftPrefix 76L);
-                    (7L, Action.ShiftPrefix 77L);
-                    (8L, Action.ShiftPrefix 78L);
-                    (9L, Action.ShiftPrefix 79L);
-                    (10L, Action.ShiftPrefix 80L);
-                    (11L, Action.ShiftPrefix 81L);
-                    (12L, Action.ShiftPrefix 82L);
-                    (18L, Action.Reduce 9L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (42L, 104L);
-                  ]
-              );
-            (* 150 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:150L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 92L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (20L, Action.Reduce 92L);
-                    (21L, Action.Reduce 92L);
-                    (27L, Action.Reduce 92L);
-                    (29L, Action.Reduce 92L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 151 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:151L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 91L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.ShiftPrefix 72L);
-                    (3L, Action.ShiftPrefix 73L);
-                    (4L, Action.ShiftPrefix 74L);
-                    (5L, Action.ShiftPrefix 75L);
-                    (6L, Action.ShiftPrefix 76L);
-                    (7L, Action.ShiftPrefix 77L);
-                    (8L, Action.ShiftPrefix 78L);
-                    (9L, Action.ShiftPrefix 79L);
-                    (10L, Action.ShiftPrefix 80L);
-                    (11L, Action.ShiftPrefix 149L);
-                    (12L, Action.ShiftPrefix 82L);
-                    (13L, Action.ShiftPrefix 116L);
-                    (14L, Action.ShiftPrefix 117L);
-                    (15L, Action.ShiftPrefix 118L);
-                    (20L, Action.Reduce 27L);
-                    (21L, Action.Reduce 27L);
-                    (27L, Action.Reduce 27L);
-                    (29L, Action.Reduce 27L);
-                    (30L, Action.ShiftPrefix 120L);
-                    (38L, Action.ShiftPrefix 121L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (42L, 122L);
-                    (51L, 150L);
-                    (65L, 123L);
-                    (67L, 124L);
-                    (68L, 151L);
-                    (69L, 177L);
-                  ]
-              );
-            (* 152 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:152L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 93L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (20L, Action.Reduce 93L);
-                    (21L, Action.Reduce 93L);
-                    (27L, Action.Reduce 93L);
-                    (29L, Action.Reduce 93L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 153 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:153L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 97L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2810_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.ShiftPrefix 72L);
-                    (3L, Action.ShiftPrefix 73L);
-                    (4L, Action.ShiftPrefix 115L);
-                    (5L, Action.ShiftPrefix 75L);
-                    (6L, Action.ShiftPrefix 76L);
-                    (7L, Action.ShiftPrefix 77L);
-                    (8L, Action.ShiftPrefix 78L);
-                    (9L, Action.ShiftPrefix 79L);
-                    (10L, Action.ShiftPrefix 80L);
-                    (11L, Action.ShiftPrefix 81L);
-                    (12L, Action.ShiftPrefix 82L);
-                    (13L, Action.ShiftPrefix 116L);
-                    (14L, Action.ShiftPrefix 117L);
-                    (15L, Action.ShiftPrefix 118L);
-                    (30L, Action.ShiftPrefix 120L);
-                    (38L, Action.ShiftPrefix 121L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (42L, 122L);
-                    (65L, 123L);
-                    (67L, 124L);
-                    (68L, 125L);
-                    (70L, 126L);
-                    (71L, 127L);
-                    (72L, 178L);
-                  ]
-              );
-            (* 154 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:154L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 100L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2810_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (20L, Action.Reduce 100L);
-                    (27L, Action.Reduce 100L);
-                    (29L, Action.Reduce 100L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 155 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:155L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 101L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2820_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.ShiftPrefix 72L);
-                    (3L, Action.ShiftPrefix 73L);
-                    (4L, Action.ShiftPrefix 74L);
-                    (5L, Action.ShiftPrefix 75L);
-                    (6L, Action.ShiftPrefix 76L);
-                    (7L, Action.ShiftPrefix 77L);
-                    (8L, Action.ShiftPrefix 78L);
-                    (9L, Action.ShiftPrefix 79L);
-                    (10L, Action.ShiftPrefix 80L);
-                    (11L, Action.ShiftPrefix 81L);
-                    (12L, Action.ShiftPrefix 82L);
-                    (13L, Action.ShiftPrefix 179L);
-                    (14L, Action.ShiftPrefix 180L);
-                    (15L, Action.ShiftPrefix 181L);
-                    (16L, Action.ShiftPrefix 182L);
-                    (17L, Action.ShiftPrefix 183L);
-                    (18L, Action.ShiftPrefix 184L);
-                    (19L, Action.ShiftPrefix 185L);
-                    (20L, Action.ShiftPrefix 186L);
-                    (22L, Action.ShiftPrefix 187L);
-                    (23L, Action.ShiftPrefix 188L);
-                    (24L, Action.ShiftPrefix 189L);
-                    (26L, Action.ShiftPrefix 190L);
-                    (28L, Action.ShiftPrefix 191L);
-                    (30L, Action.ShiftPrefix 192L);
-                    (32L, Action.ShiftPrefix 193L);
-                    (34L, Action.ShiftPrefix 194L);
-                    (36L, Action.ShiftPrefix 195L);
-                    (38L, Action.ShiftPrefix 196L);
-                    (40L, Action.ShiftPrefix 197L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (42L, 198L);
-                    (58L, 199L);
-                    (59L, 200L);
-                    (61L, 201L);
-                  ]
-              );
-            (* 156 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:156L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 102L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2800_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.ShiftPrefix 72L);
-                    (3L, Action.ShiftPrefix 73L);
-                    (4L, Action.ShiftPrefix 115L);
-                    (5L, Action.ShiftPrefix 75L);
-                    (6L, Action.ShiftPrefix 76L);
-                    (7L, Action.ShiftPrefix 77L);
-                    (8L, Action.ShiftPrefix 78L);
-                    (9L, Action.ShiftPrefix 79L);
-                    (10L, Action.ShiftPrefix 80L);
-                    (11L, Action.ShiftPrefix 81L);
-                    (12L, Action.ShiftPrefix 82L);
-                    (13L, Action.ShiftPrefix 116L);
-                    (14L, Action.ShiftPrefix 117L);
-                    (15L, Action.ShiftPrefix 118L);
-                    (21L, Action.ShiftPrefix 119L);
-                    (30L, Action.ShiftPrefix 120L);
-                    (38L, Action.ShiftPrefix 121L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (42L, 122L);
-                    (65L, 123L);
-                    (67L, 124L);
-                    (68L, 125L);
-                    (70L, 126L);
-                    (71L, 127L);
-                    (72L, 128L);
-                    (74L, 131L);
-                    (75L, 202L);
-                  ]
-              );
-            (* 157 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:157L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 104L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2800_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (27L, Action.Reduce 104L);
-                    (29L, Action.Reduce 104L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 158 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:158L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.Reduce 82L);
-                    (3L, Action.Reduce 82L);
-                    (4L, Action.Reduce 82L);
-                    (5L, Action.Reduce 82L);
-                    (6L, Action.Reduce 82L);
-                    (7L, Action.Reduce 82L);
-                    (8L, Action.Reduce 82L);
-                    (9L, Action.Reduce 82L);
-                    (10L, Action.Reduce 82L);
-                    (11L, Action.Reduce 82L);
-                    (12L, Action.Reduce 82L);
-                    (13L, Action.Reduce 82L);
-                    (14L, Action.Reduce 82L);
-                    (15L, Action.Reduce 82L);
-                    (20L, Action.Reduce 82L);
-                    (21L, Action.Reduce 82L);
-                    (27L, Action.Reduce 82L);
-                    (29L, Action.Reduce 82L);
-                    (30L, Action.Reduce 82L);
-                    (38L, Action.Reduce 82L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 159 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:159L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 89L prods) ~dot:3L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.Reduce 89L);
-                    (3L, Action.Reduce 89L);
-                    (4L, Action.Reduce 89L);
-                    (5L, Action.Reduce 89L);
-                    (6L, Action.Reduce 89L);
-                    (7L, Action.Reduce 89L);
-                    (8L, Action.Reduce 89L);
-                    (9L, Action.Reduce 89L);
-                    (10L, Action.Reduce 89L);
-                    (11L, Action.Reduce 89L);
-                    (12L, Action.Reduce 89L);
-                    (13L, Action.Reduce 89L);
-                    (14L, Action.Reduce 89L);
-                    (15L, Action.Reduce 89L);
-                    (20L, Action.Reduce 89L);
-                    (21L, Action.Reduce 89L);
-                    (27L, Action.Reduce 89L);
-                    (29L, Action.Reduce 89L);
-                    (30L, Action.Reduce 89L);
-                    (38L, Action.Reduce 89L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 160 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:160L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 99L prods) ~dot:3L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2810_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (20L, Action.Reduce 99L);
-                    (27L, Action.Reduce 99L);
-                    (29L, Action.Reduce 99L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 161 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:161L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 75L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 77L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 79L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (24L, Action.Reduce 77L);
-                    (25L, Action.Reduce 77L);
-                    (26L, Action.Reduce 77L);
-                    (31L, Action.Reduce 77L);
-                    (39L, Action.Reduce 77L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 162 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:162L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 75L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 76L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 79L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (24L, Action.ShiftPrefix 165L);
-                    (26L, Action.ShiftPrefix 166L);
-                    (31L, Action.ShiftPrefix 203L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 163 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:163L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 80L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (25L, Action.ShiftPrefix 170L);
-                    (39L, Action.Reduce 70L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (64L, 204L);
-                  ]
-              );
-            (* 164 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:164L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 19L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 78L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 81L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (13L, Action.ShiftPrefix 173L);
-                    (30L, Action.ShiftPrefix 205L);
-                    (38L, Action.ShiftPrefix 206L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (65L, 176L);
-                  ]
-              );
-            (* 165 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:165L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 79L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.ShiftPrefix 72L);
-                    (3L, Action.ShiftPrefix 73L);
-                    (4L, Action.ShiftPrefix 74L);
-                    (5L, Action.ShiftPrefix 75L);
-                    (6L, Action.ShiftPrefix 76L);
-                    (7L, Action.ShiftPrefix 77L);
-                    (8L, Action.ShiftPrefix 78L);
-                    (9L, Action.ShiftPrefix 79L);
-                    (10L, Action.ShiftPrefix 80L);
-                    (11L, Action.ShiftPrefix 81L);
-                    (12L, Action.ShiftPrefix 82L);
-                    (13L, Action.ShiftPrefix 137L);
-                    (14L, Action.ShiftPrefix 138L);
-                    (30L, Action.ShiftPrefix 139L);
-                    (38L, Action.ShiftPrefix 140L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (42L, 141L);
-                    (65L, 142L);
-                    (66L, 207L);
-                  ]
-              );
-            (* 166 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:166L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 75L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.ShiftPrefix 72L);
-                    (3L, Action.ShiftPrefix 73L);
-                    (4L, Action.ShiftPrefix 74L);
-                    (5L, Action.ShiftPrefix 75L);
-                    (6L, Action.ShiftPrefix 76L);
-                    (7L, Action.ShiftPrefix 77L);
-                    (8L, Action.ShiftPrefix 78L);
-                    (9L, Action.ShiftPrefix 79L);
-                    (10L, Action.ShiftPrefix 80L);
-                    (11L, Action.ShiftPrefix 81L);
-                    (12L, Action.ShiftPrefix 82L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (42L, 208L);
-                  ]
-              );
-            (* 167 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:167L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 85L prods) ~dot:3L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (18L, Action.ShiftPrefix 209L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 168 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:168L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 65L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.ShiftPrefix 72L);
-                    (3L, Action.ShiftPrefix 73L);
-                    (4L, Action.ShiftPrefix 74L);
-                    (5L, Action.ShiftPrefix 75L);
-                    (6L, Action.ShiftPrefix 76L);
-                    (7L, Action.ShiftPrefix 77L);
-                    (8L, Action.ShiftPrefix 78L);
-                    (9L, Action.ShiftPrefix 79L);
-                    (10L, Action.ShiftPrefix 80L);
-                    (11L, Action.ShiftPrefix 81L);
-                    (12L, Action.ShiftPrefix 82L);
-                    (13L, Action.ShiftPrefix 137L);
-                    (14L, Action.ShiftPrefix 138L);
-                    (30L, Action.ShiftPrefix 139L);
-                    (38L, Action.ShiftPrefix 140L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (42L, 141L);
-                    (65L, 142L);
-                    (66L, 210L);
-                  ]
-              );
-            (* 169 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:169L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 67L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 68L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.ShiftPrefix 72L);
-                    (3L, Action.ShiftPrefix 73L);
-                    (4L, Action.ShiftPrefix 74L);
-                    (5L, Action.ShiftPrefix 75L);
-                    (6L, Action.ShiftPrefix 76L);
-                    (7L, Action.ShiftPrefix 77L);
-                    (8L, Action.ShiftPrefix 78L);
-                    (9L, Action.ShiftPrefix 79L);
-                    (10L, Action.ShiftPrefix 80L);
-                    (11L, Action.ShiftPrefix 81L);
-                    (12L, Action.ShiftPrefix 82L);
-                    (14L, Action.ShiftPrefix 211L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (42L, 144L);
-                    (62L, 145L);
-                    (63L, 212L);
-                  ]
-              );
-            (* 170 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:170L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 69L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 39L
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (39L, Action.Reduce 69L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 171 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:171L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 87L prods) ~dot:3L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (39L, Action.ShiftPrefix 213L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 172 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:172L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 84L prods) ~dot:3L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.Reduce 84L);
-                    (3L, Action.Reduce 84L);
-                    (4L, Action.Reduce 84L);
-                    (5L, Action.Reduce 84L);
-                    (6L, Action.Reduce 84L);
-                    (7L, Action.Reduce 84L);
-                    (8L, Action.Reduce 84L);
-                    (9L, Action.Reduce 84L);
-                    (10L, Action.Reduce 84L);
-                    (11L, Action.Reduce 84L);
-                    (12L, Action.Reduce 84L);
-                    (13L, Action.Reduce 84L);
-                    (14L, Action.Reduce 84L);
-                    (15L, Action.Reduce 84L);
-                    (20L, Action.Reduce 84L);
-                    (21L, Action.Reduce 84L);
-                    (27L, Action.Reduce 84L);
-                    (29L, Action.Reduce 84L);
-                    (30L, Action.Reduce 84L);
-                    (38L, Action.Reduce 84L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 173 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:173L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 19L
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (19L, Action.Reduce 71L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 174 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:174L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 86L prods) ~dot:3L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.ShiftPrefix 72L);
-                    (3L, Action.ShiftPrefix 73L);
-                    (4L, Action.ShiftPrefix 74L);
-                    (5L, Action.ShiftPrefix 75L);
-                    (6L, Action.ShiftPrefix 76L);
-                    (7L, Action.ShiftPrefix 77L);
-                    (8L, Action.ShiftPrefix 78L);
-                    (9L, Action.ShiftPrefix 79L);
-                    (10L, Action.ShiftPrefix 80L);
-                    (11L, Action.ShiftPrefix 81L);
-                    (12L, Action.ShiftPrefix 82L);
-                    (13L, Action.ShiftPrefix 137L);
-                    (14L, Action.ShiftPrefix 138L);
-                    (30L, Action.ShiftPrefix 139L);
-                    (38L, Action.ShiftPrefix 140L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (42L, 141L);
-                    (65L, 142L);
-                    (66L, 214L);
-                  ]
-              );
-            (* 175 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:175L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 88L prods) ~dot:3L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.ShiftPrefix 72L);
-                    (3L, Action.ShiftPrefix 73L);
-                    (4L, Action.ShiftPrefix 74L);
-                    (5L, Action.ShiftPrefix 75L);
-                    (6L, Action.ShiftPrefix 76L);
-                    (7L, Action.ShiftPrefix 77L);
-                    (8L, Action.ShiftPrefix 78L);
-                    (9L, Action.ShiftPrefix 79L);
-                    (10L, Action.ShiftPrefix 80L);
-                    (11L, Action.ShiftPrefix 81L);
-                    (12L, Action.ShiftPrefix 82L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (42L, 144L);
-                    (62L, 145L);
-                    (63L, 215L);
-                  ]
-              );
-            (* 176 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:176L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 19L
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:3L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.singleton 19L
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (19L, Action.Reduce 72L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 177 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:177L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 91L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (20L, Action.Reduce 91L);
-                    (21L, Action.Reduce 91L);
-                    (27L, Action.Reduce 91L);
-                    (29L, Action.Reduce 91L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 178 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:178L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 97L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2810_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (20L, Action.Reduce 98L);
-                    (21L, Action.ShiftPrefix 153L);
-                    (27L, Action.Reduce 98L);
-                    (29L, Action.Reduce 98L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (73L, 216L);
-                  ]
-              );
-            (* 179 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:179L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -9294,10 +6957,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 180 *) State.init
+            (* 111 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:180L
+                  ~index:111L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -9356,10 +7019,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 181 *) State.init
+            (* 112 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:181L
+                  ~index:112L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -9418,10 +7081,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 182 *) State.init
+            (* 113 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:182L
+                  ~index:113L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -9480,10 +7143,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 183 *) State.init
+            (* 114 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:183L
+                  ~index:114L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -9542,10 +7205,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 184 *) State.init
+            (* 115 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:184L
+                  ~index:115L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -9604,10 +7267,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 185 *) State.init
+            (* 116 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:185L
+                  ~index:116L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -9666,10 +7329,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 186 *) State.init
+            (* 117 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:186L
+                  ~index:117L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -9728,10 +7391,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 187 *) State.init
+            (* 118 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:187L
+                  ~index:118L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -9790,10 +7453,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 188 *) State.init
+            (* 119 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:188L
+                  ~index:119L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -9852,10 +7515,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 189 *) State.init
+            (* 120 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:189L
+                  ~index:120L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -9914,10 +7577,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 190 *) State.init
+            (* 121 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:190L
+                  ~index:121L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -9976,10 +7639,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 191 *) State.init
+            (* 122 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:191L
+                  ~index:122L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -10005,40 +7668,40 @@ include struct
                     (10L, Action.ShiftPrefix 80L);
                     (11L, Action.ShiftPrefix 81L);
                     (12L, Action.ShiftPrefix 82L);
-                    (13L, Action.ShiftPrefix 179L);
-                    (14L, Action.ShiftPrefix 180L);
-                    (15L, Action.ShiftPrefix 181L);
-                    (16L, Action.ShiftPrefix 182L);
-                    (17L, Action.ShiftPrefix 183L);
-                    (18L, Action.ShiftPrefix 184L);
-                    (19L, Action.ShiftPrefix 185L);
-                    (20L, Action.ShiftPrefix 186L);
-                    (22L, Action.ShiftPrefix 187L);
-                    (23L, Action.ShiftPrefix 188L);
-                    (24L, Action.ShiftPrefix 189L);
-                    (26L, Action.ShiftPrefix 190L);
-                    (28L, Action.ShiftPrefix 191L);
-                    (30L, Action.ShiftPrefix 192L);
-                    (32L, Action.ShiftPrefix 193L);
-                    (34L, Action.ShiftPrefix 194L);
-                    (36L, Action.ShiftPrefix 195L);
-                    (38L, Action.ShiftPrefix 196L);
-                    (40L, Action.ShiftPrefix 197L);
+                    (13L, Action.ShiftPrefix 110L);
+                    (14L, Action.ShiftPrefix 111L);
+                    (15L, Action.ShiftPrefix 112L);
+                    (16L, Action.ShiftPrefix 113L);
+                    (17L, Action.ShiftPrefix 114L);
+                    (18L, Action.ShiftPrefix 115L);
+                    (19L, Action.ShiftPrefix 116L);
+                    (20L, Action.ShiftPrefix 117L);
+                    (22L, Action.ShiftPrefix 118L);
+                    (23L, Action.ShiftPrefix 119L);
+                    (24L, Action.ShiftPrefix 120L);
+                    (26L, Action.ShiftPrefix 121L);
+                    (28L, Action.ShiftPrefix 122L);
+                    (30L, Action.ShiftPrefix 123L);
+                    (32L, Action.ShiftPrefix 124L);
+                    (34L, Action.ShiftPrefix 125L);
+                    (36L, Action.ShiftPrefix 126L);
+                    (38L, Action.ShiftPrefix 127L);
+                    (40L, Action.ShiftPrefix 128L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (42L, 198L);
-                    (56L, 217L);
-                    (58L, 199L);
-                    (59L, 200L);
-                    (61L, 218L);
+                    (42L, 129L);
+                    (56L, 153L);
+                    (58L, 154L);
+                    (59L, 155L);
+                    (61L, 156L);
                   ]
               );
-            (* 192 *) State.init
+            (* 123 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:192L
+                  ~index:123L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -10064,42 +7727,42 @@ include struct
                     (10L, Action.ShiftPrefix 80L);
                     (11L, Action.ShiftPrefix 81L);
                     (12L, Action.ShiftPrefix 82L);
-                    (13L, Action.ShiftPrefix 179L);
-                    (14L, Action.ShiftPrefix 180L);
-                    (15L, Action.ShiftPrefix 181L);
-                    (16L, Action.ShiftPrefix 182L);
-                    (17L, Action.ShiftPrefix 183L);
-                    (18L, Action.ShiftPrefix 184L);
-                    (19L, Action.ShiftPrefix 185L);
-                    (20L, Action.ShiftPrefix 186L);
-                    (22L, Action.ShiftPrefix 187L);
-                    (23L, Action.ShiftPrefix 188L);
-                    (24L, Action.ShiftPrefix 189L);
-                    (26L, Action.ShiftPrefix 190L);
-                    (28L, Action.ShiftPrefix 191L);
-                    (30L, Action.ShiftPrefix 192L);
+                    (13L, Action.ShiftPrefix 110L);
+                    (14L, Action.ShiftPrefix 111L);
+                    (15L, Action.ShiftPrefix 112L);
+                    (16L, Action.ShiftPrefix 113L);
+                    (17L, Action.ShiftPrefix 114L);
+                    (18L, Action.ShiftPrefix 115L);
+                    (19L, Action.ShiftPrefix 116L);
+                    (20L, Action.ShiftPrefix 117L);
+                    (22L, Action.ShiftPrefix 118L);
+                    (23L, Action.ShiftPrefix 119L);
+                    (24L, Action.ShiftPrefix 120L);
+                    (26L, Action.ShiftPrefix 121L);
+                    (28L, Action.ShiftPrefix 122L);
+                    (30L, Action.ShiftPrefix 123L);
                     (31L, Action.Reduce 38L);
-                    (32L, Action.ShiftPrefix 193L);
-                    (34L, Action.ShiftPrefix 194L);
-                    (36L, Action.ShiftPrefix 195L);
-                    (38L, Action.ShiftPrefix 196L);
-                    (40L, Action.ShiftPrefix 197L);
+                    (32L, Action.ShiftPrefix 124L);
+                    (34L, Action.ShiftPrefix 125L);
+                    (36L, Action.ShiftPrefix 126L);
+                    (38L, Action.ShiftPrefix 127L);
+                    (40L, Action.ShiftPrefix 128L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (42L, 198L);
-                    (56L, 219L);
-                    (57L, 220L);
-                    (58L, 199L);
-                    (59L, 200L);
-                    (61L, 218L);
+                    (42L, 129L);
+                    (56L, 157L);
+                    (57L, 158L);
+                    (58L, 154L);
+                    (59L, 155L);
+                    (61L, 156L);
                   ]
               );
-            (* 193 *) State.init
+            (* 124 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:193L
+                  ~index:124L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -10125,42 +7788,42 @@ include struct
                     (10L, Action.ShiftPrefix 80L);
                     (11L, Action.ShiftPrefix 81L);
                     (12L, Action.ShiftPrefix 82L);
-                    (13L, Action.ShiftPrefix 179L);
-                    (14L, Action.ShiftPrefix 180L);
-                    (15L, Action.ShiftPrefix 181L);
-                    (16L, Action.ShiftPrefix 182L);
-                    (17L, Action.ShiftPrefix 183L);
-                    (18L, Action.ShiftPrefix 184L);
-                    (19L, Action.ShiftPrefix 185L);
-                    (20L, Action.ShiftPrefix 186L);
-                    (22L, Action.ShiftPrefix 187L);
-                    (23L, Action.ShiftPrefix 188L);
-                    (24L, Action.ShiftPrefix 189L);
-                    (26L, Action.ShiftPrefix 190L);
-                    (28L, Action.ShiftPrefix 191L);
-                    (30L, Action.ShiftPrefix 192L);
-                    (32L, Action.ShiftPrefix 193L);
+                    (13L, Action.ShiftPrefix 110L);
+                    (14L, Action.ShiftPrefix 111L);
+                    (15L, Action.ShiftPrefix 112L);
+                    (16L, Action.ShiftPrefix 113L);
+                    (17L, Action.ShiftPrefix 114L);
+                    (18L, Action.ShiftPrefix 115L);
+                    (19L, Action.ShiftPrefix 116L);
+                    (20L, Action.ShiftPrefix 117L);
+                    (22L, Action.ShiftPrefix 118L);
+                    (23L, Action.ShiftPrefix 119L);
+                    (24L, Action.ShiftPrefix 120L);
+                    (26L, Action.ShiftPrefix 121L);
+                    (28L, Action.ShiftPrefix 122L);
+                    (30L, Action.ShiftPrefix 123L);
+                    (32L, Action.ShiftPrefix 124L);
                     (33L, Action.Reduce 38L);
-                    (34L, Action.ShiftPrefix 194L);
-                    (36L, Action.ShiftPrefix 195L);
-                    (38L, Action.ShiftPrefix 196L);
-                    (40L, Action.ShiftPrefix 197L);
+                    (34L, Action.ShiftPrefix 125L);
+                    (36L, Action.ShiftPrefix 126L);
+                    (38L, Action.ShiftPrefix 127L);
+                    (40L, Action.ShiftPrefix 128L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (42L, 198L);
-                    (56L, 219L);
-                    (57L, 221L);
-                    (58L, 199L);
-                    (59L, 200L);
-                    (61L, 218L);
+                    (42L, 129L);
+                    (56L, 157L);
+                    (57L, 159L);
+                    (58L, 154L);
+                    (59L, 155L);
+                    (61L, 156L);
                   ]
               );
-            (* 194 *) State.init
+            (* 125 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:194L
+                  ~index:125L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -10186,42 +7849,42 @@ include struct
                     (10L, Action.ShiftPrefix 80L);
                     (11L, Action.ShiftPrefix 81L);
                     (12L, Action.ShiftPrefix 82L);
-                    (13L, Action.ShiftPrefix 179L);
-                    (14L, Action.ShiftPrefix 180L);
-                    (15L, Action.ShiftPrefix 181L);
-                    (16L, Action.ShiftPrefix 182L);
-                    (17L, Action.ShiftPrefix 183L);
-                    (18L, Action.ShiftPrefix 184L);
-                    (19L, Action.ShiftPrefix 185L);
-                    (20L, Action.ShiftPrefix 186L);
-                    (22L, Action.ShiftPrefix 187L);
-                    (23L, Action.ShiftPrefix 188L);
-                    (24L, Action.ShiftPrefix 189L);
-                    (26L, Action.ShiftPrefix 190L);
-                    (28L, Action.ShiftPrefix 191L);
-                    (30L, Action.ShiftPrefix 192L);
-                    (32L, Action.ShiftPrefix 193L);
-                    (34L, Action.ShiftPrefix 194L);
+                    (13L, Action.ShiftPrefix 110L);
+                    (14L, Action.ShiftPrefix 111L);
+                    (15L, Action.ShiftPrefix 112L);
+                    (16L, Action.ShiftPrefix 113L);
+                    (17L, Action.ShiftPrefix 114L);
+                    (18L, Action.ShiftPrefix 115L);
+                    (19L, Action.ShiftPrefix 116L);
+                    (20L, Action.ShiftPrefix 117L);
+                    (22L, Action.ShiftPrefix 118L);
+                    (23L, Action.ShiftPrefix 119L);
+                    (24L, Action.ShiftPrefix 120L);
+                    (26L, Action.ShiftPrefix 121L);
+                    (28L, Action.ShiftPrefix 122L);
+                    (30L, Action.ShiftPrefix 123L);
+                    (32L, Action.ShiftPrefix 124L);
+                    (34L, Action.ShiftPrefix 125L);
                     (35L, Action.Reduce 38L);
-                    (36L, Action.ShiftPrefix 195L);
-                    (38L, Action.ShiftPrefix 196L);
-                    (40L, Action.ShiftPrefix 197L);
+                    (36L, Action.ShiftPrefix 126L);
+                    (38L, Action.ShiftPrefix 127L);
+                    (40L, Action.ShiftPrefix 128L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (42L, 198L);
-                    (56L, 219L);
-                    (57L, 222L);
-                    (58L, 199L);
-                    (59L, 200L);
-                    (61L, 218L);
+                    (42L, 129L);
+                    (56L, 157L);
+                    (57L, 160L);
+                    (58L, 154L);
+                    (59L, 155L);
+                    (61L, 156L);
                   ]
               );
-            (* 195 *) State.init
+            (* 126 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:195L
+                  ~index:126L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -10247,42 +7910,42 @@ include struct
                     (10L, Action.ShiftPrefix 80L);
                     (11L, Action.ShiftPrefix 81L);
                     (12L, Action.ShiftPrefix 82L);
-                    (13L, Action.ShiftPrefix 179L);
-                    (14L, Action.ShiftPrefix 180L);
-                    (15L, Action.ShiftPrefix 181L);
-                    (16L, Action.ShiftPrefix 182L);
-                    (17L, Action.ShiftPrefix 183L);
-                    (18L, Action.ShiftPrefix 184L);
-                    (19L, Action.ShiftPrefix 185L);
-                    (20L, Action.ShiftPrefix 186L);
-                    (22L, Action.ShiftPrefix 187L);
-                    (23L, Action.ShiftPrefix 188L);
-                    (24L, Action.ShiftPrefix 189L);
-                    (26L, Action.ShiftPrefix 190L);
-                    (28L, Action.ShiftPrefix 191L);
-                    (30L, Action.ShiftPrefix 192L);
-                    (32L, Action.ShiftPrefix 193L);
-                    (34L, Action.ShiftPrefix 194L);
-                    (36L, Action.ShiftPrefix 195L);
+                    (13L, Action.ShiftPrefix 110L);
+                    (14L, Action.ShiftPrefix 111L);
+                    (15L, Action.ShiftPrefix 112L);
+                    (16L, Action.ShiftPrefix 113L);
+                    (17L, Action.ShiftPrefix 114L);
+                    (18L, Action.ShiftPrefix 115L);
+                    (19L, Action.ShiftPrefix 116L);
+                    (20L, Action.ShiftPrefix 117L);
+                    (22L, Action.ShiftPrefix 118L);
+                    (23L, Action.ShiftPrefix 119L);
+                    (24L, Action.ShiftPrefix 120L);
+                    (26L, Action.ShiftPrefix 121L);
+                    (28L, Action.ShiftPrefix 122L);
+                    (30L, Action.ShiftPrefix 123L);
+                    (32L, Action.ShiftPrefix 124L);
+                    (34L, Action.ShiftPrefix 125L);
+                    (36L, Action.ShiftPrefix 126L);
                     (37L, Action.Reduce 38L);
-                    (38L, Action.ShiftPrefix 196L);
-                    (40L, Action.ShiftPrefix 197L);
+                    (38L, Action.ShiftPrefix 127L);
+                    (40L, Action.ShiftPrefix 128L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (42L, 198L);
-                    (56L, 219L);
-                    (57L, 223L);
-                    (58L, 199L);
-                    (59L, 200L);
-                    (61L, 218L);
+                    (42L, 129L);
+                    (56L, 157L);
+                    (57L, 161L);
+                    (58L, 154L);
+                    (59L, 155L);
+                    (61L, 156L);
                   ]
               );
-            (* 196 *) State.init
+            (* 127 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:196L
+                  ~index:127L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -10308,42 +7971,42 @@ include struct
                     (10L, Action.ShiftPrefix 80L);
                     (11L, Action.ShiftPrefix 81L);
                     (12L, Action.ShiftPrefix 82L);
-                    (13L, Action.ShiftPrefix 179L);
-                    (14L, Action.ShiftPrefix 180L);
-                    (15L, Action.ShiftPrefix 181L);
-                    (16L, Action.ShiftPrefix 182L);
-                    (17L, Action.ShiftPrefix 183L);
-                    (18L, Action.ShiftPrefix 184L);
-                    (19L, Action.ShiftPrefix 185L);
-                    (20L, Action.ShiftPrefix 186L);
-                    (22L, Action.ShiftPrefix 187L);
-                    (23L, Action.ShiftPrefix 188L);
-                    (24L, Action.ShiftPrefix 189L);
-                    (26L, Action.ShiftPrefix 190L);
-                    (28L, Action.ShiftPrefix 191L);
-                    (30L, Action.ShiftPrefix 192L);
-                    (32L, Action.ShiftPrefix 193L);
-                    (34L, Action.ShiftPrefix 194L);
-                    (36L, Action.ShiftPrefix 195L);
-                    (38L, Action.ShiftPrefix 196L);
+                    (13L, Action.ShiftPrefix 110L);
+                    (14L, Action.ShiftPrefix 111L);
+                    (15L, Action.ShiftPrefix 112L);
+                    (16L, Action.ShiftPrefix 113L);
+                    (17L, Action.ShiftPrefix 114L);
+                    (18L, Action.ShiftPrefix 115L);
+                    (19L, Action.ShiftPrefix 116L);
+                    (20L, Action.ShiftPrefix 117L);
+                    (22L, Action.ShiftPrefix 118L);
+                    (23L, Action.ShiftPrefix 119L);
+                    (24L, Action.ShiftPrefix 120L);
+                    (26L, Action.ShiftPrefix 121L);
+                    (28L, Action.ShiftPrefix 122L);
+                    (30L, Action.ShiftPrefix 123L);
+                    (32L, Action.ShiftPrefix 124L);
+                    (34L, Action.ShiftPrefix 125L);
+                    (36L, Action.ShiftPrefix 126L);
+                    (38L, Action.ShiftPrefix 127L);
                     (39L, Action.Reduce 38L);
-                    (40L, Action.ShiftPrefix 197L);
+                    (40L, Action.ShiftPrefix 128L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (42L, 198L);
-                    (56L, 219L);
-                    (57L, 224L);
-                    (58L, 199L);
-                    (59L, 200L);
-                    (61L, 218L);
+                    (42L, 129L);
+                    (56L, 157L);
+                    (57L, 162L);
+                    (58L, 154L);
+                    (59L, 155L);
+                    (61L, 156L);
                   ]
               );
-            (* 197 *) State.init
+            (* 128 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:197L
+                  ~index:128L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -10402,10 +8065,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 198 *) State.init
+            (* 129 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:198L
+                  ~index:129L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -10464,10 +8127,918 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 199 *) State.init
+            (* 130 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:199L
+                  ~index:130L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 62L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x2800_0800n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.ShiftPrefix 72L);
+                    (3L, Action.ShiftPrefix 73L);
+                    (4L, Action.ShiftPrefix 74L);
+                    (5L, Action.ShiftPrefix 75L);
+                    (6L, Action.ShiftPrefix 76L);
+                    (7L, Action.ShiftPrefix 77L);
+                    (8L, Action.ShiftPrefix 78L);
+                    (9L, Action.ShiftPrefix 79L);
+                    (10L, Action.ShiftPrefix 80L);
+                    (11L, Action.Reduce 61L);
+                    (12L, Action.ShiftPrefix 82L);
+                    (13L, Action.ShiftPrefix 110L);
+                    (14L, Action.ShiftPrefix 111L);
+                    (15L, Action.ShiftPrefix 112L);
+                    (16L, Action.ShiftPrefix 113L);
+                    (17L, Action.ShiftPrefix 114L);
+                    (18L, Action.ShiftPrefix 115L);
+                    (19L, Action.ShiftPrefix 116L);
+                    (20L, Action.ShiftPrefix 117L);
+                    (22L, Action.ShiftPrefix 118L);
+                    (23L, Action.ShiftPrefix 119L);
+                    (24L, Action.ShiftPrefix 120L);
+                    (26L, Action.ShiftPrefix 121L);
+                    (27L, Action.Reduce 61L);
+                    (28L, Action.ShiftPrefix 122L);
+                    (29L, Action.Reduce 61L);
+                    (30L, Action.ShiftPrefix 123L);
+                    (32L, Action.ShiftPrefix 124L);
+                    (34L, Action.ShiftPrefix 125L);
+                    (36L, Action.ShiftPrefix 126L);
+                    (38L, Action.ShiftPrefix 127L);
+                    (40L, Action.ShiftPrefix 128L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (42L, 129L);
+                    (58L, 163L);
+                    (59L, 164L);
+                    (60L, 165L);
+                  ]
+              );
+            (* 131 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:131L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 63L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x2800_0800n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.ShiftPrefix 72L);
+                    (3L, Action.ShiftPrefix 73L);
+                    (4L, Action.ShiftPrefix 74L);
+                    (5L, Action.ShiftPrefix 75L);
+                    (6L, Action.ShiftPrefix 76L);
+                    (7L, Action.ShiftPrefix 77L);
+                    (8L, Action.ShiftPrefix 78L);
+                    (9L, Action.ShiftPrefix 79L);
+                    (10L, Action.ShiftPrefix 80L);
+                    (11L, Action.Reduce 61L);
+                    (12L, Action.ShiftPrefix 82L);
+                    (13L, Action.ShiftPrefix 110L);
+                    (14L, Action.ShiftPrefix 111L);
+                    (15L, Action.ShiftPrefix 112L);
+                    (16L, Action.ShiftPrefix 113L);
+                    (17L, Action.ShiftPrefix 114L);
+                    (18L, Action.ShiftPrefix 115L);
+                    (19L, Action.ShiftPrefix 116L);
+                    (20L, Action.ShiftPrefix 117L);
+                    (22L, Action.ShiftPrefix 118L);
+                    (23L, Action.ShiftPrefix 119L);
+                    (24L, Action.ShiftPrefix 120L);
+                    (26L, Action.ShiftPrefix 121L);
+                    (27L, Action.Reduce 61L);
+                    (28L, Action.ShiftPrefix 122L);
+                    (29L, Action.Reduce 61L);
+                    (30L, Action.ShiftPrefix 123L);
+                    (32L, Action.ShiftPrefix 124L);
+                    (34L, Action.ShiftPrefix 125L);
+                    (36L, Action.ShiftPrefix 126L);
+                    (38L, Action.ShiftPrefix 127L);
+                    (40L, Action.ShiftPrefix 128L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (42L, 129L);
+                    (58L, 163L);
+                    (59L, 164L);
+                    (60L, 166L);
+                  ]
+              );
+            (* 132 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:132L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 28L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x2800_0800n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (11L, Action.Reduce 28L);
+                    (27L, Action.Reduce 28L);
+                    (29L, Action.Reduce 28L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 133 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:133L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 30L prods) ~dot:5L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x2800_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (27L, Action.Reduce 30L);
+                    (29L, Action.Reduce 30L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 134 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:134L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 11L prods) ~dot:3L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x2840_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (22L, Action.Reduce 11L);
+                    (27L, Action.Reduce 11L);
+                    (29L, Action.Reduce 11L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 135 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:135L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 21L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x1ffcn")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.Reduce 22L);
+                    (3L, Action.Reduce 22L);
+                    (4L, Action.Reduce 22L);
+                    (5L, Action.Reduce 22L);
+                    (6L, Action.Reduce 22L);
+                    (7L, Action.Reduce 22L);
+                    (8L, Action.Reduce 22L);
+                    (9L, Action.Reduce 22L);
+                    (10L, Action.Reduce 22L);
+                    (11L, Action.Reduce 22L);
+                    (12L, Action.Reduce 22L);
+                    (13L, Action.ShiftPrefix 105L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (48L, 167L);
+                  ]
+              );
+            (* 136 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:136L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 23L prods) ~dot:3L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x155_55df_fffcn")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.Reduce 23L);
+                    (3L, Action.Reduce 23L);
+                    (4L, Action.Reduce 23L);
+                    (5L, Action.Reduce 23L);
+                    (6L, Action.Reduce 23L);
+                    (7L, Action.Reduce 23L);
+                    (8L, Action.Reduce 23L);
+                    (9L, Action.Reduce 23L);
+                    (10L, Action.Reduce 23L);
+                    (11L, Action.Reduce 23L);
+                    (12L, Action.Reduce 23L);
+                    (13L, Action.Reduce 23L);
+                    (14L, Action.Reduce 23L);
+                    (15L, Action.Reduce 23L);
+                    (16L, Action.Reduce 23L);
+                    (17L, Action.Reduce 23L);
+                    (18L, Action.Reduce 23L);
+                    (19L, Action.Reduce 23L);
+                    (20L, Action.Reduce 23L);
+                    (22L, Action.Reduce 23L);
+                    (23L, Action.Reduce 23L);
+                    (24L, Action.Reduce 23L);
+                    (26L, Action.Reduce 23L);
+                    (28L, Action.Reduce 23L);
+                    (30L, Action.Reduce 23L);
+                    (32L, Action.Reduce 23L);
+                    (34L, Action.Reduce 23L);
+                    (36L, Action.Reduce 23L);
+                    (38L, Action.Reduce 23L);
+                    (40L, Action.Reduce 23L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 137 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:137L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 108L prods) ~dot:5L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x2800_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.ShiftPrefix 72L);
+                    (3L, Action.ShiftPrefix 73L);
+                    (4L, Action.ShiftPrefix 138L);
+                    (5L, Action.ShiftPrefix 75L);
+                    (6L, Action.ShiftPrefix 76L);
+                    (7L, Action.ShiftPrefix 77L);
+                    (8L, Action.ShiftPrefix 78L);
+                    (9L, Action.ShiftPrefix 79L);
+                    (10L, Action.ShiftPrefix 80L);
+                    (11L, Action.ShiftPrefix 81L);
+                    (12L, Action.ShiftPrefix 82L);
+                    (13L, Action.ShiftPrefix 139L);
+                    (14L, Action.ShiftPrefix 140L);
+                    (15L, Action.ShiftPrefix 141L);
+                    (21L, Action.ShiftPrefix 142L);
+                    (30L, Action.ShiftPrefix 143L);
+                    (38L, Action.ShiftPrefix 144L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (42L, 145L);
+                    (65L, 146L);
+                    (67L, 147L);
+                    (68L, 148L);
+                    (70L, 149L);
+                    (71L, 150L);
+                    (72L, 151L);
+                    (74L, 168L);
+                    (75L, 169L);
+                    (77L, 170L);
+                  ]
+              );
+            (* 138 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:138L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 2L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.singleton 18L
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 95L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (11L, Action.ShiftPrefix 95L);
+                    (18L, Action.Reduce 2L);
+                    (20L, Action.Reduce 25L);
+                    (21L, Action.Reduce 25L);
+                    (27L, Action.Reduce 25L);
+                    (29L, Action.Reduce 25L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (50L, 171L);
+                  ]
+              );
+            (* 139 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:139L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.singleton 19L
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.Reduce 82L);
+                    (3L, Action.Reduce 82L);
+                    (4L, Action.Reduce 82L);
+                    (5L, Action.Reduce 82L);
+                    (6L, Action.Reduce 82L);
+                    (7L, Action.Reduce 82L);
+                    (8L, Action.Reduce 82L);
+                    (9L, Action.Reduce 82L);
+                    (10L, Action.Reduce 82L);
+                    (11L, Action.Reduce 82L);
+                    (12L, Action.Reduce 82L);
+                    (13L, Action.Reduce 82L);
+                    (14L, Action.Reduce 82L);
+                    (15L, Action.Reduce 82L);
+                    (19L, Action.Reduce 71L);
+                    (20L, Action.Reduce 82L);
+                    (21L, Action.Reduce 82L);
+                    (27L, Action.Reduce 82L);
+                    (29L, Action.Reduce 82L);
+                    (30L, Action.Reduce 82L);
+                    (38L, Action.Reduce 82L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 140 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:140L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 89L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (18L, Action.ShiftPrefix 172L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 141 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:141L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 83L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.Reduce 83L);
+                    (3L, Action.Reduce 83L);
+                    (4L, Action.Reduce 83L);
+                    (5L, Action.Reduce 83L);
+                    (6L, Action.Reduce 83L);
+                    (7L, Action.Reduce 83L);
+                    (8L, Action.Reduce 83L);
+                    (9L, Action.Reduce 83L);
+                    (10L, Action.Reduce 83L);
+                    (11L, Action.Reduce 83L);
+                    (12L, Action.Reduce 83L);
+                    (13L, Action.Reduce 83L);
+                    (14L, Action.Reduce 83L);
+                    (15L, Action.Reduce 83L);
+                    (20L, Action.Reduce 83L);
+                    (21L, Action.Reduce 83L);
+                    (27L, Action.Reduce 83L);
+                    (29L, Action.Reduce 83L);
+                    (30L, Action.Reduce 83L);
+                    (38L, Action.Reduce 83L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 142 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:142L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 99L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x2810_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.ShiftPrefix 72L);
+                    (3L, Action.ShiftPrefix 73L);
+                    (4L, Action.ShiftPrefix 138L);
+                    (5L, Action.ShiftPrefix 75L);
+                    (6L, Action.ShiftPrefix 76L);
+                    (7L, Action.ShiftPrefix 77L);
+                    (8L, Action.ShiftPrefix 78L);
+                    (9L, Action.ShiftPrefix 79L);
+                    (10L, Action.ShiftPrefix 80L);
+                    (11L, Action.ShiftPrefix 81L);
+                    (12L, Action.ShiftPrefix 82L);
+                    (13L, Action.ShiftPrefix 139L);
+                    (14L, Action.ShiftPrefix 140L);
+                    (15L, Action.ShiftPrefix 141L);
+                    (30L, Action.ShiftPrefix 143L);
+                    (38L, Action.ShiftPrefix 144L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (42L, 145L);
+                    (65L, 146L);
+                    (67L, 147L);
+                    (68L, 148L);
+                    (70L, 149L);
+                    (71L, 150L);
+                    (72L, 173L);
+                  ]
+              );
+            (* 143 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:143L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 85L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.ShiftPrefix 72L);
+                    (3L, Action.ShiftPrefix 73L);
+                    (4L, Action.ShiftPrefix 74L);
+                    (5L, Action.ShiftPrefix 75L);
+                    (6L, Action.ShiftPrefix 76L);
+                    (7L, Action.ShiftPrefix 77L);
+                    (8L, Action.ShiftPrefix 78L);
+                    (9L, Action.ShiftPrefix 79L);
+                    (10L, Action.ShiftPrefix 80L);
+                    (11L, Action.ShiftPrefix 81L);
+                    (12L, Action.ShiftPrefix 82L);
+                    (13L, Action.ShiftPrefix 174L);
+                    (14L, Action.ShiftPrefix 175L);
+                    (30L, Action.ShiftPrefix 176L);
+                    (38L, Action.ShiftPrefix 177L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (42L, 178L);
+                    (65L, 179L);
+                    (66L, 180L);
+                  ]
+              );
+            (* 144 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:144L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 87L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.ShiftPrefix 72L);
+                    (3L, Action.ShiftPrefix 73L);
+                    (4L, Action.ShiftPrefix 74L);
+                    (5L, Action.ShiftPrefix 75L);
+                    (6L, Action.ShiftPrefix 76L);
+                    (7L, Action.ShiftPrefix 77L);
+                    (8L, Action.ShiftPrefix 78L);
+                    (9L, Action.ShiftPrefix 79L);
+                    (10L, Action.ShiftPrefix 80L);
+                    (11L, Action.ShiftPrefix 81L);
+                    (12L, Action.ShiftPrefix 82L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (42L, 181L);
+                    (62L, 182L);
+                    (63L, 183L);
+                  ]
+              );
+            (* 145 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:145L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 84L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (18L, Action.ShiftPrefix 184L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 146 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:146L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.singleton 19L
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 86L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 88L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (19L, Action.ShiftPrefix 185L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 147 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:147L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 90L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.Reduce 90L);
+                    (3L, Action.Reduce 90L);
+                    (4L, Action.Reduce 90L);
+                    (5L, Action.Reduce 90L);
+                    (6L, Action.Reduce 90L);
+                    (7L, Action.Reduce 90L);
+                    (8L, Action.Reduce 90L);
+                    (9L, Action.Reduce 90L);
+                    (10L, Action.Reduce 90L);
+                    (11L, Action.Reduce 90L);
+                    (12L, Action.Reduce 90L);
+                    (13L, Action.Reduce 90L);
+                    (14L, Action.Reduce 90L);
+                    (15L, Action.Reduce 90L);
+                    (20L, Action.Reduce 90L);
+                    (21L, Action.Reduce 90L);
+                    (27L, Action.Reduce 90L);
+                    (29L, Action.Reduce 90L);
+                    (30L, Action.Reduce 90L);
+                    (38L, Action.Reduce 90L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 148 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:148L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 93L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.ShiftPrefix 72L);
+                    (3L, Action.ShiftPrefix 73L);
+                    (4L, Action.ShiftPrefix 74L);
+                    (5L, Action.ShiftPrefix 75L);
+                    (6L, Action.ShiftPrefix 76L);
+                    (7L, Action.ShiftPrefix 77L);
+                    (8L, Action.ShiftPrefix 78L);
+                    (9L, Action.ShiftPrefix 79L);
+                    (10L, Action.ShiftPrefix 80L);
+                    (11L, Action.ShiftPrefix 186L);
+                    (12L, Action.ShiftPrefix 82L);
+                    (13L, Action.ShiftPrefix 139L);
+                    (14L, Action.ShiftPrefix 140L);
+                    (15L, Action.ShiftPrefix 141L);
+                    (20L, Action.Reduce 25L);
+                    (21L, Action.Reduce 25L);
+                    (27L, Action.Reduce 25L);
+                    (29L, Action.Reduce 25L);
+                    (30L, Action.ShiftPrefix 143L);
+                    (38L, Action.ShiftPrefix 144L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (42L, 145L);
+                    (50L, 187L);
+                    (65L, 146L);
+                    (67L, 147L);
+                    (68L, 188L);
+                    (69L, 189L);
+                  ]
+              );
+            (* 149 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:149L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 94L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (20L, Action.Reduce 94L);
+                    (21L, Action.Reduce 94L);
+                    (27L, Action.Reduce 94L);
+                    (29L, Action.Reduce 94L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 150 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:150L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 96L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (20L, Action.Reduce 96L);
+                    (21L, Action.Reduce 96L);
+                    (27L, Action.Reduce 96L);
+                    (29L, Action.Reduce 96L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 151 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:151L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 100L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x2810_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (20L, Action.Reduce 98L);
+                    (21L, Action.ShiftPrefix 190L);
+                    (27L, Action.Reduce 98L);
+                    (29L, Action.Reduce 98L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (73L, 191L);
+                  ]
+              );
+            (* 152 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:152L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 107L prods) ~dot:5L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x2800_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (27L, Action.Reduce 107L);
+                    (29L, Action.Reduce 107L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 153 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:153L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 39L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (29L, Action.ShiftPrefix 192L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 154 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:154L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -10493,48 +9064,48 @@ include struct
                     (10L, Action.ShiftPrefix 80L);
                     (11L, Action.ShiftPrefix 81L);
                     (12L, Action.ShiftPrefix 82L);
-                    (13L, Action.ShiftPrefix 179L);
-                    (14L, Action.ShiftPrefix 180L);
-                    (15L, Action.ShiftPrefix 181L);
-                    (16L, Action.ShiftPrefix 182L);
-                    (17L, Action.ShiftPrefix 183L);
-                    (18L, Action.ShiftPrefix 184L);
-                    (19L, Action.ShiftPrefix 185L);
-                    (20L, Action.ShiftPrefix 186L);
+                    (13L, Action.ShiftPrefix 110L);
+                    (14L, Action.ShiftPrefix 111L);
+                    (15L, Action.ShiftPrefix 112L);
+                    (16L, Action.ShiftPrefix 113L);
+                    (17L, Action.ShiftPrefix 114L);
+                    (18L, Action.ShiftPrefix 115L);
+                    (19L, Action.ShiftPrefix 116L);
+                    (20L, Action.ShiftPrefix 117L);
                     (21L, Action.Reduce 61L);
-                    (22L, Action.ShiftPrefix 187L);
-                    (23L, Action.ShiftPrefix 188L);
-                    (24L, Action.ShiftPrefix 189L);
+                    (22L, Action.ShiftPrefix 118L);
+                    (23L, Action.ShiftPrefix 119L);
+                    (24L, Action.ShiftPrefix 120L);
                     (25L, Action.Reduce 61L);
-                    (26L, Action.ShiftPrefix 190L);
+                    (26L, Action.ShiftPrefix 121L);
                     (27L, Action.Reduce 61L);
-                    (28L, Action.ShiftPrefix 191L);
+                    (28L, Action.ShiftPrefix 122L);
                     (29L, Action.Reduce 61L);
-                    (30L, Action.ShiftPrefix 192L);
+                    (30L, Action.ShiftPrefix 123L);
                     (31L, Action.Reduce 61L);
-                    (32L, Action.ShiftPrefix 193L);
+                    (32L, Action.ShiftPrefix 124L);
                     (33L, Action.Reduce 61L);
-                    (34L, Action.ShiftPrefix 194L);
+                    (34L, Action.ShiftPrefix 125L);
                     (35L, Action.Reduce 61L);
-                    (36L, Action.ShiftPrefix 195L);
+                    (36L, Action.ShiftPrefix 126L);
                     (37L, Action.Reduce 61L);
-                    (38L, Action.ShiftPrefix 196L);
+                    (38L, Action.ShiftPrefix 127L);
                     (39L, Action.Reduce 61L);
-                    (40L, Action.ShiftPrefix 197L);
+                    (40L, Action.ShiftPrefix 128L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (42L, 198L);
-                    (58L, 225L);
-                    (59L, 226L);
-                    (60L, 227L);
+                    (42L, 129L);
+                    (58L, 193L);
+                    (59L, 194L);
+                    (60L, 165L);
                   ]
               );
-            (* 200 *) State.init
+            (* 155 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:200L
+                  ~index:155L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -10560,563 +9131,48 @@ include struct
                     (10L, Action.ShiftPrefix 80L);
                     (11L, Action.ShiftPrefix 81L);
                     (12L, Action.ShiftPrefix 82L);
-                    (13L, Action.ShiftPrefix 179L);
-                    (14L, Action.ShiftPrefix 180L);
-                    (15L, Action.ShiftPrefix 181L);
-                    (16L, Action.ShiftPrefix 182L);
-                    (17L, Action.ShiftPrefix 183L);
-                    (18L, Action.ShiftPrefix 184L);
-                    (19L, Action.ShiftPrefix 185L);
-                    (20L, Action.ShiftPrefix 186L);
+                    (13L, Action.ShiftPrefix 110L);
+                    (14L, Action.ShiftPrefix 111L);
+                    (15L, Action.ShiftPrefix 112L);
+                    (16L, Action.ShiftPrefix 113L);
+                    (17L, Action.ShiftPrefix 114L);
+                    (18L, Action.ShiftPrefix 115L);
+                    (19L, Action.ShiftPrefix 116L);
+                    (20L, Action.ShiftPrefix 117L);
                     (21L, Action.Reduce 61L);
-                    (22L, Action.ShiftPrefix 187L);
-                    (23L, Action.ShiftPrefix 188L);
-                    (24L, Action.ShiftPrefix 189L);
+                    (22L, Action.ShiftPrefix 118L);
+                    (23L, Action.ShiftPrefix 119L);
+                    (24L, Action.ShiftPrefix 120L);
                     (25L, Action.Reduce 61L);
-                    (26L, Action.ShiftPrefix 190L);
+                    (26L, Action.ShiftPrefix 121L);
                     (27L, Action.Reduce 61L);
-                    (28L, Action.ShiftPrefix 191L);
+                    (28L, Action.ShiftPrefix 122L);
                     (29L, Action.Reduce 61L);
-                    (30L, Action.ShiftPrefix 192L);
+                    (30L, Action.ShiftPrefix 123L);
                     (31L, Action.Reduce 61L);
-                    (32L, Action.ShiftPrefix 193L);
+                    (32L, Action.ShiftPrefix 124L);
                     (33L, Action.Reduce 61L);
-                    (34L, Action.ShiftPrefix 194L);
+                    (34L, Action.ShiftPrefix 125L);
                     (35L, Action.Reduce 61L);
-                    (36L, Action.ShiftPrefix 195L);
+                    (36L, Action.ShiftPrefix 126L);
                     (37L, Action.Reduce 61L);
-                    (38L, Action.ShiftPrefix 196L);
+                    (38L, Action.ShiftPrefix 127L);
                     (39L, Action.Reduce 61L);
-                    (40L, Action.ShiftPrefix 197L);
+                    (40L, Action.ShiftPrefix 128L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (42L, 198L);
-                    (58L, 225L);
-                    (59L, 226L);
-                    (60L, 228L);
+                    (42L, 129L);
+                    (58L, 193L);
+                    (59L, 194L);
+                    (60L, 166L);
                   ]
               );
-            (* 201 *) State.init
+            (* 156 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:201L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 101L prods) ~dot:3L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2820_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (21L, Action.Reduce 101L);
-                    (27L, Action.Reduce 101L);
-                    (29L, Action.Reduce 101L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 202 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:202L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 102L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2800_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (21L, Action.ShiftPrefix 156L);
-                    (27L, Action.Reduce 103L);
-                    (29L, Action.Reduce 103L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (76L, 229L);
-                  ]
-              );
-            (* 203 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:203L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 76L prods) ~dot:3L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (24L, Action.Reduce 76L);
-                    (25L, Action.Reduce 76L);
-                    (26L, Action.Reduce 76L);
-                    (31L, Action.Reduce 76L);
-                    (39L, Action.Reduce 76L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 204 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:204L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 80L prods) ~dot:3L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (39L, Action.ShiftPrefix 230L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 205 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:205L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 78L prods) ~dot:3L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.ShiftPrefix 72L);
-                    (3L, Action.ShiftPrefix 73L);
-                    (4L, Action.ShiftPrefix 74L);
-                    (5L, Action.ShiftPrefix 75L);
-                    (6L, Action.ShiftPrefix 76L);
-                    (7L, Action.ShiftPrefix 77L);
-                    (8L, Action.ShiftPrefix 78L);
-                    (9L, Action.ShiftPrefix 79L);
-                    (10L, Action.ShiftPrefix 80L);
-                    (11L, Action.ShiftPrefix 81L);
-                    (12L, Action.ShiftPrefix 82L);
-                    (13L, Action.ShiftPrefix 137L);
-                    (14L, Action.ShiftPrefix 138L);
-                    (30L, Action.ShiftPrefix 139L);
-                    (38L, Action.ShiftPrefix 140L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (42L, 141L);
-                    (65L, 142L);
-                    (66L, 231L);
-                  ]
-              );
-            (* 206 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:206L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 81L prods) ~dot:3L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (2L, Action.ShiftPrefix 72L);
-                    (3L, Action.ShiftPrefix 73L);
-                    (4L, Action.ShiftPrefix 74L);
-                    (5L, Action.ShiftPrefix 75L);
-                    (6L, Action.ShiftPrefix 76L);
-                    (7L, Action.ShiftPrefix 77L);
-                    (8L, Action.ShiftPrefix 78L);
-                    (9L, Action.ShiftPrefix 79L);
-                    (10L, Action.ShiftPrefix 80L);
-                    (11L, Action.ShiftPrefix 81L);
-                    (12L, Action.ShiftPrefix 82L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (42L, 144L);
-                    (62L, 145L);
-                    (63L, 232L);
-                  ]
-              );
-            (* 207 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:207L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 75L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 79L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 79L prods) ~dot:3L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (24L, Action.Reduce 79L);
-                    (25L, Action.Reduce 79L);
-                    (26L, Action.Reduce 79L);
-                    (31L, Action.Reduce 79L);
-                    (39L, Action.Reduce 79L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 208 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:208L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 75L prods) ~dot:3L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (24L, Action.Reduce 75L);
-                    (25L, Action.Reduce 75L);
-                    (26L, Action.Reduce 75L);
-                    (31L, Action.Reduce 75L);
-                    (39L, Action.Reduce 75L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 209 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:209L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 85L prods) ~dot:4L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (13L, Action.ShiftPrefix 158L);
-                    (15L, Action.ShiftPrefix 118L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (67L, 233L);
-                  ]
-              );
-            (* 210 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:210L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 65L prods) ~dot:3L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 75L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 79L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (24L, Action.ShiftPrefix 165L);
-                    (25L, Action.Reduce 65L);
-                    (26L, Action.ShiftPrefix 166L);
-                    (39L, Action.Reduce 65L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 211 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:211L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 67L prods) ~dot:3L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (25L, Action.Reduce 67L);
-                    (39L, Action.Reduce 67L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 212 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:212L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 68L prods) ~dot:3L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (25L, Action.Reduce 68L);
-                    (39L, Action.Reduce 68L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 213 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:213L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 87L prods) ~dot:4L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (18L, Action.ShiftPrefix 234L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 214 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:214L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 75L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 79L prods) ~dot:1L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 86L prods) ~dot:4L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (24L, Action.ShiftPrefix 165L);
-                    (26L, Action.ShiftPrefix 166L);
-                    (31L, Action.ShiftPrefix 235L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 215 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:215L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 88L prods) ~dot:4L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (25L, Action.ShiftPrefix 170L);
-                    (39L, Action.Reduce 70L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (64L, 236L);
-                  ]
-              );
-            (* 216 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:216L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 97L prods) ~dot:3L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x2810_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (20L, Action.Reduce 97L);
-                    (27L, Action.Reduce 97L);
-                    (29L, Action.Reduce 97L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 217 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:217L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 39L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x1ff_ffff_fffcn")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (29L, Action.ShiftPrefix 237L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 218 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:218L
+                  ~index:156L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -11144,14 +9200,14 @@ include struct
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (54L, 238L);
-                    (55L, 239L);
+                    (54L, 195L);
+                    (55L, 196L);
                   ]
               );
-            (* 219 *) State.init
+            (* 157 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:219L
+                  ~index:157L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -11176,10 +9232,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 220 *) State.init
+            (* 158 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:220L
+                  ~index:158L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -11194,16 +9250,16 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (31L, Action.ShiftPrefix 240L);
+                    (31L, Action.ShiftPrefix 197L);
                   ]
               )
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 221 *) State.init
+            (* 159 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:221L
+                  ~index:159L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -11218,16 +9274,16 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (33L, Action.ShiftPrefix 241L);
+                    (33L, Action.ShiftPrefix 198L);
                   ]
               )
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 222 *) State.init
+            (* 160 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:222L
+                  ~index:160L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -11242,16 +9298,16 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (35L, Action.ShiftPrefix 242L);
+                    (35L, Action.ShiftPrefix 199L);
                   ]
               )
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 223 *) State.init
+            (* 161 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:223L
+                  ~index:161L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -11266,16 +9322,16 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (37L, Action.ShiftPrefix 243L);
+                    (37L, Action.ShiftPrefix 200L);
                   ]
               )
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 224 *) State.init
+            (* 162 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:224L
+                  ~index:162L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -11290,22 +9346,22 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (39L, Action.ShiftPrefix 244L);
+                    (39L, Action.ShiftPrefix 201L);
                   ]
               )
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 225 *) State.init
+            (* 163 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:225L
+                  ~index:163L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 59L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0xaa_aa20_0000n")
+                                Bitset.of_nat (Nat.of_string "0x2800_0800n")
                               ) in
                             lr0item, lr1item
                           );
@@ -11323,56 +9379,49 @@ include struct
                     (8L, Action.ShiftPrefix 78L);
                     (9L, Action.ShiftPrefix 79L);
                     (10L, Action.ShiftPrefix 80L);
-                    (11L, Action.ShiftPrefix 81L);
+                    (11L, Action.Reduce 61L);
                     (12L, Action.ShiftPrefix 82L);
-                    (13L, Action.ShiftPrefix 179L);
-                    (14L, Action.ShiftPrefix 180L);
-                    (15L, Action.ShiftPrefix 181L);
-                    (16L, Action.ShiftPrefix 182L);
-                    (17L, Action.ShiftPrefix 183L);
-                    (18L, Action.ShiftPrefix 184L);
-                    (19L, Action.ShiftPrefix 185L);
-                    (20L, Action.ShiftPrefix 186L);
-                    (21L, Action.Reduce 61L);
-                    (22L, Action.ShiftPrefix 187L);
-                    (23L, Action.ShiftPrefix 188L);
-                    (24L, Action.ShiftPrefix 189L);
-                    (25L, Action.Reduce 61L);
-                    (26L, Action.ShiftPrefix 190L);
+                    (13L, Action.ShiftPrefix 110L);
+                    (14L, Action.ShiftPrefix 111L);
+                    (15L, Action.ShiftPrefix 112L);
+                    (16L, Action.ShiftPrefix 113L);
+                    (17L, Action.ShiftPrefix 114L);
+                    (18L, Action.ShiftPrefix 115L);
+                    (19L, Action.ShiftPrefix 116L);
+                    (20L, Action.ShiftPrefix 117L);
+                    (22L, Action.ShiftPrefix 118L);
+                    (23L, Action.ShiftPrefix 119L);
+                    (24L, Action.ShiftPrefix 120L);
+                    (26L, Action.ShiftPrefix 121L);
                     (27L, Action.Reduce 61L);
-                    (28L, Action.ShiftPrefix 191L);
+                    (28L, Action.ShiftPrefix 122L);
                     (29L, Action.Reduce 61L);
-                    (30L, Action.ShiftPrefix 192L);
-                    (31L, Action.Reduce 61L);
-                    (32L, Action.ShiftPrefix 193L);
-                    (33L, Action.Reduce 61L);
-                    (34L, Action.ShiftPrefix 194L);
-                    (35L, Action.Reduce 61L);
-                    (36L, Action.ShiftPrefix 195L);
-                    (37L, Action.Reduce 61L);
-                    (38L, Action.ShiftPrefix 196L);
-                    (39L, Action.Reduce 61L);
-                    (40L, Action.ShiftPrefix 197L);
+                    (30L, Action.ShiftPrefix 123L);
+                    (32L, Action.ShiftPrefix 124L);
+                    (34L, Action.ShiftPrefix 125L);
+                    (36L, Action.ShiftPrefix 126L);
+                    (38L, Action.ShiftPrefix 127L);
+                    (40L, Action.ShiftPrefix 128L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (42L, 198L);
-                    (58L, 225L);
-                    (59L, 226L);
-                    (60L, 245L);
+                    (42L, 129L);
+                    (58L, 163L);
+                    (59L, 164L);
+                    (60L, 202L);
                   ]
               );
-            (* 226 *) State.init
+            (* 164 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:226L
+                  ~index:164L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 60L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0xaa_aa20_0000n")
+                                Bitset.of_nat (Nat.of_string "0x2800_0800n")
                               ) in
                             lr0item, lr1item
                           );
@@ -11390,56 +9439,49 @@ include struct
                     (8L, Action.ShiftPrefix 78L);
                     (9L, Action.ShiftPrefix 79L);
                     (10L, Action.ShiftPrefix 80L);
-                    (11L, Action.ShiftPrefix 81L);
+                    (11L, Action.Reduce 61L);
                     (12L, Action.ShiftPrefix 82L);
-                    (13L, Action.ShiftPrefix 179L);
-                    (14L, Action.ShiftPrefix 180L);
-                    (15L, Action.ShiftPrefix 181L);
-                    (16L, Action.ShiftPrefix 182L);
-                    (17L, Action.ShiftPrefix 183L);
-                    (18L, Action.ShiftPrefix 184L);
-                    (19L, Action.ShiftPrefix 185L);
-                    (20L, Action.ShiftPrefix 186L);
-                    (21L, Action.Reduce 61L);
-                    (22L, Action.ShiftPrefix 187L);
-                    (23L, Action.ShiftPrefix 188L);
-                    (24L, Action.ShiftPrefix 189L);
-                    (25L, Action.Reduce 61L);
-                    (26L, Action.ShiftPrefix 190L);
+                    (13L, Action.ShiftPrefix 110L);
+                    (14L, Action.ShiftPrefix 111L);
+                    (15L, Action.ShiftPrefix 112L);
+                    (16L, Action.ShiftPrefix 113L);
+                    (17L, Action.ShiftPrefix 114L);
+                    (18L, Action.ShiftPrefix 115L);
+                    (19L, Action.ShiftPrefix 116L);
+                    (20L, Action.ShiftPrefix 117L);
+                    (22L, Action.ShiftPrefix 118L);
+                    (23L, Action.ShiftPrefix 119L);
+                    (24L, Action.ShiftPrefix 120L);
+                    (26L, Action.ShiftPrefix 121L);
                     (27L, Action.Reduce 61L);
-                    (28L, Action.ShiftPrefix 191L);
+                    (28L, Action.ShiftPrefix 122L);
                     (29L, Action.Reduce 61L);
-                    (30L, Action.ShiftPrefix 192L);
-                    (31L, Action.Reduce 61L);
-                    (32L, Action.ShiftPrefix 193L);
-                    (33L, Action.Reduce 61L);
-                    (34L, Action.ShiftPrefix 194L);
-                    (35L, Action.Reduce 61L);
-                    (36L, Action.ShiftPrefix 195L);
-                    (37L, Action.Reduce 61L);
-                    (38L, Action.ShiftPrefix 196L);
-                    (39L, Action.Reduce 61L);
-                    (40L, Action.ShiftPrefix 197L);
+                    (30L, Action.ShiftPrefix 123L);
+                    (32L, Action.ShiftPrefix 124L);
+                    (34L, Action.ShiftPrefix 125L);
+                    (36L, Action.ShiftPrefix 126L);
+                    (38L, Action.ShiftPrefix 127L);
+                    (40L, Action.ShiftPrefix 128L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (42L, 198L);
-                    (58L, 225L);
-                    (59L, 226L);
-                    (60L, 246L);
+                    (42L, 129L);
+                    (58L, 163L);
+                    (59L, 164L);
+                    (60L, 203L);
                   ]
               );
-            (* 227 *) State.init
+            (* 165 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:227L
+                  ~index:165L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 62L prods) ~dot:2L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0xaa_aa20_0000n")
+                                Bitset.of_nat (Nat.of_string "0xaa_aa20_0800n")
                               ) in
                             lr0item, lr1item
                           );
@@ -11448,6 +9490,7 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
+                    (11L, Action.Reduce 62L);
                     (21L, Action.Reduce 62L);
                     (25L, Action.Reduce 62L);
                     (27L, Action.Reduce 62L);
@@ -11462,16 +9505,16 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 228 *) State.init
+            (* 166 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:228L
+                  ~index:166L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 63L prods) ~dot:2L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0xaa_aa20_0000n")
+                                Bitset.of_nat (Nat.of_string "0xaa_aa20_0800n")
                               ) in
                             lr0item, lr1item
                           );
@@ -11480,6 +9523,7 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
+                    (11L, Action.Reduce 63L);
                     (21L, Action.Reduce 63L);
                     (25L, Action.Reduce 63L);
                     (27L, Action.Reduce 63L);
@@ -11494,14 +9538,72 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 229 *) State.init
+            (* 167 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:229L
+                  ~index:167L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 102L prods) ~dot:3L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 21L prods) ~dot:3L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x1ffcn")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.Reduce 21L);
+                    (3L, Action.Reduce 21L);
+                    (4L, Action.Reduce 21L);
+                    (5L, Action.Reduce 21L);
+                    (6L, Action.Reduce 21L);
+                    (7L, Action.Reduce 21L);
+                    (8L, Action.Reduce 21L);
+                    (9L, Action.Reduce 21L);
+                    (10L, Action.Reduce 21L);
+                    (11L, Action.Reduce 21L);
+                    (12L, Action.Reduce 21L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 168 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:168L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 101L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x2820_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (20L, Action.ShiftPrefix 204L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 169 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:169L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 104L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x2800_0000n")
                               ) in
@@ -11512,21 +9614,139 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (27L, Action.Reduce 102L);
-                    (29L, Action.Reduce 102L);
+                    (21L, Action.ShiftPrefix 205L);
+                    (27L, Action.Reduce 103L);
+                    (29L, Action.Reduce 103L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (76L, 206L);
+                  ]
+              );
+            (* 170 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:170L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 108L prods) ~dot:6L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x2800_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (27L, Action.Reduce 108L);
+                    (29L, Action.Reduce 108L);
                   ]
               )
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 230 *) State.init
+            (* 171 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:230L
+                  ~index:171L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 80L prods) ~dot:4L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 95L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (20L, Action.Reduce 95L);
+                    (21L, Action.Reduce 95L);
+                    (27L, Action.Reduce 95L);
+                    (29L, Action.Reduce 95L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 172 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:172L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 89L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (13L, Action.ShiftPrefix 207L);
+                    (15L, Action.ShiftPrefix 141L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (67L, 208L);
+                  ]
+              );
+            (* 173 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:173L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 99L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x2810_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (20L, Action.Reduce 98L);
+                    (21L, Action.ShiftPrefix 190L);
+                    (27L, Action.Reduce 98L);
+                    (29L, Action.Reduce 98L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (73L, 209L);
+                  ]
+              );
+            (* 174 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:174L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.singleton 19L
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 77L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
                               ) in
@@ -11537,20 +9757,209 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (24L, Action.Reduce 80L);
-                    (25L, Action.Reduce 80L);
-                    (26L, Action.Reduce 80L);
-                    (31L, Action.Reduce 80L);
-                    (39L, Action.Reduce 80L);
+                    (2L, Action.ShiftPrefix 72L);
+                    (3L, Action.ShiftPrefix 73L);
+                    (4L, Action.ShiftPrefix 74L);
+                    (5L, Action.ShiftPrefix 75L);
+                    (6L, Action.ShiftPrefix 76L);
+                    (7L, Action.ShiftPrefix 77L);
+                    (8L, Action.ShiftPrefix 78L);
+                    (9L, Action.ShiftPrefix 79L);
+                    (10L, Action.ShiftPrefix 80L);
+                    (11L, Action.ShiftPrefix 81L);
+                    (12L, Action.ShiftPrefix 82L);
+                    (13L, Action.ShiftPrefix 174L);
+                    (14L, Action.ShiftPrefix 175L);
+                    (19L, Action.Reduce 71L);
+                    (30L, Action.ShiftPrefix 176L);
+                    (38L, Action.ShiftPrefix 177L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (42L, 178L);
+                    (65L, 179L);
+                    (66L, 210L);
+                  ]
+              );
+            (* 175 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:175L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 73L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (24L, Action.Reduce 73L);
+                    (25L, Action.Reduce 73L);
+                    (26L, Action.Reduce 73L);
+                    (31L, Action.Reduce 73L);
+                    (39L, Action.Reduce 73L);
                   ]
               )
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 231 *) State.init
+            (* 176 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:231L
+                  ~index:176L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 76L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.ShiftPrefix 72L);
+                    (3L, Action.ShiftPrefix 73L);
+                    (4L, Action.ShiftPrefix 74L);
+                    (5L, Action.ShiftPrefix 75L);
+                    (6L, Action.ShiftPrefix 76L);
+                    (7L, Action.ShiftPrefix 77L);
+                    (8L, Action.ShiftPrefix 78L);
+                    (9L, Action.ShiftPrefix 79L);
+                    (10L, Action.ShiftPrefix 80L);
+                    (11L, Action.ShiftPrefix 81L);
+                    (12L, Action.ShiftPrefix 82L);
+                    (13L, Action.ShiftPrefix 174L);
+                    (14L, Action.ShiftPrefix 175L);
+                    (30L, Action.ShiftPrefix 176L);
+                    (38L, Action.ShiftPrefix 177L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (42L, 178L);
+                    (65L, 179L);
+                    (66L, 211L);
+                  ]
+              );
+            (* 177 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:177L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 80L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.ShiftPrefix 72L);
+                    (3L, Action.ShiftPrefix 73L);
+                    (4L, Action.ShiftPrefix 74L);
+                    (5L, Action.ShiftPrefix 75L);
+                    (6L, Action.ShiftPrefix 76L);
+                    (7L, Action.ShiftPrefix 77L);
+                    (8L, Action.ShiftPrefix 78L);
+                    (9L, Action.ShiftPrefix 79L);
+                    (10L, Action.ShiftPrefix 80L);
+                    (11L, Action.ShiftPrefix 81L);
+                    (12L, Action.ShiftPrefix 82L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (42L, 181L);
+                    (62L, 182L);
+                    (63L, 212L);
+                  ]
+              );
+            (* 178 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:178L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 74L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (24L, Action.Reduce 74L);
+                    (25L, Action.Reduce 74L);
+                    (26L, Action.Reduce 74L);
+                    (31L, Action.Reduce 74L);
+                    (39L, Action.Reduce 74L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 179 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:179L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.singleton 19L
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 78L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 81L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (19L, Action.ShiftPrefix 213L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 180 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:180L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -11561,42 +9970,16 @@ include struct
                             lr0item, lr1item
                           );
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 78L prods) ~dot:4L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                        (
                             let lr0item = Lr0Item.init ~prod:(Array.get 79L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x8500_0000n")
                               ) in
                             lr0item, lr1item
                           );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (24L, Action.ShiftPrefix 165L);
-                    (26L, Action.ShiftPrefix 166L);
-                    (31L, Action.ShiftPrefix 247L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 232 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:232L
-                  ~kernel:(
-                    Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 81L prods) ~dot:4L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 85L prods) ~dot:2L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
+                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
                               ) in
                             lr0item, lr1item
                           );
@@ -11605,23 +9988,121 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (25L, Action.ShiftPrefix 170L);
+                    (24L, Action.ShiftPrefix 214L);
+                    (26L, Action.ShiftPrefix 215L);
+                    (31L, Action.ShiftPrefix 216L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 181 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:181L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 64L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 65L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (23L, Action.ShiftPrefix 217L);
+                    (25L, Action.Reduce 64L);
+                    (39L, Action.Reduce 64L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 182 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:182L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 66L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 67L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 68L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (25L, Action.ShiftPrefix 218L);
+                    (39L, Action.Reduce 66L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 183 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:183L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 87L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (25L, Action.ShiftPrefix 219L);
                     (39L, Action.Reduce 70L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (64L, 248L);
+                    (64L, 220L);
                   ]
               );
-            (* 233 *) State.init
+            (* 184 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:233L
+                  ~index:184L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 85L prods) ~dot:5L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 84L prods) ~dot:2L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
                                 Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
                               ) in
@@ -11632,41 +10113,138 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (2L, Action.Reduce 85L);
-                    (3L, Action.Reduce 85L);
-                    (4L, Action.Reduce 85L);
-                    (5L, Action.Reduce 85L);
-                    (6L, Action.Reduce 85L);
-                    (7L, Action.Reduce 85L);
-                    (8L, Action.Reduce 85L);
-                    (9L, Action.Reduce 85L);
-                    (10L, Action.Reduce 85L);
-                    (11L, Action.Reduce 85L);
-                    (12L, Action.Reduce 85L);
-                    (13L, Action.Reduce 85L);
-                    (14L, Action.Reduce 85L);
-                    (15L, Action.Reduce 85L);
-                    (20L, Action.Reduce 85L);
-                    (21L, Action.Reduce 85L);
-                    (27L, Action.Reduce 85L);
-                    (29L, Action.Reduce 85L);
-                    (30L, Action.Reduce 85L);
-                    (38L, Action.Reduce 85L);
+                    (13L, Action.ShiftPrefix 207L);
+                    (15L, Action.ShiftPrefix 141L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (67L, 221L);
+                  ]
+              );
+            (* 185 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:185L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.singleton 19L
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 86L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 88L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (13L, Action.ShiftPrefix 222L);
+                    (30L, Action.ShiftPrefix 223L);
+                    (38L, Action.ShiftPrefix 224L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (65L, 225L);
+                  ]
+              );
+            (* 186 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:186L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 9L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.singleton 18L
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 24L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.ShiftPrefix 72L);
+                    (3L, Action.ShiftPrefix 73L);
+                    (4L, Action.ShiftPrefix 74L);
+                    (5L, Action.ShiftPrefix 75L);
+                    (6L, Action.ShiftPrefix 76L);
+                    (7L, Action.ShiftPrefix 77L);
+                    (8L, Action.ShiftPrefix 78L);
+                    (9L, Action.ShiftPrefix 79L);
+                    (10L, Action.ShiftPrefix 80L);
+                    (11L, Action.ShiftPrefix 81L);
+                    (12L, Action.ShiftPrefix 82L);
+                    (18L, Action.Reduce 9L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (42L, 104L);
+                  ]
+              );
+            (* 187 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:187L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 92L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (20L, Action.Reduce 92L);
+                    (21L, Action.Reduce 92L);
+                    (27L, Action.Reduce 92L);
+                    (29L, Action.Reduce 92L);
                   ]
               )
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 234 *) State.init
+            (* 188 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:234L
+                  ~index:188L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 87L prods) ~dot:5L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 91L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
+                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
                               ) in
                             lr0item, lr1item
                           );
@@ -11675,25 +10253,48 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (13L, Action.ShiftPrefix 158L);
-                    (15L, Action.ShiftPrefix 118L);
+                    (2L, Action.ShiftPrefix 72L);
+                    (3L, Action.ShiftPrefix 73L);
+                    (4L, Action.ShiftPrefix 74L);
+                    (5L, Action.ShiftPrefix 75L);
+                    (6L, Action.ShiftPrefix 76L);
+                    (7L, Action.ShiftPrefix 77L);
+                    (8L, Action.ShiftPrefix 78L);
+                    (9L, Action.ShiftPrefix 79L);
+                    (10L, Action.ShiftPrefix 80L);
+                    (11L, Action.ShiftPrefix 186L);
+                    (12L, Action.ShiftPrefix 82L);
+                    (13L, Action.ShiftPrefix 139L);
+                    (14L, Action.ShiftPrefix 140L);
+                    (15L, Action.ShiftPrefix 141L);
+                    (20L, Action.Reduce 25L);
+                    (21L, Action.Reduce 25L);
+                    (27L, Action.Reduce 25L);
+                    (29L, Action.Reduce 25L);
+                    (30L, Action.ShiftPrefix 143L);
+                    (38L, Action.ShiftPrefix 144L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (67L, 249L);
+                    (42L, 145L);
+                    (50L, 187L);
+                    (65L, 146L);
+                    (67L, 147L);
+                    (68L, 188L);
+                    (69L, 226L);
                   ]
               );
-            (* 235 *) State.init
+            (* 189 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:235L
+                  ~index:189L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 86L prods) ~dot:5L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 93L prods) ~dot:2L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
+                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
                               ) in
                             lr0item, lr1item
                           );
@@ -11702,22 +10303,25 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (18L, Action.ShiftPrefix 250L);
+                    (20L, Action.Reduce 93L);
+                    (21L, Action.Reduce 93L);
+                    (27L, Action.Reduce 93L);
+                    (29L, Action.Reduce 93L);
                   ]
               )
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 236 *) State.init
+            (* 190 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:236L
+                  ~index:190L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 88L prods) ~dot:5L in
+                            let lr0item = Lr0Item.init ~prod:(Array.get 97L prods) ~dot:1L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
+                                Bitset.of_nat (Nat.of_string "0x2810_0000n")
                               ) in
                             lr0item, lr1item
                           );
@@ -11726,16 +10330,65 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (39L, Action.ShiftPrefix 251L);
+                    (2L, Action.ShiftPrefix 72L);
+                    (3L, Action.ShiftPrefix 73L);
+                    (4L, Action.ShiftPrefix 138L);
+                    (5L, Action.ShiftPrefix 75L);
+                    (6L, Action.ShiftPrefix 76L);
+                    (7L, Action.ShiftPrefix 77L);
+                    (8L, Action.ShiftPrefix 78L);
+                    (9L, Action.ShiftPrefix 79L);
+                    (10L, Action.ShiftPrefix 80L);
+                    (11L, Action.ShiftPrefix 81L);
+                    (12L, Action.ShiftPrefix 82L);
+                    (13L, Action.ShiftPrefix 139L);
+                    (14L, Action.ShiftPrefix 140L);
+                    (15L, Action.ShiftPrefix 141L);
+                    (30L, Action.ShiftPrefix 143L);
+                    (38L, Action.ShiftPrefix 144L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (42L, 145L);
+                    (65L, 146L);
+                    (67L, 147L);
+                    (68L, 148L);
+                    (70L, 149L);
+                    (71L, 150L);
+                    (72L, 227L);
+                  ]
+              );
+            (* 191 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:191L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 100L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x2810_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (20L, Action.Reduce 100L);
+                    (27L, Action.Reduce 100L);
+                    (29L, Action.Reduce 100L);
                   ]
               )
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 237 *) State.init
+            (* 192 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:237L
+                  ~index:192L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -11794,10 +10447,144 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 238 *) State.init
+            (* 193 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:238L
+                  ~index:193L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 59L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0xaa_aa20_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.ShiftPrefix 72L);
+                    (3L, Action.ShiftPrefix 73L);
+                    (4L, Action.ShiftPrefix 74L);
+                    (5L, Action.ShiftPrefix 75L);
+                    (6L, Action.ShiftPrefix 76L);
+                    (7L, Action.ShiftPrefix 77L);
+                    (8L, Action.ShiftPrefix 78L);
+                    (9L, Action.ShiftPrefix 79L);
+                    (10L, Action.ShiftPrefix 80L);
+                    (11L, Action.ShiftPrefix 81L);
+                    (12L, Action.ShiftPrefix 82L);
+                    (13L, Action.ShiftPrefix 110L);
+                    (14L, Action.ShiftPrefix 111L);
+                    (15L, Action.ShiftPrefix 112L);
+                    (16L, Action.ShiftPrefix 113L);
+                    (17L, Action.ShiftPrefix 114L);
+                    (18L, Action.ShiftPrefix 115L);
+                    (19L, Action.ShiftPrefix 116L);
+                    (20L, Action.ShiftPrefix 117L);
+                    (21L, Action.Reduce 61L);
+                    (22L, Action.ShiftPrefix 118L);
+                    (23L, Action.ShiftPrefix 119L);
+                    (24L, Action.ShiftPrefix 120L);
+                    (25L, Action.Reduce 61L);
+                    (26L, Action.ShiftPrefix 121L);
+                    (27L, Action.Reduce 61L);
+                    (28L, Action.ShiftPrefix 122L);
+                    (29L, Action.Reduce 61L);
+                    (30L, Action.ShiftPrefix 123L);
+                    (31L, Action.Reduce 61L);
+                    (32L, Action.ShiftPrefix 124L);
+                    (33L, Action.Reduce 61L);
+                    (34L, Action.ShiftPrefix 125L);
+                    (35L, Action.Reduce 61L);
+                    (36L, Action.ShiftPrefix 126L);
+                    (37L, Action.Reduce 61L);
+                    (38L, Action.ShiftPrefix 127L);
+                    (39L, Action.Reduce 61L);
+                    (40L, Action.ShiftPrefix 128L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (42L, 129L);
+                    (58L, 193L);
+                    (59L, 194L);
+                    (60L, 202L);
+                  ]
+              );
+            (* 194 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:194L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 60L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0xaa_aa20_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.ShiftPrefix 72L);
+                    (3L, Action.ShiftPrefix 73L);
+                    (4L, Action.ShiftPrefix 74L);
+                    (5L, Action.ShiftPrefix 75L);
+                    (6L, Action.ShiftPrefix 76L);
+                    (7L, Action.ShiftPrefix 77L);
+                    (8L, Action.ShiftPrefix 78L);
+                    (9L, Action.ShiftPrefix 79L);
+                    (10L, Action.ShiftPrefix 80L);
+                    (11L, Action.ShiftPrefix 81L);
+                    (12L, Action.ShiftPrefix 82L);
+                    (13L, Action.ShiftPrefix 110L);
+                    (14L, Action.ShiftPrefix 111L);
+                    (15L, Action.ShiftPrefix 112L);
+                    (16L, Action.ShiftPrefix 113L);
+                    (17L, Action.ShiftPrefix 114L);
+                    (18L, Action.ShiftPrefix 115L);
+                    (19L, Action.ShiftPrefix 116L);
+                    (20L, Action.ShiftPrefix 117L);
+                    (21L, Action.Reduce 61L);
+                    (22L, Action.ShiftPrefix 118L);
+                    (23L, Action.ShiftPrefix 119L);
+                    (24L, Action.ShiftPrefix 120L);
+                    (25L, Action.Reduce 61L);
+                    (26L, Action.ShiftPrefix 121L);
+                    (27L, Action.Reduce 61L);
+                    (28L, Action.ShiftPrefix 122L);
+                    (29L, Action.Reduce 61L);
+                    (30L, Action.ShiftPrefix 123L);
+                    (31L, Action.Reduce 61L);
+                    (32L, Action.ShiftPrefix 124L);
+                    (33L, Action.Reduce 61L);
+                    (34L, Action.ShiftPrefix 125L);
+                    (35L, Action.Reduce 61L);
+                    (36L, Action.ShiftPrefix 126L);
+                    (37L, Action.Reduce 61L);
+                    (38L, Action.ShiftPrefix 127L);
+                    (39L, Action.Reduce 61L);
+                    (40L, Action.ShiftPrefix 128L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (42L, 129L);
+                    (58L, 193L);
+                    (59L, 194L);
+                    (60L, 203L);
+                  ]
+              );
+            (* 195 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:195L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -11823,39 +10610,39 @@ include struct
                     (10L, Action.ShiftPrefix 80L);
                     (11L, Action.ShiftPrefix 81L);
                     (12L, Action.ShiftPrefix 82L);
-                    (13L, Action.ShiftPrefix 179L);
-                    (14L, Action.ShiftPrefix 180L);
-                    (15L, Action.ShiftPrefix 181L);
-                    (16L, Action.ShiftPrefix 182L);
-                    (17L, Action.ShiftPrefix 183L);
-                    (18L, Action.ShiftPrefix 184L);
-                    (19L, Action.ShiftPrefix 185L);
-                    (20L, Action.ShiftPrefix 186L);
-                    (22L, Action.ShiftPrefix 187L);
-                    (23L, Action.ShiftPrefix 188L);
-                    (24L, Action.ShiftPrefix 189L);
-                    (26L, Action.ShiftPrefix 190L);
-                    (28L, Action.ShiftPrefix 191L);
-                    (30L, Action.ShiftPrefix 192L);
-                    (32L, Action.ShiftPrefix 193L);
-                    (34L, Action.ShiftPrefix 194L);
-                    (36L, Action.ShiftPrefix 195L);
-                    (38L, Action.ShiftPrefix 196L);
-                    (40L, Action.ShiftPrefix 197L);
+                    (13L, Action.ShiftPrefix 110L);
+                    (14L, Action.ShiftPrefix 111L);
+                    (15L, Action.ShiftPrefix 112L);
+                    (16L, Action.ShiftPrefix 113L);
+                    (17L, Action.ShiftPrefix 114L);
+                    (18L, Action.ShiftPrefix 115L);
+                    (19L, Action.ShiftPrefix 116L);
+                    (20L, Action.ShiftPrefix 117L);
+                    (22L, Action.ShiftPrefix 118L);
+                    (23L, Action.ShiftPrefix 119L);
+                    (24L, Action.ShiftPrefix 120L);
+                    (26L, Action.ShiftPrefix 121L);
+                    (28L, Action.ShiftPrefix 122L);
+                    (30L, Action.ShiftPrefix 123L);
+                    (32L, Action.ShiftPrefix 124L);
+                    (34L, Action.ShiftPrefix 125L);
+                    (36L, Action.ShiftPrefix 126L);
+                    (38L, Action.ShiftPrefix 127L);
+                    (40L, Action.ShiftPrefix 128L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (42L, 198L);
-                    (58L, 199L);
-                    (59L, 200L);
-                    (61L, 252L);
+                    (42L, 129L);
+                    (58L, 154L);
+                    (59L, 155L);
+                    (61L, 228L);
                   ]
               );
-            (* 239 *) State.init
+            (* 196 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:239L
+                  ~index:196L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -11881,10 +10668,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 240 *) State.init
+            (* 197 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:240L
+                  ~index:197L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -11943,10 +10730,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 241 *) State.init
+            (* 198 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:241L
+                  ~index:198L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -12005,10 +10792,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 242 *) State.init
+            (* 199 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:242L
+                  ~index:199L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -12067,10 +10854,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 243 *) State.init
+            (* 200 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:243L
+                  ~index:200L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -12129,10 +10916,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 244 *) State.init
+            (* 201 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:244L
+                  ~index:201L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -12191,16 +10978,16 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 245 *) State.init
+            (* 202 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:245L
+                  ~index:202L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 59L prods) ~dot:2L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0xaa_aa20_0000n")
+                                Bitset.of_nat (Nat.of_string "0xaa_aa20_0800n")
                               ) in
                             lr0item, lr1item
                           );
@@ -12209,6 +10996,7 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
+                    (11L, Action.Reduce 59L);
                     (21L, Action.Reduce 59L);
                     (25L, Action.Reduce 59L);
                     (27L, Action.Reduce 59L);
@@ -12223,16 +11011,16 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 246 *) State.init
+            (* 203 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:246L
+                  ~index:203L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
                             let lr0item = Lr0Item.init ~prod:(Array.get 60L prods) ~dot:2L in
                             let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0xaa_aa20_0000n")
+                                Bitset.of_nat (Nat.of_string "0xaa_aa20_0800n")
                               ) in
                             lr0item, lr1item
                           );
@@ -12241,6 +11029,7 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
+                    (11L, Action.Reduce 60L);
                     (21L, Action.Reduce 60L);
                     (25L, Action.Reduce 60L);
                     (27L, Action.Reduce 60L);
@@ -12255,10 +11044,1671 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
+            (* 204 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:204L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 101L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x2820_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.ShiftPrefix 72L);
+                    (3L, Action.ShiftPrefix 73L);
+                    (4L, Action.ShiftPrefix 74L);
+                    (5L, Action.ShiftPrefix 75L);
+                    (6L, Action.ShiftPrefix 76L);
+                    (7L, Action.ShiftPrefix 77L);
+                    (8L, Action.ShiftPrefix 78L);
+                    (9L, Action.ShiftPrefix 79L);
+                    (10L, Action.ShiftPrefix 80L);
+                    (11L, Action.ShiftPrefix 81L);
+                    (12L, Action.ShiftPrefix 82L);
+                    (13L, Action.ShiftPrefix 110L);
+                    (14L, Action.ShiftPrefix 111L);
+                    (15L, Action.ShiftPrefix 112L);
+                    (16L, Action.ShiftPrefix 113L);
+                    (17L, Action.ShiftPrefix 114L);
+                    (18L, Action.ShiftPrefix 115L);
+                    (19L, Action.ShiftPrefix 116L);
+                    (20L, Action.ShiftPrefix 117L);
+                    (22L, Action.ShiftPrefix 118L);
+                    (23L, Action.ShiftPrefix 119L);
+                    (24L, Action.ShiftPrefix 120L);
+                    (26L, Action.ShiftPrefix 121L);
+                    (28L, Action.ShiftPrefix 122L);
+                    (30L, Action.ShiftPrefix 123L);
+                    (32L, Action.ShiftPrefix 124L);
+                    (34L, Action.ShiftPrefix 125L);
+                    (36L, Action.ShiftPrefix 126L);
+                    (38L, Action.ShiftPrefix 127L);
+                    (40L, Action.ShiftPrefix 128L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (42L, 129L);
+                    (58L, 154L);
+                    (59L, 155L);
+                    (61L, 229L);
+                  ]
+              );
+            (* 205 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:205L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 102L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x2800_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.ShiftPrefix 72L);
+                    (3L, Action.ShiftPrefix 73L);
+                    (4L, Action.ShiftPrefix 138L);
+                    (5L, Action.ShiftPrefix 75L);
+                    (6L, Action.ShiftPrefix 76L);
+                    (7L, Action.ShiftPrefix 77L);
+                    (8L, Action.ShiftPrefix 78L);
+                    (9L, Action.ShiftPrefix 79L);
+                    (10L, Action.ShiftPrefix 80L);
+                    (11L, Action.ShiftPrefix 81L);
+                    (12L, Action.ShiftPrefix 82L);
+                    (13L, Action.ShiftPrefix 139L);
+                    (14L, Action.ShiftPrefix 140L);
+                    (15L, Action.ShiftPrefix 141L);
+                    (21L, Action.ShiftPrefix 142L);
+                    (30L, Action.ShiftPrefix 143L);
+                    (38L, Action.ShiftPrefix 144L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (42L, 145L);
+                    (65L, 146L);
+                    (67L, 147L);
+                    (68L, 148L);
+                    (70L, 149L);
+                    (71L, 150L);
+                    (72L, 151L);
+                    (74L, 168L);
+                    (75L, 230L);
+                  ]
+              );
+            (* 206 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:206L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 104L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x2800_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (27L, Action.Reduce 104L);
+                    (29L, Action.Reduce 104L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 207 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:207L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 82L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.Reduce 82L);
+                    (3L, Action.Reduce 82L);
+                    (4L, Action.Reduce 82L);
+                    (5L, Action.Reduce 82L);
+                    (6L, Action.Reduce 82L);
+                    (7L, Action.Reduce 82L);
+                    (8L, Action.Reduce 82L);
+                    (9L, Action.Reduce 82L);
+                    (10L, Action.Reduce 82L);
+                    (11L, Action.Reduce 82L);
+                    (12L, Action.Reduce 82L);
+                    (13L, Action.Reduce 82L);
+                    (14L, Action.Reduce 82L);
+                    (15L, Action.Reduce 82L);
+                    (20L, Action.Reduce 82L);
+                    (21L, Action.Reduce 82L);
+                    (27L, Action.Reduce 82L);
+                    (29L, Action.Reduce 82L);
+                    (30L, Action.Reduce 82L);
+                    (38L, Action.Reduce 82L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 208 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:208L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 89L prods) ~dot:3L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.Reduce 89L);
+                    (3L, Action.Reduce 89L);
+                    (4L, Action.Reduce 89L);
+                    (5L, Action.Reduce 89L);
+                    (6L, Action.Reduce 89L);
+                    (7L, Action.Reduce 89L);
+                    (8L, Action.Reduce 89L);
+                    (9L, Action.Reduce 89L);
+                    (10L, Action.Reduce 89L);
+                    (11L, Action.Reduce 89L);
+                    (12L, Action.Reduce 89L);
+                    (13L, Action.Reduce 89L);
+                    (14L, Action.Reduce 89L);
+                    (15L, Action.Reduce 89L);
+                    (20L, Action.Reduce 89L);
+                    (21L, Action.Reduce 89L);
+                    (27L, Action.Reduce 89L);
+                    (29L, Action.Reduce 89L);
+                    (30L, Action.Reduce 89L);
+                    (38L, Action.Reduce 89L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 209 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:209L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 99L prods) ~dot:3L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x2810_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (20L, Action.Reduce 99L);
+                    (27L, Action.Reduce 99L);
+                    (29L, Action.Reduce 99L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 210 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:210L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 75L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 77L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 79L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (24L, Action.Reduce 77L);
+                    (25L, Action.Reduce 77L);
+                    (26L, Action.Reduce 77L);
+                    (31L, Action.Reduce 77L);
+                    (39L, Action.Reduce 77L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 211 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:211L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 75L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 76L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 79L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (24L, Action.ShiftPrefix 214L);
+                    (26L, Action.ShiftPrefix 215L);
+                    (31L, Action.ShiftPrefix 231L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 212 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:212L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 80L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (25L, Action.ShiftPrefix 219L);
+                    (39L, Action.Reduce 70L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (64L, 232L);
+                  ]
+              );
+            (* 213 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:213L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.singleton 19L
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 78L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 81L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (13L, Action.ShiftPrefix 222L);
+                    (30L, Action.ShiftPrefix 233L);
+                    (38L, Action.ShiftPrefix 234L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (65L, 225L);
+                  ]
+              );
+            (* 214 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:214L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 79L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.ShiftPrefix 72L);
+                    (3L, Action.ShiftPrefix 73L);
+                    (4L, Action.ShiftPrefix 74L);
+                    (5L, Action.ShiftPrefix 75L);
+                    (6L, Action.ShiftPrefix 76L);
+                    (7L, Action.ShiftPrefix 77L);
+                    (8L, Action.ShiftPrefix 78L);
+                    (9L, Action.ShiftPrefix 79L);
+                    (10L, Action.ShiftPrefix 80L);
+                    (11L, Action.ShiftPrefix 81L);
+                    (12L, Action.ShiftPrefix 82L);
+                    (13L, Action.ShiftPrefix 174L);
+                    (14L, Action.ShiftPrefix 175L);
+                    (30L, Action.ShiftPrefix 176L);
+                    (38L, Action.ShiftPrefix 177L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (42L, 178L);
+                    (65L, 179L);
+                    (66L, 235L);
+                  ]
+              );
+            (* 215 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:215L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 75L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.ShiftPrefix 72L);
+                    (3L, Action.ShiftPrefix 73L);
+                    (4L, Action.ShiftPrefix 74L);
+                    (5L, Action.ShiftPrefix 75L);
+                    (6L, Action.ShiftPrefix 76L);
+                    (7L, Action.ShiftPrefix 77L);
+                    (8L, Action.ShiftPrefix 78L);
+                    (9L, Action.ShiftPrefix 79L);
+                    (10L, Action.ShiftPrefix 80L);
+                    (11L, Action.ShiftPrefix 81L);
+                    (12L, Action.ShiftPrefix 82L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (42L, 236L);
+                  ]
+              );
+            (* 216 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:216L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 85L prods) ~dot:3L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (18L, Action.ShiftPrefix 237L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 217 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:217L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 65L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.ShiftPrefix 72L);
+                    (3L, Action.ShiftPrefix 73L);
+                    (4L, Action.ShiftPrefix 74L);
+                    (5L, Action.ShiftPrefix 75L);
+                    (6L, Action.ShiftPrefix 76L);
+                    (7L, Action.ShiftPrefix 77L);
+                    (8L, Action.ShiftPrefix 78L);
+                    (9L, Action.ShiftPrefix 79L);
+                    (10L, Action.ShiftPrefix 80L);
+                    (11L, Action.ShiftPrefix 81L);
+                    (12L, Action.ShiftPrefix 82L);
+                    (13L, Action.ShiftPrefix 174L);
+                    (14L, Action.ShiftPrefix 175L);
+                    (30L, Action.ShiftPrefix 176L);
+                    (38L, Action.ShiftPrefix 177L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (42L, 178L);
+                    (65L, 179L);
+                    (66L, 238L);
+                  ]
+              );
+            (* 218 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:218L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 67L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 68L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.ShiftPrefix 72L);
+                    (3L, Action.ShiftPrefix 73L);
+                    (4L, Action.ShiftPrefix 74L);
+                    (5L, Action.ShiftPrefix 75L);
+                    (6L, Action.ShiftPrefix 76L);
+                    (7L, Action.ShiftPrefix 77L);
+                    (8L, Action.ShiftPrefix 78L);
+                    (9L, Action.ShiftPrefix 79L);
+                    (10L, Action.ShiftPrefix 80L);
+                    (11L, Action.ShiftPrefix 81L);
+                    (12L, Action.ShiftPrefix 82L);
+                    (14L, Action.ShiftPrefix 239L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (42L, 181L);
+                    (62L, 182L);
+                    (63L, 240L);
+                  ]
+              );
+            (* 219 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:219L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 69L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.singleton 39L
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (39L, Action.Reduce 69L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 220 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:220L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 87L prods) ~dot:3L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (39L, Action.ShiftPrefix 241L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 221 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:221L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 84L prods) ~dot:3L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.Reduce 84L);
+                    (3L, Action.Reduce 84L);
+                    (4L, Action.Reduce 84L);
+                    (5L, Action.Reduce 84L);
+                    (6L, Action.Reduce 84L);
+                    (7L, Action.Reduce 84L);
+                    (8L, Action.Reduce 84L);
+                    (9L, Action.Reduce 84L);
+                    (10L, Action.Reduce 84L);
+                    (11L, Action.Reduce 84L);
+                    (12L, Action.Reduce 84L);
+                    (13L, Action.Reduce 84L);
+                    (14L, Action.Reduce 84L);
+                    (15L, Action.Reduce 84L);
+                    (20L, Action.Reduce 84L);
+                    (21L, Action.Reduce 84L);
+                    (27L, Action.Reduce 84L);
+                    (29L, Action.Reduce 84L);
+                    (30L, Action.Reduce 84L);
+                    (38L, Action.Reduce 84L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 222 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:222L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 71L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.singleton 19L
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (19L, Action.Reduce 71L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 223 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:223L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 86L prods) ~dot:3L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.ShiftPrefix 72L);
+                    (3L, Action.ShiftPrefix 73L);
+                    (4L, Action.ShiftPrefix 74L);
+                    (5L, Action.ShiftPrefix 75L);
+                    (6L, Action.ShiftPrefix 76L);
+                    (7L, Action.ShiftPrefix 77L);
+                    (8L, Action.ShiftPrefix 78L);
+                    (9L, Action.ShiftPrefix 79L);
+                    (10L, Action.ShiftPrefix 80L);
+                    (11L, Action.ShiftPrefix 81L);
+                    (12L, Action.ShiftPrefix 82L);
+                    (13L, Action.ShiftPrefix 174L);
+                    (14L, Action.ShiftPrefix 175L);
+                    (30L, Action.ShiftPrefix 176L);
+                    (38L, Action.ShiftPrefix 177L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (42L, 178L);
+                    (65L, 179L);
+                    (66L, 242L);
+                  ]
+              );
+            (* 224 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:224L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 88L prods) ~dot:3L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.ShiftPrefix 72L);
+                    (3L, Action.ShiftPrefix 73L);
+                    (4L, Action.ShiftPrefix 74L);
+                    (5L, Action.ShiftPrefix 75L);
+                    (6L, Action.ShiftPrefix 76L);
+                    (7L, Action.ShiftPrefix 77L);
+                    (8L, Action.ShiftPrefix 78L);
+                    (9L, Action.ShiftPrefix 79L);
+                    (10L, Action.ShiftPrefix 80L);
+                    (11L, Action.ShiftPrefix 81L);
+                    (12L, Action.ShiftPrefix 82L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (42L, 181L);
+                    (62L, 182L);
+                    (63L, 243L);
+                  ]
+              );
+            (* 225 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:225L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.singleton 19L
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 72L prods) ~dot:3L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.singleton 19L
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (19L, Action.Reduce 72L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 226 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:226L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 91L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x2830_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (20L, Action.Reduce 91L);
+                    (21L, Action.Reduce 91L);
+                    (27L, Action.Reduce 91L);
+                    (29L, Action.Reduce 91L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 227 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:227L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 97L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x2810_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (20L, Action.Reduce 98L);
+                    (21L, Action.ShiftPrefix 190L);
+                    (27L, Action.Reduce 98L);
+                    (29L, Action.Reduce 98L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (73L, 244L);
+                  ]
+              );
+            (* 228 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:228L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 34L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0xaa_a000_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (21L, Action.ShiftPrefix 20L);
+                    (25L, Action.ShiftPrefix 24L);
+                    (27L, Action.ShiftPrefix 26L);
+                    (29L, Action.Reduce 35L);
+                    (31L, Action.Reduce 35L);
+                    (33L, Action.Reduce 35L);
+                    (35L, Action.Reduce 35L);
+                    (37L, Action.Reduce 35L);
+                    (39L, Action.Reduce 35L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (54L, 195L);
+                    (55L, 245L);
+                  ]
+              );
+            (* 229 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:229L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 101L prods) ~dot:3L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x2820_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (21L, Action.Reduce 101L);
+                    (27L, Action.Reduce 101L);
+                    (29L, Action.Reduce 101L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 230 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:230L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 102L prods) ~dot:2L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x2800_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (21L, Action.ShiftPrefix 205L);
+                    (27L, Action.Reduce 103L);
+                    (29L, Action.Reduce 103L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (76L, 246L);
+                  ]
+              );
+            (* 231 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:231L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 76L prods) ~dot:3L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (24L, Action.Reduce 76L);
+                    (25L, Action.Reduce 76L);
+                    (26L, Action.Reduce 76L);
+                    (31L, Action.Reduce 76L);
+                    (39L, Action.Reduce 76L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 232 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:232L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 80L prods) ~dot:3L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (39L, Action.ShiftPrefix 247L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 233 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:233L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 78L prods) ~dot:3L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.ShiftPrefix 72L);
+                    (3L, Action.ShiftPrefix 73L);
+                    (4L, Action.ShiftPrefix 74L);
+                    (5L, Action.ShiftPrefix 75L);
+                    (6L, Action.ShiftPrefix 76L);
+                    (7L, Action.ShiftPrefix 77L);
+                    (8L, Action.ShiftPrefix 78L);
+                    (9L, Action.ShiftPrefix 79L);
+                    (10L, Action.ShiftPrefix 80L);
+                    (11L, Action.ShiftPrefix 81L);
+                    (12L, Action.ShiftPrefix 82L);
+                    (13L, Action.ShiftPrefix 174L);
+                    (14L, Action.ShiftPrefix 175L);
+                    (30L, Action.ShiftPrefix 176L);
+                    (38L, Action.ShiftPrefix 177L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (42L, 178L);
+                    (65L, 179L);
+                    (66L, 248L);
+                  ]
+              );
+            (* 234 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:234L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 81L prods) ~dot:3L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.ShiftPrefix 72L);
+                    (3L, Action.ShiftPrefix 73L);
+                    (4L, Action.ShiftPrefix 74L);
+                    (5L, Action.ShiftPrefix 75L);
+                    (6L, Action.ShiftPrefix 76L);
+                    (7L, Action.ShiftPrefix 77L);
+                    (8L, Action.ShiftPrefix 78L);
+                    (9L, Action.ShiftPrefix 79L);
+                    (10L, Action.ShiftPrefix 80L);
+                    (11L, Action.ShiftPrefix 81L);
+                    (12L, Action.ShiftPrefix 82L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (42L, 181L);
+                    (62L, 182L);
+                    (63L, 249L);
+                  ]
+              );
+            (* 235 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:235L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 75L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 79L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 79L prods) ~dot:3L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (24L, Action.Reduce 79L);
+                    (25L, Action.Reduce 79L);
+                    (26L, Action.Reduce 79L);
+                    (31L, Action.Reduce 79L);
+                    (39L, Action.Reduce 79L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 236 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:236L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 75L prods) ~dot:3L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (24L, Action.Reduce 75L);
+                    (25L, Action.Reduce 75L);
+                    (26L, Action.Reduce 75L);
+                    (31L, Action.Reduce 75L);
+                    (39L, Action.Reduce 75L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 237 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:237L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 85L prods) ~dot:4L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (13L, Action.ShiftPrefix 207L);
+                    (15L, Action.ShiftPrefix 141L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (67L, 250L);
+                  ]
+              );
+            (* 238 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:238L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 65L prods) ~dot:3L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 75L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x80_0700_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 79L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x80_0700_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (24L, Action.ShiftPrefix 214L);
+                    (25L, Action.Reduce 65L);
+                    (26L, Action.ShiftPrefix 215L);
+                    (39L, Action.Reduce 65L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 239 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:239L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 67L prods) ~dot:3L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (25L, Action.Reduce 67L);
+                    (39L, Action.Reduce 67L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 240 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:240L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 68L prods) ~dot:3L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x80_0200_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (25L, Action.Reduce 68L);
+                    (39L, Action.Reduce 68L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 241 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:241L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 87L prods) ~dot:4L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (18L, Action.ShiftPrefix 251L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 242 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:242L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 75L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 79L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 86L prods) ~dot:4L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (24L, Action.ShiftPrefix 214L);
+                    (26L, Action.ShiftPrefix 215L);
+                    (31L, Action.ShiftPrefix 252L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 243 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:243L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 88L prods) ~dot:4L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (25L, Action.ShiftPrefix 219L);
+                    (39L, Action.Reduce 70L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (64L, 253L);
+                  ]
+              );
+            (* 244 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:244L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 97L prods) ~dot:3L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x2810_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (20L, Action.Reduce 97L);
+                    (27L, Action.Reduce 97L);
+                    (29L, Action.Reduce 97L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 245 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:245L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 34L prods) ~dot:3L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0xaa_a000_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (29L, Action.Reduce 34L);
+                    (31L, Action.Reduce 34L);
+                    (33L, Action.Reduce 34L);
+                    (35L, Action.Reduce 34L);
+                    (37L, Action.Reduce 34L);
+                    (39L, Action.Reduce 34L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 246 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:246L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 102L prods) ~dot:3L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x2800_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (27L, Action.Reduce 102L);
+                    (29L, Action.Reduce 102L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
             (* 247 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
                   ~index:247L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 80L prods) ~dot:4L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (24L, Action.Reduce 80L);
+                    (25L, Action.Reduce 80L);
+                    (26L, Action.Reduce 80L);
+                    (31L, Action.Reduce 80L);
+                    (39L, Action.Reduce 80L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 248 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:248L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 75L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 78L prods) ~dot:4L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 79L prods) ~dot:1L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x8500_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (24L, Action.ShiftPrefix 214L);
+                    (26L, Action.ShiftPrefix 215L);
+                    (31L, Action.ShiftPrefix 254L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 249 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:249L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 81L prods) ~dot:4L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x80_8700_0000n")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (25L, Action.ShiftPrefix 219L);
+                    (39L, Action.Reduce 70L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (64L, 255L);
+                  ]
+              );
+            (* 250 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:250L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 85L prods) ~dot:5L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (2L, Action.Reduce 85L);
+                    (3L, Action.Reduce 85L);
+                    (4L, Action.Reduce 85L);
+                    (5L, Action.Reduce 85L);
+                    (6L, Action.Reduce 85L);
+                    (7L, Action.Reduce 85L);
+                    (8L, Action.Reduce 85L);
+                    (9L, Action.Reduce 85L);
+                    (10L, Action.Reduce 85L);
+                    (11L, Action.Reduce 85L);
+                    (12L, Action.Reduce 85L);
+                    (13L, Action.Reduce 85L);
+                    (14L, Action.Reduce 85L);
+                    (15L, Action.Reduce 85L);
+                    (20L, Action.Reduce 85L);
+                    (21L, Action.Reduce 85L);
+                    (27L, Action.Reduce 85L);
+                    (29L, Action.Reduce 85L);
+                    (30L, Action.Reduce 85L);
+                    (38L, Action.Reduce 85L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 251 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:251L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 87L prods) ~dot:5L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (13L, Action.ShiftPrefix 207L);
+                    (15L, Action.ShiftPrefix 141L);
+                  ]
+              )
+              ~gotos:(
+                Map.of_alist (module Uns) [
+                    (67L, 256L);
+                  ]
+              );
+            (* 252 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:252L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 86L prods) ~dot:5L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (18L, Action.ShiftPrefix 257L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 253 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:253L
+                  ~kernel:(
+                    Lr1Itemset.init [
+                        (
+                            let lr0item = Lr0Item.init ~prod:(Array.get 88L prods) ~dot:5L in
+                            let lr1item = Lr1Item.init ~lr0item ~follow:(
+                                Bitset.of_nat (Nat.of_string "0x40_6830_fffcn")
+                              ) in
+                            lr0item, lr1item
+                          );
+                      ]
+                  )
+              )
+              ~actions:(
+                Map.of_alist (module Uns) [
+                    (39L, Action.ShiftPrefix 258L);
+                  ]
+              )
+              ~gotos:(
+                Map.empty (module Uns)
+              );
+            (* 254 *) State.init
+              ~lr1ItemsetClosure:(
+                Lr1ItemsetClosure.init
+                  ~index:254L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -12283,10 +12733,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 248 *) State.init
+            (* 255 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:248L
+                  ~index:255L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -12301,16 +12751,16 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (39L, Action.ShiftPrefix 253L);
+                    (39L, Action.ShiftPrefix 259L);
                   ]
               )
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 249 *) State.init
+            (* 256 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:249L
+                  ~index:256L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -12350,10 +12800,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 250 *) State.init
+            (* 257 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:250L
+                  ~index:257L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -12368,19 +12818,19 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (13L, Action.ShiftPrefix 158L);
-                    (15L, Action.ShiftPrefix 118L);
+                    (13L, Action.ShiftPrefix 207L);
+                    (15L, Action.ShiftPrefix 141L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (67L, 254L);
+                    (67L, 260L);
                   ]
               );
-            (* 251 *) State.init
+            (* 258 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:251L
+                  ~index:258L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -12395,51 +12845,16 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (18L, Action.ShiftPrefix 255L);
+                    (18L, Action.ShiftPrefix 261L);
                   ]
               )
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 252 *) State.init
+            (* 259 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:252L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 34L prods) ~dot:2L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0xaa_a000_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (21L, Action.ShiftPrefix 20L);
-                    (25L, Action.ShiftPrefix 24L);
-                    (27L, Action.ShiftPrefix 26L);
-                    (29L, Action.Reduce 35L);
-                    (31L, Action.Reduce 35L);
-                    (33L, Action.Reduce 35L);
-                    (35L, Action.Reduce 35L);
-                    (37L, Action.Reduce 35L);
-                    (39L, Action.Reduce 35L);
-                  ]
-              )
-              ~gotos:(
-                Map.of_alist (module Uns) [
-                    (54L, 238L);
-                    (55L, 256L);
-                  ]
-              );
-            (* 253 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:253L
+                  ~index:259L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -12464,10 +12879,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 254 *) State.init
+            (* 260 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:254L
+                  ~index:260L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -12507,10 +12922,10 @@ include struct
               ~gotos:(
                 Map.empty (module Uns)
               );
-            (* 255 *) State.init
+            (* 261 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:255L
+                  ~index:261L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -12525,48 +12940,19 @@ include struct
               )
               ~actions:(
                 Map.of_alist (module Uns) [
-                    (13L, Action.ShiftPrefix 158L);
-                    (15L, Action.ShiftPrefix 118L);
+                    (13L, Action.ShiftPrefix 207L);
+                    (15L, Action.ShiftPrefix 141L);
                   ]
               )
               ~gotos:(
                 Map.of_alist (module Uns) [
-                    (67L, 257L);
+                    (67L, 262L);
                   ]
               );
-            (* 256 *) State.init
+            (* 262 *) State.init
               ~lr1ItemsetClosure:(
                 Lr1ItemsetClosure.init
-                  ~index:256L
-                  ~kernel:(
-                    Lr1Itemset.init [
-                        (
-                            let lr0item = Lr0Item.init ~prod:(Array.get 34L prods) ~dot:3L in
-                            let lr1item = Lr1Item.init ~lr0item ~follow:(
-                                Bitset.of_nat (Nat.of_string "0xaa_a000_0000n")
-                              ) in
-                            lr0item, lr1item
-                          );
-                      ]
-                  )
-              )
-              ~actions:(
-                Map.of_alist (module Uns) [
-                    (29L, Action.Reduce 34L);
-                    (31L, Action.Reduce 34L);
-                    (33L, Action.Reduce 34L);
-                    (35L, Action.Reduce 34L);
-                    (37L, Action.Reduce 34L);
-                    (39L, Action.Reduce 34L);
-                  ]
-              )
-              ~gotos:(
-                Map.empty (module Uns)
-              );
-            (* 257 *) State.init
-              ~lr1ItemsetClosure:(
-                Lr1ItemsetClosure.init
-                  ~index:257L
+                  ~index:262L
                   ~kernel:(
                     Lr1Itemset.init [
                         (
@@ -12699,6 +13085,91 @@ include struct
               | OTHER_TOKEN _ -> 40L
               | EOI _ -> 41L
 
+            let protos = [|
+                EPSILON;
+                PSEUDO_END;
+#337 "./Parse.hmh"
+                HOCC proto_hocc;
+#338 "./Parse.hmh"
+                NONTERM proto_nonterm;
+#339 "./Parse.hmh"
+                EPSILON_ proto_epsilon;
+#340 "./Parse.hmh"
+                START proto_start;
+#341 "./Parse.hmh"
+                TOKEN proto_token;
+#342 "./Parse.hmh"
+                NEUTRAL proto_neutral;
+#343 "./Parse.hmh"
+                LEFT proto_left;
+#344 "./Parse.hmh"
+                RIGHT proto_right;
+#345 "./Parse.hmh"
+                NONASSOC proto_nonassoc;
+#346 "./Parse.hmh"
+                PREC proto_prec;
+#349 "./Parse.hmh"
+                UIDENT proto_uident;
+#351 "./Parse.hmh"
+                CIDENT proto_cident;
+#352 "./Parse.hmh"
+                USCORE proto_uscore;
+#355 "./Parse.hmh"
+                ISTRING proto_istring;
+#358 "./Parse.hmh"
+                COLON_COLON_EQ proto_colon_colon_eq;
+#359 "./Parse.hmh"
+                OF proto_of;
+#360 "./Parse.hmh"
+                COLON proto_colon;
+#362 "./Parse.hmh"
+                DOT proto_dot;
+#363 "./Parse.hmh"
+                ARROW proto_arrow;
+#364 "./Parse.hmh"
+                BAR proto_bar;
+#365 "./Parse.hmh"
+                LT proto_lt;
+#366 "./Parse.hmh"
+                EQ proto_eq;
+#368 "./Parse.hmh"
+                COMMA proto_comma;
+#370 "./Parse.hmh"
+                SEMI proto_semi;
+#372 "./Parse.hmh"
+                AS proto_as;
+#373 "./Parse.hmh"
+                LINE_DELIM proto_line_delim;
+#376 "./Parse.hmh"
+                INDENT proto_indent;
+#377 "./Parse.hmh"
+                DEDENT proto_dedent;
+#378 "./Parse.hmh"
+                LPAREN proto_lparen;
+#379 "./Parse.hmh"
+                RPAREN proto_rparen;
+#380 "./Parse.hmh"
+                LCAPTURE proto_lcapture;
+#381 "./Parse.hmh"
+                RCAPTURE proto_rcapture;
+#382 "./Parse.hmh"
+                LBRACK proto_lbrack;
+#383 "./Parse.hmh"
+                RBRACK proto_rbrack;
+#384 "./Parse.hmh"
+                LARRAY proto_larray;
+#385 "./Parse.hmh"
+                RARRAY proto_rarray;
+#386 "./Parse.hmh"
+                LCURLY proto_lcurly;
+#387 "./Parse.hmh"
+                RCURLY proto_rcurly;
+#390 "./Parse.hmh"
+                OTHER_TOKEN proto_other_token;
+#393 "./Parse.hmh"
+                EOI proto_eoi
+              |]
+
             let hash_fold t state =
                 state |> Uns.hash_fold (index t)
 
@@ -12727,9 +13198,9 @@ include struct
               | PrecSet of nonterm_prec_set
               | SymbolTypeQualifier of nonterm_symbol_type_qualifier
               | SymbolType of nonterm_symbol_type
-              | SymbolType0 of nonterm_symbol_type0
               | PrecRef of nonterm_prec_ref
-              | TokenAlias of nonterm_token_alias
+              | Alias of nonterm_alias
+              | TokenType of nonterm_token_type
               | Token of nonterm_token
               | Sep of nonterm_sep
               | CodesTl of nonterm_codes_tl
@@ -12777,9 +13248,9 @@ include struct
               | PrecSet _ -> 47L
               | SymbolTypeQualifier _ -> 48L
               | SymbolType _ -> 49L
-              | SymbolType0 _ -> 50L
-              | PrecRef _ -> 51L
-              | TokenAlias _ -> 52L
+              | PrecRef _ -> 50L
+              | Alias _ -> 51L
+              | TokenType _ -> 52L
               | Token _ -> 53L
               | Sep _ -> 54L
               | CodesTl _ -> 55L
@@ -12950,7 +13421,7 @@ include struct
                   | Elm.{symbol=Symbol.Token (HOCC (HOCC {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Uident (
                   (*______________________________________________________________________________*)
-#349 "./Parse.hmh"
+#407 "./Parse.hmh"
 Uident {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -12960,7 +13431,7 @@ Uident {token}
                   | Elm.{symbol=Symbol.Token (NONTERM (NONTERM {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Uident (
                   (*______________________________________________________________________________*)
-#349 "./Parse.hmh"
+#407 "./Parse.hmh"
 Uident {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -12970,7 +13441,7 @@ Uident {token}
                   | Elm.{symbol=Symbol.Token (EPSILON_ (EPSILON {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Uident (
                   (*______________________________________________________________________________*)
-#349 "./Parse.hmh"
+#407 "./Parse.hmh"
 Uident {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -12980,7 +13451,7 @@ Uident {token}
                   | Elm.{symbol=Symbol.Token (START (START {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Uident (
                   (*______________________________________________________________________________*)
-#349 "./Parse.hmh"
+#407 "./Parse.hmh"
 Uident {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -12990,7 +13461,7 @@ Uident {token}
                   | Elm.{symbol=Symbol.Token (TOKEN (TOKEN {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Uident (
                   (*______________________________________________________________________________*)
-#349 "./Parse.hmh"
+#407 "./Parse.hmh"
 Uident {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13000,7 +13471,7 @@ Uident {token}
                   | Elm.{symbol=Symbol.Token (NEUTRAL (NEUTRAL {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Uident (
                   (*______________________________________________________________________________*)
-#349 "./Parse.hmh"
+#407 "./Parse.hmh"
 Uident {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13010,7 +13481,7 @@ Uident {token}
                   | Elm.{symbol=Symbol.Token (LEFT (LEFT {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Uident (
                   (*______________________________________________________________________________*)
-#349 "./Parse.hmh"
+#407 "./Parse.hmh"
 Uident {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13020,7 +13491,7 @@ Uident {token}
                   | Elm.{symbol=Symbol.Token (RIGHT (RIGHT {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Uident (
                   (*______________________________________________________________________________*)
-#349 "./Parse.hmh"
+#407 "./Parse.hmh"
 Uident {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13030,7 +13501,7 @@ Uident {token}
                   | Elm.{symbol=Symbol.Token (NONASSOC (NONASSOC {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Uident (
                   (*______________________________________________________________________________*)
-#349 "./Parse.hmh"
+#407 "./Parse.hmh"
 Uident {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13040,7 +13511,7 @@ Uident {token}
                   | Elm.{symbol=Symbol.Token (PREC (PREC {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Uident (
                   (*______________________________________________________________________________*)
-#349 "./Parse.hmh"
+#407 "./Parse.hmh"
 Uident {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13050,7 +13521,7 @@ Uident {token}
                   | Elm.{symbol=Symbol.Token (UIDENT (UIDENT {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Uident (
                   (*______________________________________________________________________________*)
-#349 "./Parse.hmh"
+#407 "./Parse.hmh"
 Uident {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13062,7 +13533,7 @@ Uident {token}
                   :: _
                   :: tl__hocc__ -> Symbol.Nonterm (PrecsTl (
                   (*______________________________________________________________________________*)
-#352 "./Parse.hmh"
+#410 "./Parse.hmh"
 PrecsTlUident {uident=token; precs_tl}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13071,7 +13542,7 @@ PrecsTlUident {uident=token; precs_tl}
                 (* 12 *) (function
                   tl__hocc__ -> Symbol.Nonterm (PrecsTl (
                   (*______________________________________________________________________________*)
-#353 "./Parse.hmh"
+#411 "./Parse.hmh"
 PrecsTlEpsilon
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13081,7 +13552,7 @@ PrecsTlEpsilon
                   :: Elm.{symbol=Symbol.Nonterm (Uident (Uident {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Precs (
                   (*______________________________________________________________________________*)
-#356 "./Parse.hmh"
+#414 "./Parse.hmh"
 Precs {uident=token; precs_tl}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13092,7 +13563,7 @@ Precs {uident=token; precs_tl}
                   :: _
                   :: tl__hocc__ -> Symbol.Nonterm (PrecRels (
                   (*______________________________________________________________________________*)
-#359 "./Parse.hmh"
+#417 "./Parse.hmh"
 PrecRelsPrecs {precs}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13101,7 +13572,7 @@ PrecRelsPrecs {precs}
                 (* 15 *) (function
                   tl__hocc__ -> Symbol.Nonterm (PrecRels (
                   (*______________________________________________________________________________*)
-#360 "./Parse.hmh"
+#418 "./Parse.hmh"
 PrecRelsEpsilon
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13110,7 +13581,7 @@ PrecRelsEpsilon
                   | _
                   :: tl__hocc__ -> Symbol.Nonterm (PrecType (
                   (*______________________________________________________________________________*)
-#363 "./Parse.hmh"
+#421 "./Parse.hmh"
 PrecTypeNeutral
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13120,7 +13591,7 @@ PrecTypeNeutral
                   | _
                   :: tl__hocc__ -> Symbol.Nonterm (PrecType (
                   (*______________________________________________________________________________*)
-#364 "./Parse.hmh"
+#422 "./Parse.hmh"
 PrecTypeLeft
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13130,7 +13601,7 @@ PrecTypeLeft
                   | _
                   :: tl__hocc__ -> Symbol.Nonterm (PrecType (
                   (*______________________________________________________________________________*)
-#365 "./Parse.hmh"
+#423 "./Parse.hmh"
 PrecTypeRight
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13140,7 +13611,7 @@ PrecTypeRight
                   | _
                   :: tl__hocc__ -> Symbol.Nonterm (PrecType (
                   (*______________________________________________________________________________*)
-#366 "./Parse.hmh"
+#424 "./Parse.hmh"
 PrecTypeNonassoc
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13152,7 +13623,7 @@ PrecTypeNonassoc
                   :: Elm.{symbol=Symbol.Nonterm (PrecType prec_type); _}
                   :: tl__hocc__ -> Symbol.Nonterm (PrecSet (
                   (*______________________________________________________________________________*)
-#370 "./Parse.hmh"
+#428 "./Parse.hmh"
 PrecSet {prec_type; prec_set; prec_rels}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13164,7 +13635,7 @@ PrecSet {prec_type; prec_set; prec_rels}
                   :: Elm.{symbol=Symbol.Token (CIDENT cident); _}
                   :: tl__hocc__ -> Symbol.Nonterm (SymbolTypeQualifier (
                   (*______________________________________________________________________________*)
-#374 "./Parse.hmh"
+#432 "./Parse.hmh"
 SymbolTypeQualifier {cident; symbol_type_qualifier_tl}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13173,7 +13644,7 @@ SymbolTypeQualifier {cident; symbol_type_qualifier_tl}
                 (* 22 *) (function
                   tl__hocc__ -> Symbol.Nonterm (SymbolTypeQualifier (
                   (*______________________________________________________________________________*)
-#375 "./Parse.hmh"
+#433 "./Parse.hmh"
 SymbolTypeQualifierEpsilon
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13184,77 +13655,78 @@ SymbolTypeQualifierEpsilon
                   :: _
                   :: tl__hocc__ -> Symbol.Nonterm (SymbolType (
                   (*______________________________________________________________________________*)
-#379 "./Parse.hmh"
+#437 "./Parse.hmh"
 SymbolType {symbol_type_qualifier; symbol_type=token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 24 *) (function
-                  | Elm.{symbol=Symbol.Nonterm (SymbolType symbol_type); _}
-                  :: tl__hocc__ -> Symbol.Nonterm (SymbolType0 (
-                  (*______________________________________________________________________________*)
-#382 "./Parse.hmh"
-SymbolType0SymbolType {symbol_type}
-                  (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
-                  )), tl__hocc__
-                  | _ -> not_reached ()
-                );
-                (* 25 *) (function
-                  tl__hocc__ -> Symbol.Nonterm (SymbolType0 (
-                  (*______________________________________________________________________________*)
-#383 "./Parse.hmh"
-SymbolType0Epsilon
-                  (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
-                  )), tl__hocc__
-                );
-                (* 26 *) (function
                   | Elm.{symbol=Symbol.Nonterm (Uident (Uident {token})); _}
                   :: _
                   :: tl__hocc__ -> Symbol.Nonterm (PrecRef (
                   (*______________________________________________________________________________*)
-#386 "./Parse.hmh"
+#440 "./Parse.hmh"
 PrecRefUident {uident=token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
-                (* 27 *) (function
+                (* 25 *) (function
                   tl__hocc__ -> Symbol.Nonterm (PrecRef (
                   (*______________________________________________________________________________*)
-#387 "./Parse.hmh"
+#441 "./Parse.hmh"
 PrecRefEpsilon
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                 );
-                (* 28 *) (function
+                (* 26 *) (function
                   | Elm.{symbol=Symbol.Token (ISTRING alias); _}
-                  :: tl__hocc__ -> Symbol.Nonterm (TokenAlias (
+                  :: tl__hocc__ -> Symbol.Nonterm (Alias (
                   (*______________________________________________________________________________*)
-#390 "./Parse.hmh"
-TokenAlias {alias}
+#444 "./Parse.hmh"
+Alias {alias}
+                  (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
+                  )), tl__hocc__
+                  | _ -> not_reached ()
+                );
+                (* 27 *) (function
+                  tl__hocc__ -> Symbol.Nonterm (Alias (
+                  (*______________________________________________________________________________*)
+#445 "./Parse.hmh"
+AliasEpsilon
+                  (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
+                  )), tl__hocc__
+                );
+                (* 28 *) (function
+                  | Elm.{symbol=Symbol.Nonterm (Code proto); _}
+                  :: Elm.{symbol=Symbol.Nonterm (SymbolType symbol_type); _}
+                  :: tl__hocc__ -> Symbol.Nonterm (TokenType (
+                  (*______________________________________________________________________________*)
+#448 "./Parse.hmh"
+TokenType {symbol_type; proto}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
                 );
                 (* 29 *) (function
-                  tl__hocc__ -> Symbol.Nonterm (TokenAlias (
+                  tl__hocc__ -> Symbol.Nonterm (TokenType (
                   (*______________________________________________________________________________*)
-#391 "./Parse.hmh"
-TokenAliasEpsilon
+#449 "./Parse.hmh"
+TokenTypeEpsilon
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                 );
                 (* 30 *) (function
                   | Elm.{symbol=Symbol.Nonterm (PrecRef prec_ref); _}
-                  :: Elm.{symbol=Symbol.Nonterm (SymbolType0 symbol_type0); _}
-                  :: Elm.{symbol=Symbol.Nonterm (TokenAlias token_alias); _}
+                  :: Elm.{symbol=Symbol.Nonterm (TokenType token_type); _}
+                  :: Elm.{symbol=Symbol.Nonterm (Alias alias); _}
                   :: Elm.{symbol=Symbol.Token (CIDENT cident); _}
                   :: _
                   :: tl__hocc__ -> Symbol.Nonterm (Token (
                   (*______________________________________________________________________________*)
-#395 "./Parse.hmh"
-Token {cident; token_alias; symbol_type0; prec_ref}
+#453 "./Parse.hmh"
+Token {cident; alias; token_type; prec_ref}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
                   | _ -> not_reached ()
@@ -13263,7 +13735,7 @@ Token {cident; token_alias; symbol_type0; prec_ref}
                   | Elm.{symbol=Symbol.Token (LINE_DELIM line_delim); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Sep (
                   (*______________________________________________________________________________*)
-#398 "./Parse.hmh"
+#456 "./Parse.hmh"
 SepLineDelim {line_delim}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13273,7 +13745,7 @@ SepLineDelim {line_delim}
                   | Elm.{symbol=Symbol.Token (SEMI semi); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Sep (
                   (*______________________________________________________________________________*)
-#399 "./Parse.hmh"
+#457 "./Parse.hmh"
 SepSemi {semi}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13283,7 +13755,7 @@ SepSemi {semi}
                   | Elm.{symbol=Symbol.Token (BAR bar); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Sep (
                   (*______________________________________________________________________________*)
-#400 "./Parse.hmh"
+#458 "./Parse.hmh"
 SepBar {bar}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13295,7 +13767,7 @@ SepBar {bar}
                   :: Elm.{symbol=Symbol.Nonterm (Sep sep); _}
                   :: tl__hocc__ -> Symbol.Nonterm (CodesTl (
                   (*______________________________________________________________________________*)
-#403 "./Parse.hmh"
+#461 "./Parse.hmh"
 CodesTlSepCode {sep; code; codes_tl}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13304,7 +13776,7 @@ CodesTlSepCode {sep; code; codes_tl}
                 (* 35 *) (function
                   tl__hocc__ -> Symbol.Nonterm (CodesTl (
                   (*______________________________________________________________________________*)
-#404 "./Parse.hmh"
+#462 "./Parse.hmh"
 CodesTlEpsilon
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13314,7 +13786,7 @@ CodesTlEpsilon
                   :: Elm.{symbol=Symbol.Nonterm (Code code); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Codes (
                   (*______________________________________________________________________________*)
-#407 "./Parse.hmh"
+#465 "./Parse.hmh"
 Codes {code; codes_tl}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13324,7 +13796,7 @@ Codes {code; codes_tl}
                   | Elm.{symbol=Symbol.Nonterm (Codes codes); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Codes0 (
                   (*______________________________________________________________________________*)
-#410 "./Parse.hmh"
+#468 "./Parse.hmh"
 Codes0Codes {codes}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13333,7 +13805,7 @@ Codes0Codes {codes}
                 (* 38 *) (function
                   tl__hocc__ -> Symbol.Nonterm (Codes0 (
                   (*______________________________________________________________________________*)
-#411 "./Parse.hmh"
+#469 "./Parse.hmh"
 Codes0Epsilon
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13344,7 +13816,7 @@ Codes0Epsilon
                   :: Elm.{symbol=Symbol.Token (INDENT indent); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Delimited (
                   (*______________________________________________________________________________*)
-#414 "./Parse.hmh"
+#472 "./Parse.hmh"
 DelimitedBlock {indent; codes; dedent}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13356,7 +13828,7 @@ DelimitedBlock {indent; codes; dedent}
                   :: Elm.{symbol=Symbol.Token (LPAREN lparen); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Delimited (
                   (*______________________________________________________________________________*)
-#415 "./Parse.hmh"
+#473 "./Parse.hmh"
 DelimitedParen {lparen; codes0; rparen}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13368,7 +13840,7 @@ DelimitedParen {lparen; codes0; rparen}
                   :: Elm.{symbol=Symbol.Token (LCAPTURE lcapture); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Delimited (
                   (*______________________________________________________________________________*)
-#416 "./Parse.hmh"
+#474 "./Parse.hmh"
 DelimitedCapture {lcapture; codes0; rcapture}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13380,7 +13852,7 @@ DelimitedCapture {lcapture; codes0; rcapture}
                   :: Elm.{symbol=Symbol.Token (LBRACK lbrack); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Delimited (
                   (*______________________________________________________________________________*)
-#417 "./Parse.hmh"
+#475 "./Parse.hmh"
 DelimitedList {lbrack; codes0; rbrack}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13392,7 +13864,7 @@ DelimitedList {lbrack; codes0; rbrack}
                   :: Elm.{symbol=Symbol.Token (LARRAY larray); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Delimited (
                   (*______________________________________________________________________________*)
-#418 "./Parse.hmh"
+#476 "./Parse.hmh"
 DelimitedArray {larray; codes0; rarray}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13404,7 +13876,7 @@ DelimitedArray {larray; codes0; rarray}
                   :: Elm.{symbol=Symbol.Token (LCURLY lcurly); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Delimited (
                   (*______________________________________________________________________________*)
-#419 "./Parse.hmh"
+#477 "./Parse.hmh"
 DelimitedModule {lcurly; codes0; rcurly}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13414,7 +13886,7 @@ DelimitedModule {lcurly; codes0; rcurly}
                   | Elm.{symbol=Symbol.Token (OTHER_TOKEN (OTHER_TOKEN {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (CodeToken (
                   (*______________________________________________________________________________*)
-#436 "./Parse.hmh"
+#494 "./Parse.hmh"
 CodeToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13424,7 +13896,7 @@ CodeToken {token}
                   | Elm.{symbol=Symbol.Nonterm (Uident (Uident {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (CodeToken (
                   (*______________________________________________________________________________*)
-#436 "./Parse.hmh"
+#494 "./Parse.hmh"
 CodeToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13434,7 +13906,7 @@ CodeToken {token}
                   | Elm.{symbol=Symbol.Token (CIDENT (CIDENT {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (CodeToken (
                   (*______________________________________________________________________________*)
-#436 "./Parse.hmh"
+#494 "./Parse.hmh"
 CodeToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13444,7 +13916,7 @@ CodeToken {token}
                   | Elm.{symbol=Symbol.Token (USCORE (USCORE {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (CodeToken (
                   (*______________________________________________________________________________*)
-#436 "./Parse.hmh"
+#494 "./Parse.hmh"
 CodeToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13454,7 +13926,7 @@ CodeToken {token}
                   | Elm.{symbol=Symbol.Token (ISTRING (ISTRING {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (CodeToken (
                   (*______________________________________________________________________________*)
-#436 "./Parse.hmh"
+#494 "./Parse.hmh"
 CodeToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13464,7 +13936,7 @@ CodeToken {token}
                   | Elm.{symbol=Symbol.Token (COLON_COLON_EQ (COLON_COLON_EQ {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (CodeToken (
                   (*______________________________________________________________________________*)
-#436 "./Parse.hmh"
+#494 "./Parse.hmh"
 CodeToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13474,7 +13946,7 @@ CodeToken {token}
                   | Elm.{symbol=Symbol.Token (AS (AS {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (CodeToken (
                   (*______________________________________________________________________________*)
-#436 "./Parse.hmh"
+#494 "./Parse.hmh"
 CodeToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13484,7 +13956,7 @@ CodeToken {token}
                   | Elm.{symbol=Symbol.Token (OF (OF {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (CodeToken (
                   (*______________________________________________________________________________*)
-#436 "./Parse.hmh"
+#494 "./Parse.hmh"
 CodeToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13494,7 +13966,7 @@ CodeToken {token}
                   | Elm.{symbol=Symbol.Token (COLON (COLON {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (CodeToken (
                   (*______________________________________________________________________________*)
-#436 "./Parse.hmh"
+#494 "./Parse.hmh"
 CodeToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13504,7 +13976,7 @@ CodeToken {token}
                   | Elm.{symbol=Symbol.Token (DOT (DOT {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (CodeToken (
                   (*______________________________________________________________________________*)
-#436 "./Parse.hmh"
+#494 "./Parse.hmh"
 CodeToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13514,7 +13986,7 @@ CodeToken {token}
                   | Elm.{symbol=Symbol.Token (ARROW (ARROW {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (CodeToken (
                   (*______________________________________________________________________________*)
-#436 "./Parse.hmh"
+#494 "./Parse.hmh"
 CodeToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13524,7 +13996,7 @@ CodeToken {token}
                   | Elm.{symbol=Symbol.Token (LT (LT {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (CodeToken (
                   (*______________________________________________________________________________*)
-#436 "./Parse.hmh"
+#494 "./Parse.hmh"
 CodeToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13534,7 +14006,7 @@ CodeToken {token}
                   | Elm.{symbol=Symbol.Token (EQ (EQ {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (CodeToken (
                   (*______________________________________________________________________________*)
-#436 "./Parse.hmh"
+#494 "./Parse.hmh"
 CodeToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13544,7 +14016,7 @@ CodeToken {token}
                   | Elm.{symbol=Symbol.Token (COMMA (COMMA {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (CodeToken (
                   (*______________________________________________________________________________*)
-#436 "./Parse.hmh"
+#494 "./Parse.hmh"
 CodeToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13555,7 +14027,7 @@ CodeToken {token}
                   :: Elm.{symbol=Symbol.Nonterm (Delimited delimited); _}
                   :: tl__hocc__ -> Symbol.Nonterm (CodeTl (
                   (*______________________________________________________________________________*)
-#439 "./Parse.hmh"
+#497 "./Parse.hmh"
 CodeTlDelimited {delimited; code_tl}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13566,7 +14038,7 @@ CodeTlDelimited {delimited; code_tl}
                   :: Elm.{symbol=Symbol.Nonterm (CodeToken code_token); _}
                   :: tl__hocc__ -> Symbol.Nonterm (CodeTl (
                   (*______________________________________________________________________________*)
-#440 "./Parse.hmh"
+#498 "./Parse.hmh"
 CodeTlCodeToken {code_token; code_tl}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13575,7 +14047,7 @@ CodeTlCodeToken {code_token; code_tl}
                 (* 61 *) (function
                   tl__hocc__ -> Symbol.Nonterm (CodeTl (
                   (*______________________________________________________________________________*)
-#441 "./Parse.hmh"
+#499 "./Parse.hmh"
 CodeTlEpsilon
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13585,7 +14057,7 @@ CodeTlEpsilon
                   :: Elm.{symbol=Symbol.Nonterm (Delimited delimited); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Code (
                   (*______________________________________________________________________________*)
-#444 "./Parse.hmh"
+#502 "./Parse.hmh"
 CodeDelimited {delimited; code_tl}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13596,7 +14068,7 @@ CodeDelimited {delimited; code_tl}
                   :: Elm.{symbol=Symbol.Nonterm (CodeToken code_token); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Code (
                   (*______________________________________________________________________________*)
-#445 "./Parse.hmh"
+#503 "./Parse.hmh"
 CodeCodeToken {code_token; code_tl}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13606,7 +14078,7 @@ CodeCodeToken {code_token; code_tl}
                   | Elm.{symbol=Symbol.Nonterm (Uident binding); _}
                   :: tl__hocc__ -> Symbol.Nonterm (PatternField (
                   (*______________________________________________________________________________*)
-#448 "./Parse.hmh"
+#506 "./Parse.hmh"
 PatternFieldBinding {binding}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13618,7 +14090,7 @@ PatternFieldBinding {binding}
                   :: _
                   :: tl__hocc__ -> Symbol.Nonterm (PatternField (
                   (*______________________________________________________________________________*)
-#449 "./Parse.hmh"
+#507 "./Parse.hmh"
 PatternFieldPattern {pattern}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13628,7 +14100,7 @@ PatternFieldPattern {pattern}
                   | Elm.{symbol=Symbol.Nonterm (PatternField field); _}
                   :: tl__hocc__ -> Symbol.Nonterm (PatternFields (
                   (*______________________________________________________________________________*)
-#454 "./Parse.hmh"
+#512 "./Parse.hmh"
 PatternFieldsOne {field}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13640,7 +14112,7 @@ PatternFieldsOne {field}
                   :: Elm.{symbol=Symbol.Nonterm (PatternField field); _}
                   :: tl__hocc__ -> Symbol.Nonterm (PatternFields (
                   (*______________________________________________________________________________*)
-#454 "./Parse.hmh"
+#512 "./Parse.hmh"
 PatternFieldsOne {field}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13652,7 +14124,7 @@ PatternFieldsOne {field}
                   :: Elm.{symbol=Symbol.Nonterm (PatternField field); _}
                   :: tl__hocc__ -> Symbol.Nonterm (PatternFields (
                   (*______________________________________________________________________________*)
-#456 "./Parse.hmh"
+#514 "./Parse.hmh"
 PatternFieldsMulti {field; fields}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13662,7 +14134,7 @@ PatternFieldsMulti {field; fields}
                   | _
                   :: tl__hocc__ -> Symbol.Nonterm (SemiSuffix (
                   (*______________________________________________________________________________*)
-#461 "./Parse.hmh"
+#519 "./Parse.hmh"
 SemiSuffix
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13671,7 +14143,7 @@ SemiSuffix
                 (* 70 *) (function
                   tl__hocc__ -> Symbol.Nonterm (SemiSuffix (
                   (*______________________________________________________________________________*)
-#461 "./Parse.hmh"
+#519 "./Parse.hmh"
 SemiSuffix
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13680,7 +14152,7 @@ SemiSuffix
                   | _
                   :: tl__hocc__ -> Symbol.Nonterm (ModulePath (
                   (*______________________________________________________________________________*)
-#466 "./Parse.hmh"
+#524 "./Parse.hmh"
 ModulePath
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13692,7 +14164,7 @@ ModulePath
                   :: _
                   :: tl__hocc__ -> Symbol.Nonterm (ModulePath (
                   (*______________________________________________________________________________*)
-#466 "./Parse.hmh"
+#524 "./Parse.hmh"
 ModulePath
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13702,7 +14174,7 @@ ModulePath
                   | _
                   :: tl__hocc__ -> Symbol.Nonterm (Pattern (
                   (*______________________________________________________________________________*)
-#470 "./Parse.hmh"
+#528 "./Parse.hmh"
 PatternUscore
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13712,7 +14184,7 @@ PatternUscore
                   | Elm.{symbol=Symbol.Nonterm (Uident binding); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Pattern (
                   (*______________________________________________________________________________*)
-#473 "./Parse.hmh"
+#531 "./Parse.hmh"
 PatternBinding {binding}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13724,7 +14196,7 @@ PatternBinding {binding}
                   :: _
                   :: tl__hocc__ -> Symbol.Nonterm (Pattern (
                   (*______________________________________________________________________________*)
-#473 "./Parse.hmh"
+#531 "./Parse.hmh"
 PatternBinding {binding}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13736,7 +14208,7 @@ PatternBinding {binding}
                   :: _
                   :: tl__hocc__ -> Symbol.Nonterm (Pattern (
                   (*______________________________________________________________________________*)
-#477 "./Parse.hmh"
+#535 "./Parse.hmh"
 PatternPattern {pattern}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13747,7 +14219,7 @@ PatternPattern {pattern}
                   :: _
                   :: tl__hocc__ -> Symbol.Nonterm (Pattern (
                   (*______________________________________________________________________________*)
-#477 "./Parse.hmh"
+#535 "./Parse.hmh"
 PatternPattern {pattern}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13761,7 +14233,7 @@ PatternPattern {pattern}
                   :: _
                   :: tl__hocc__ -> Symbol.Nonterm (Pattern (
                   (*______________________________________________________________________________*)
-#477 "./Parse.hmh"
+#535 "./Parse.hmh"
 PatternPattern {pattern}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13773,7 +14245,7 @@ PatternPattern {pattern}
                   :: Elm.{symbol=Symbol.Nonterm (Pattern pattern_a); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Pattern (
                   (*______________________________________________________________________________*)
-#479 "./Parse.hmh"
+#537 "./Parse.hmh"
 PatternComma {pattern_a; pattern_b}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13786,7 +14258,7 @@ PatternComma {pattern_a; pattern_b}
                   :: _
                   :: tl__hocc__ -> Symbol.Nonterm (Pattern (
                   (*______________________________________________________________________________*)
-#482 "./Parse.hmh"
+#540 "./Parse.hmh"
 PatternFields {fields}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13801,7 +14273,7 @@ PatternFields {fields}
                   :: _
                   :: tl__hocc__ -> Symbol.Nonterm (Pattern (
                   (*______________________________________________________________________________*)
-#482 "./Parse.hmh"
+#540 "./Parse.hmh"
 PatternFields {fields}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13811,7 +14283,7 @@ PatternFields {fields}
                   | Elm.{symbol=Symbol.Token (CIDENT cident); _}
                   :: tl__hocc__ -> Symbol.Nonterm (ProdParamSymbol (
                   (*______________________________________________________________________________*)
-#485 "./Parse.hmh"
+#543 "./Parse.hmh"
 ProdParamSymbolCident {cident}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13821,7 +14293,7 @@ ProdParamSymbolCident {cident}
                   | Elm.{symbol=Symbol.Token (ISTRING alias); _}
                   :: tl__hocc__ -> Symbol.Nonterm (ProdParamSymbol (
                   (*______________________________________________________________________________*)
-#486 "./Parse.hmh"
+#544 "./Parse.hmh"
 ProdParamSymbolAlias {alias}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13833,7 +14305,7 @@ ProdParamSymbolAlias {alias}
                   :: Elm.{symbol=Symbol.Nonterm (Uident binding); _}
                   :: tl__hocc__ -> Symbol.Nonterm (ProdParam (
                   (*______________________________________________________________________________*)
-#490 "./Parse.hmh"
+#548 "./Parse.hmh"
 ProdParamBinding {binding; prod_param_symbol}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13847,7 +14319,7 @@ ProdParamBinding {binding; prod_param_symbol}
                   :: Elm.{symbol=Symbol.Token (LPAREN lparen); _}
                   :: tl__hocc__ -> Symbol.Nonterm (ProdParam (
                   (*______________________________________________________________________________*)
-#493 "./Parse.hmh"
+#551 "./Parse.hmh"
 ProdParamPattern {lparen; pattern; rparen; prod_param_symbol}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13863,7 +14335,7 @@ ProdParamPattern {lparen; pattern; rparen; prod_param_symbol}
                   :: _
                   :: tl__hocc__ -> Symbol.Nonterm (ProdParam (
                   (*______________________________________________________________________________*)
-#493 "./Parse.hmh"
+#551 "./Parse.hmh"
 ProdParamPattern {lparen; pattern; rparen; prod_param_symbol}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13878,7 +14350,7 @@ ProdParamPattern {lparen; pattern; rparen; prod_param_symbol}
                   :: Elm.{symbol=Symbol.Token (LCURLY lcurly); _}
                   :: tl__hocc__ -> Symbol.Nonterm (ProdParam (
                   (*______________________________________________________________________________*)
-#497 "./Parse.hmh"
+#555 "./Parse.hmh"
 ProdParamFields {lcurly; fields; rcurly; prod_param_symbol}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13895,7 +14367,7 @@ ProdParamFields {lcurly; fields; rcurly; prod_param_symbol}
                   :: _
                   :: tl__hocc__ -> Symbol.Nonterm (ProdParam (
                   (*______________________________________________________________________________*)
-#497 "./Parse.hmh"
+#555 "./Parse.hmh"
 ProdParamFields {lcurly; fields; rcurly; prod_param_symbol}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13907,7 +14379,7 @@ ProdParamFields {lcurly; fields; rcurly; prod_param_symbol}
                   :: _
                   :: tl__hocc__ -> Symbol.Nonterm (ProdParam (
                   (*______________________________________________________________________________*)
-#500 "./Parse.hmh"
+#558 "./Parse.hmh"
 ProdParam {prod_param_symbol}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13917,7 +14389,7 @@ ProdParam {prod_param_symbol}
                   | Elm.{symbol=Symbol.Nonterm (ProdParamSymbol prod_param_symbol); _}
                   :: tl__hocc__ -> Symbol.Nonterm (ProdParam (
                   (*______________________________________________________________________________*)
-#500 "./Parse.hmh"
+#558 "./Parse.hmh"
 ProdParam {prod_param_symbol}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13928,7 +14400,7 @@ ProdParam {prod_param_symbol}
                   :: Elm.{symbol=Symbol.Nonterm (ProdParam prod_param); _}
                   :: tl__hocc__ -> Symbol.Nonterm (ProdParamsTl (
                   (*______________________________________________________________________________*)
-#504 "./Parse.hmh"
+#562 "./Parse.hmh"
 ProdParamsTlProdParam {prod_param; prod_params_tl}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13938,7 +14410,7 @@ ProdParamsTlProdParam {prod_param; prod_params_tl}
                   | Elm.{symbol=Symbol.Nonterm (PrecRef prec_ref); _}
                   :: tl__hocc__ -> Symbol.Nonterm (ProdParamsTl (
                   (*______________________________________________________________________________*)
-#505 "./Parse.hmh"
+#563 "./Parse.hmh"
 ProdParamsTlPrecRef {prec_ref}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13949,7 +14421,7 @@ ProdParamsTlPrecRef {prec_ref}
                   :: Elm.{symbol=Symbol.Nonterm (ProdParam prod_param); _}
                   :: tl__hocc__ -> Symbol.Nonterm (ProdParams (
                   (*______________________________________________________________________________*)
-#509 "./Parse.hmh"
+#567 "./Parse.hmh"
 ProdParamsProdParam {prod_param; prod_params_tl}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13959,7 +14431,7 @@ ProdParamsProdParam {prod_param; prod_params_tl}
                   | Elm.{symbol=Symbol.Nonterm (ProdParams prod_params); _}
                   :: tl__hocc__ -> Symbol.Nonterm (ProdPattern (
                   (*______________________________________________________________________________*)
-#512 "./Parse.hmh"
+#570 "./Parse.hmh"
 ProdPatternParams {prod_params}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13970,7 +14442,7 @@ ProdPatternParams {prod_params}
                   :: Elm.{symbol=Symbol.Token (EPSILON_ epsilon); _}
                   :: tl__hocc__ -> Symbol.Nonterm (ProdPattern (
                   (*______________________________________________________________________________*)
-#513 "./Parse.hmh"
+#571 "./Parse.hmh"
 ProdPatternEpsilon {epsilon; prec_ref}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13980,7 +14452,7 @@ ProdPatternEpsilon {epsilon; prec_ref}
                   | Elm.{symbol=Symbol.Nonterm (ProdPattern prod_pattern); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Prod (
                   (*______________________________________________________________________________*)
-#516 "./Parse.hmh"
+#574 "./Parse.hmh"
 Prod {prod_pattern}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -13992,7 +14464,7 @@ Prod {prod_pattern}
                   :: _
                   :: tl__hocc__ -> Symbol.Nonterm (ProdsTl (
                   (*______________________________________________________________________________*)
-#519 "./Parse.hmh"
+#577 "./Parse.hmh"
 ProdsTlProd {prod; prods_tl}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14001,7 +14473,7 @@ ProdsTlProd {prod; prods_tl}
                 (* 98 *) (function
                   tl__hocc__ -> Symbol.Nonterm (ProdsTl (
                   (*______________________________________________________________________________*)
-#520 "./Parse.hmh"
+#578 "./Parse.hmh"
 ProdsTlEpsilon
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14012,7 +14484,7 @@ ProdsTlEpsilon
                   :: _
                   :: tl__hocc__ -> Symbol.Nonterm (Prods (
                   (*______________________________________________________________________________*)
-#524 "./Parse.hmh"
+#582 "./Parse.hmh"
 ProdsProd {prod; prods_tl}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14023,7 +14495,7 @@ ProdsProd {prod; prods_tl}
                   :: Elm.{symbol=Symbol.Nonterm (Prod prod); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Prods (
                   (*______________________________________________________________________________*)
-#524 "./Parse.hmh"
+#582 "./Parse.hmh"
 ProdsProd {prod; prods_tl}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14035,7 +14507,7 @@ ProdsProd {prod; prods_tl}
                   :: Elm.{symbol=Symbol.Nonterm (Prods prods); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Reduction (
                   (*______________________________________________________________________________*)
-#527 "./Parse.hmh"
+#585 "./Parse.hmh"
 Reduction {prods; code}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14047,7 +14519,7 @@ Reduction {prods; code}
                   :: _
                   :: tl__hocc__ -> Symbol.Nonterm (ReductionsTl (
                   (*______________________________________________________________________________*)
-#531 "./Parse.hmh"
+#589 "./Parse.hmh"
 ReductionsTlReduction {reduction; reductions_tl}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14056,7 +14528,7 @@ ReductionsTlReduction {reduction; reductions_tl}
                 (* 103 *) (function
                   tl__hocc__ -> Symbol.Nonterm (ReductionsTl (
                   (*______________________________________________________________________________*)
-#532 "./Parse.hmh"
+#590 "./Parse.hmh"
 ReductionsTlEpsilon
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14066,7 +14538,7 @@ ReductionsTlEpsilon
                   :: Elm.{symbol=Symbol.Nonterm (Reduction reduction); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Reductions (
                   (*______________________________________________________________________________*)
-#536 "./Parse.hmh"
+#594 "./Parse.hmh"
 ReductionsReduction {reduction; reductions_tl}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14076,7 +14548,7 @@ ReductionsReduction {reduction; reductions_tl}
                   | _
                   :: tl__hocc__ -> Symbol.Nonterm (NontermType (
                   (*______________________________________________________________________________*)
-#539 "./Parse.hmh"
+#597 "./Parse.hmh"
 NontermTypeNonterm
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14086,7 +14558,7 @@ NontermTypeNonterm
                   | _
                   :: tl__hocc__ -> Symbol.Nonterm (NontermType (
                   (*______________________________________________________________________________*)
-#540 "./Parse.hmh"
+#598 "./Parse.hmh"
 NontermTypeStart
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14100,7 +14572,7 @@ NontermTypeStart
                   :: Elm.{symbol=Symbol.Nonterm (NontermType nonterm_type); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Nonterm (
                   (*______________________________________________________________________________*)
-#544 "./Parse.hmh"
+#602 "./Parse.hmh"
 NontermProds {nonterm_type; cident; prec_ref; prods}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14115,7 +14587,7 @@ NontermProds {nonterm_type; cident; prec_ref; prods}
                   :: Elm.{symbol=Symbol.Nonterm (NontermType nonterm_type); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Nonterm (
                   (*______________________________________________________________________________*)
-#547 "./Parse.hmh"
+#605 "./Parse.hmh"
 NontermReductions {nonterm_type; cident; symbol_type; prec_ref; reductions}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14125,7 +14597,7 @@ NontermReductions {nonterm_type; cident; symbol_type; prec_ref; reductions}
                   | Elm.{symbol=Symbol.Nonterm (PrecSet prec_set); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Stmt (
                   (*______________________________________________________________________________*)
-#550 "./Parse.hmh"
+#608 "./Parse.hmh"
 StmtPrecSet {prec_set}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14135,7 +14607,7 @@ StmtPrecSet {prec_set}
                   | Elm.{symbol=Symbol.Nonterm (Token token); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Stmt (
                   (*______________________________________________________________________________*)
-#551 "./Parse.hmh"
+#609 "./Parse.hmh"
 StmtToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14145,7 +14617,7 @@ StmtToken {token}
                   | Elm.{symbol=Symbol.Nonterm (Nonterm nonterm); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Stmt (
                   (*______________________________________________________________________________*)
-#552 "./Parse.hmh"
+#610 "./Parse.hmh"
 StmtNonterm {nonterm}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14157,7 +14629,7 @@ StmtNonterm {nonterm}
                   :: _
                   :: tl__hocc__ -> Symbol.Nonterm (StmtsTl (
                   (*______________________________________________________________________________*)
-#555 "./Parse.hmh"
+#613 "./Parse.hmh"
 StmtsTl {stmt; stmts_tl}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14166,7 +14638,7 @@ StmtsTl {stmt; stmts_tl}
                 (* 113 *) (function
                   tl__hocc__ -> Symbol.Nonterm (StmtsTl (
                   (*______________________________________________________________________________*)
-#556 "./Parse.hmh"
+#614 "./Parse.hmh"
 StmtsTlEpsilon
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14176,7 +14648,7 @@ StmtsTlEpsilon
                   :: Elm.{symbol=Symbol.Nonterm (Stmt stmt); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Stmts (
                   (*______________________________________________________________________________*)
-#559 "./Parse.hmh"
+#617 "./Parse.hmh"
 Stmts {stmt; stmts_tl}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14189,7 +14661,7 @@ Stmts {stmt; stmts_tl}
                   :: Elm.{symbol=Symbol.Token (HOCC hocc_); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Hocc (
                   (*______________________________________________________________________________*)
-#562 "./Parse.hmh"
+#620 "./Parse.hmh"
 Hocc {hocc_; indent; stmts; dedent}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14199,7 +14671,7 @@ Hocc {hocc_; indent; stmts; dedent}
                   | Elm.{symbol=Symbol.Nonterm (Sep sep); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#567 "./Parse.hmh"
+#625 "./Parse.hmh"
 let token = match sep with
           | SepLineDelim {line_delim=LINE_DELIM {token}}
           | SepSemi {semi=SEMI {token}}
@@ -14215,7 +14687,7 @@ let token = match sep with
                   | Elm.{symbol=Symbol.Token (NONTERM (NONTERM {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#609 "./Parse.hmh"
+#667 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14225,7 +14697,7 @@ MatterToken {token}
                   | Elm.{symbol=Symbol.Token (EPSILON_ (EPSILON {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#609 "./Parse.hmh"
+#667 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14235,7 +14707,7 @@ MatterToken {token}
                   | Elm.{symbol=Symbol.Token (START (START {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#609 "./Parse.hmh"
+#667 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14245,7 +14717,7 @@ MatterToken {token}
                   | Elm.{symbol=Symbol.Token (TOKEN (TOKEN {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#609 "./Parse.hmh"
+#667 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14255,7 +14727,7 @@ MatterToken {token}
                   | Elm.{symbol=Symbol.Token (NEUTRAL (NEUTRAL {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#609 "./Parse.hmh"
+#667 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14265,7 +14737,7 @@ MatterToken {token}
                   | Elm.{symbol=Symbol.Token (LEFT (LEFT {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#609 "./Parse.hmh"
+#667 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14275,7 +14747,7 @@ MatterToken {token}
                   | Elm.{symbol=Symbol.Token (RIGHT (RIGHT {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#609 "./Parse.hmh"
+#667 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14285,7 +14757,7 @@ MatterToken {token}
                   | Elm.{symbol=Symbol.Token (NONASSOC (NONASSOC {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#609 "./Parse.hmh"
+#667 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14295,7 +14767,7 @@ MatterToken {token}
                   | Elm.{symbol=Symbol.Token (PREC (PREC {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#609 "./Parse.hmh"
+#667 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14305,7 +14777,7 @@ MatterToken {token}
                   | Elm.{symbol=Symbol.Token (OTHER_TOKEN (OTHER_TOKEN {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#609 "./Parse.hmh"
+#667 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14315,7 +14787,7 @@ MatterToken {token}
                   | Elm.{symbol=Symbol.Token (UIDENT (UIDENT {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#609 "./Parse.hmh"
+#667 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14325,7 +14797,7 @@ MatterToken {token}
                   | Elm.{symbol=Symbol.Token (CIDENT (CIDENT {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#609 "./Parse.hmh"
+#667 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14335,7 +14807,7 @@ MatterToken {token}
                   | Elm.{symbol=Symbol.Token (USCORE (USCORE {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#609 "./Parse.hmh"
+#667 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14345,7 +14817,7 @@ MatterToken {token}
                   | Elm.{symbol=Symbol.Token (ISTRING (ISTRING {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#609 "./Parse.hmh"
+#667 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14355,7 +14827,7 @@ MatterToken {token}
                   | Elm.{symbol=Symbol.Token (COLON_COLON_EQ (COLON_COLON_EQ {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#609 "./Parse.hmh"
+#667 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14365,7 +14837,7 @@ MatterToken {token}
                   | Elm.{symbol=Symbol.Token (AS (AS {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#609 "./Parse.hmh"
+#667 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14375,7 +14847,7 @@ MatterToken {token}
                   | Elm.{symbol=Symbol.Token (OF (OF {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#609 "./Parse.hmh"
+#667 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14385,7 +14857,7 @@ MatterToken {token}
                   | Elm.{symbol=Symbol.Token (COLON (COLON {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#609 "./Parse.hmh"
+#667 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14395,7 +14867,7 @@ MatterToken {token}
                   | Elm.{symbol=Symbol.Token (DOT (DOT {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#609 "./Parse.hmh"
+#667 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14405,7 +14877,7 @@ MatterToken {token}
                   | Elm.{symbol=Symbol.Token (ARROW (ARROW {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#609 "./Parse.hmh"
+#667 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14415,7 +14887,7 @@ MatterToken {token}
                   | Elm.{symbol=Symbol.Token (LT (LT {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#609 "./Parse.hmh"
+#667 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14425,7 +14897,7 @@ MatterToken {token}
                   | Elm.{symbol=Symbol.Token (EQ (EQ {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#609 "./Parse.hmh"
+#667 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14435,7 +14907,7 @@ MatterToken {token}
                   | Elm.{symbol=Symbol.Token (COMMA (COMMA {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#609 "./Parse.hmh"
+#667 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14445,7 +14917,7 @@ MatterToken {token}
                   | Elm.{symbol=Symbol.Token (INDENT (INDENT {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#609 "./Parse.hmh"
+#667 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14455,7 +14927,7 @@ MatterToken {token}
                   | Elm.{symbol=Symbol.Token (DEDENT (DEDENT {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#609 "./Parse.hmh"
+#667 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14465,7 +14937,7 @@ MatterToken {token}
                   | Elm.{symbol=Symbol.Token (LPAREN (LPAREN {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#609 "./Parse.hmh"
+#667 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14475,7 +14947,7 @@ MatterToken {token}
                   | Elm.{symbol=Symbol.Token (RPAREN (RPAREN {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#609 "./Parse.hmh"
+#667 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14485,7 +14957,7 @@ MatterToken {token}
                   | Elm.{symbol=Symbol.Token (LCAPTURE (LCAPTURE {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#609 "./Parse.hmh"
+#667 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14495,7 +14967,7 @@ MatterToken {token}
                   | Elm.{symbol=Symbol.Token (RCAPTURE (RCAPTURE {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#609 "./Parse.hmh"
+#667 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14505,7 +14977,7 @@ MatterToken {token}
                   | Elm.{symbol=Symbol.Token (LBRACK (LBRACK {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#609 "./Parse.hmh"
+#667 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14515,7 +14987,7 @@ MatterToken {token}
                   | Elm.{symbol=Symbol.Token (RBRACK (RBRACK {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#609 "./Parse.hmh"
+#667 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14525,7 +14997,7 @@ MatterToken {token}
                   | Elm.{symbol=Symbol.Token (LARRAY (LARRAY {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#609 "./Parse.hmh"
+#667 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14535,7 +15007,7 @@ MatterToken {token}
                   | Elm.{symbol=Symbol.Token (RARRAY (RARRAY {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#609 "./Parse.hmh"
+#667 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14545,7 +15017,7 @@ MatterToken {token}
                   | Elm.{symbol=Symbol.Token (LCURLY (LCURLY {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#609 "./Parse.hmh"
+#667 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14555,7 +15027,7 @@ MatterToken {token}
                   | Elm.{symbol=Symbol.Token (RCURLY (RCURLY {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (MatterToken (
                   (*______________________________________________________________________________*)
-#609 "./Parse.hmh"
+#667 "./Parse.hmh"
 MatterToken {token}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14566,7 +15038,7 @@ MatterToken {token}
                   :: Elm.{symbol=Symbol.Nonterm (MatterToken (MatterToken {token})); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Matter (
                   (*______________________________________________________________________________*)
-#612 "./Parse.hmh"
+#670 "./Parse.hmh"
 Matter {token; matter}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14575,7 +15047,7 @@ Matter {token; matter}
                 (* 153 *) (function
                   tl__hocc__ -> Symbol.Nonterm (Matter (
                   (*______________________________________________________________________________*)
-#613 "./Parse.hmh"
+#671 "./Parse.hmh"
 MatterEpsilon
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14587,7 +15059,7 @@ MatterEpsilon
                   :: Elm.{symbol=Symbol.Nonterm (Matter prelude); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Hmh (
                   (*______________________________________________________________________________*)
-#616 "./Parse.hmh"
+#674 "./Parse.hmh"
 Hmh {prelude; hocc_; postlude; eoi}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14601,7 +15073,7 @@ Hmh {prelude; hocc_; postlude; eoi}
                   :: Elm.{symbol=Symbol.Nonterm (Matter prelude); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Hmhi (
                   (*______________________________________________________________________________*)
-#619 "./Parse.hmh"
+#677 "./Parse.hmh"
 Hmhi {prelude; hocc_; postlude; eoi}
                   (*‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾*)
                   )), tl__hocc__
@@ -14810,11 +15282,29 @@ Hmhi {prelude; hocc_; postlude; eoi}
           | Reject _ -> t
 
     let next token ({status; _} as t) =
+        let open Status in
         match status with
-          | Status.Prefix -> t |> feed token |> walk
-          | _ -> not_reached ()
+          | Prefix -> begin
+            match t |> feed token |> walk with
+              | {status=Reject _ as status; _} -> {t with status}
+              | t' -> t'
+          end
+          | _ -> halt "`token` only supports `Prefix` status"
+
+    let expect ({status; _} as t) =
+        let open Status in
+        let t = match status with
+          | Prefix -> t
+          | Reject _ -> {t with status=Prefix}
+          | _ -> halt "`expect` only supports `Prefix`/`Reject` status"
+          in
+        Array.fold ~init:(Ordset.empty (module Token)) ~f:(fun expect token ->
+            match next token t with
+              | {status=Reject _; _} -> expect
+              | _ -> Ordset.insert token expect
+        ) Token.protos
   end
-#620 "./Parse.hmh"
+#678 "./Parse.hmh"
 
 let rec scan scanner =
     let scanner, scan_token = Scan.next scanner in
@@ -14874,6 +15364,21 @@ let rec scan scanner =
       end
       | mals -> scanner, scan_token, Token.OTHER_TOKEN (OTHER_TOKEN {token=scan_token}), mals
 
+let pp_expect expect formatter =
+    let names =
+      expect
+      |> Ordset.to_list
+      |> List.map ~f:(fun token ->
+        match Token.spec token with
+          | {alias=Some alias; _} -> alias
+          | {name; _} -> name
+      )
+      in
+    formatter
+      |> Fmt.fmt "{⸱"
+      |> Fmt.fmt (String.join ~sep:"⸱" names)
+      |> Fmt.fmt "⸱}"
+
 let hmhi scanner =
     let rec inner scanner errs parser = begin
         let scanner, scan_token, token, mals = scan scanner in
@@ -14887,7 +15392,13 @@ let hmhi scanner =
           | Accept (Hmhi hmhi), [] -> scanner, Ok hmhi
           | Accept (Hmhi _), _ -> scanner, Error errs
           | Reject _, _ ->
-            let errs = Error.init_token scan_token "Unexpected token" :: errs in
+            let msg =
+              String.Fmt.empty
+              |> Fmt.fmt "Unexpected token not in "
+              |> pp_expect (expect parser)
+              |> Fmt.to_string
+              in
+            let errs = Error.init_token scan_token msg :: errs in
             scanner, Error errs
           | _ -> not_reached ()
       end in
@@ -14907,7 +15418,13 @@ let hmh scanner =
           | Accept (Hmh hmh), [] -> scanner, Ok hmh
           | Accept (Hmh _), _ -> scanner, Error errs
           | Reject _, _ -> begin
-            let errs = Error.init_token scan_token "Unexpected token" :: errs in
+            let msg =
+              String.Fmt.empty
+              |> Fmt.fmt "Unexpected token not in "
+              |> pp_expect (expect parser)
+              |> Fmt.to_string
+              in
+            let errs = Error.init_token scan_token msg :: errs in
             scanner, Error errs
           end
           | _ -> not_reached ()
@@ -15286,20 +15803,6 @@ let rec pp_token_hocc (HOCC {token}) formatter =
   and pp_symbol_type symbol_type formatter =
     fmt_symbol_type symbol_type formatter
 
-  and fmt_symbol_type0 ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) symbol_type0
-  formatter =
-    let width' = width + 4L in
-    match symbol_type0 with
-      | SymbolType0SymbolType {symbol_type} ->
-        formatter |> Fmt.fmt "SymbolType0SymbolType "
-          |> fmt_lcurly ~alt ~width
-          |> Fmt.fmt "symbol_type=" |> fmt_symbol_type ~alt ~width:width' symbol_type
-          |> fmt_rcurly ~alt ~width
-      | SymbolType0Epsilon ->
-        formatter |> Fmt.fmt "SymbolType0Epsilon"
-  and pp_symbol_type0 symbol_type0 formatter =
-    fmt_symbol_type0 symbol_type0 formatter
-
   and fmt_prec_ref ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) prec_ref formatter =
     match prec_ref with
       | PrecRefUident {uident} ->
@@ -15312,29 +15815,44 @@ let rec pp_token_hocc (HOCC {token}) formatter =
   and pp_prec_ref prec_ref formatter =
     fmt_prec_ref prec_ref formatter
 
-  and fmt_token_alias ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) token_alias formatter =
-    match token_alias with
-      | TokenAlias {alias} ->
-        formatter |> Fmt.fmt "Token "
+  and fmt_alias ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) token formatter =
+    match token with
+      | Alias {alias} ->
+        formatter |> Fmt.fmt "Alias "
           |> fmt_lcurly ~alt ~width
           |> Fmt.fmt "alias=" |> pp_token_istring alias
           |> fmt_rcurly ~alt ~width
-      | TokenAliasEpsilon ->
-        formatter |> Fmt.fmt "TokenAliasEpsilon"
-  and pp_token_alias token_alias formatter =
-    fmt_token_alias token_alias formatter
+      | AliasEpsilon ->
+        formatter |> Fmt.fmt "AliasEpsilon"
+  and pp_alias alias formatter =
+    fmt_alias alias formatter
+
+  and fmt_token_type ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) token formatter =
+    let width' = width + 4L in
+    match token with
+      | TokenType {symbol_type; proto} ->
+        formatter |> Fmt.fmt "TokenType "
+          |> fmt_lcurly ~alt ~width
+          |> Fmt.fmt "symbol_type=" |> pp_symbol_type symbol_type
+          |> fmt_semi ~alt ~width
+          |> Fmt.fmt "proto=" |> fmt_code ~alt ~width:width' proto
+          |> fmt_rcurly ~alt ~width
+      | TokenTypeEpsilon ->
+        formatter |> Fmt.fmt "TokenTypeEpsilon"
+  and pp_token_type token_type formatter =
+    fmt_token_type token_type formatter
 
   and fmt_token ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) token formatter =
     let width' = width + 4L in
     match token with
-      | Token {cident; token_alias; symbol_type0; prec_ref} ->
+      | Token {cident; alias; token_type; prec_ref} ->
         formatter |> Fmt.fmt "Token "
           |> fmt_lcurly ~alt ~width
           |> Fmt.fmt "cident=" |> pp_token_cident cident
           |> fmt_semi ~alt ~width
-          |> Fmt.fmt "token_alias=" |> fmt_token_alias ~alt ~width:width' token_alias
+          |> Fmt.fmt "alias=" |> pp_alias alias
           |> fmt_semi ~alt ~width
-          |> Fmt.fmt "symbol_type0=" |> fmt_symbol_type0 ~alt ~width:width' symbol_type0
+          |> Fmt.fmt "token_type=" |> fmt_token_type ~alt ~width:width' token_type
           |> fmt_semi ~alt ~width
           |> Fmt.fmt "prec_ref=" |> fmt_prec_ref ~alt ~width:width' prec_ref
           |> fmt_rcurly ~alt ~width
@@ -16019,7 +16537,7 @@ let rec source_of_binding = function
 (**************************************************************************************************)
 (* Miscellaneous helper functions. *)
 
-let min_comment_indentation_of_hocc_block = function
+let indentation_of_hocc_block = function
   | Hocc {indent=INDENT {token=indent}; _} ->
     Scan.Token.source indent
       |> Hmc.Source.Slice.base
@@ -16099,7 +16617,7 @@ let source_of_code code =
     Hmc.Source.Slice.of_cursors ~base ~past
 
 let indentation_of_code hocc_block code =
-    let min_comment_indentation = min_comment_indentation_of_hocc_block hocc_block in
+    let min_comment_indentation = indentation_of_hocc_block hocc_block in
     match code with
       | CodeDelimited _ -> min_comment_indentation + 4L
       | CodeCodeToken _ -> min_comment_indentation
@@ -16122,17 +16640,51 @@ let postlude_base_of_hocc (Hocc {stmts=Stmts {stmt; stmts_tl}; _}) =
       and of_prec_rels = function
       | PrecRelsPrecs {precs} -> Some (of_precs precs)
       | PrecRelsEpsilon -> None
-      and of_symbol_type = function
-      | SymbolType {symbol_type; _} -> symbol_type
-      and of_symbol_type0 = function
-      | SymbolType0SymbolType {symbol_type} -> Some (of_symbol_type symbol_type)
-      | SymbolType0Epsilon -> None
       and of_prec_ref = function
       | PrecRefUident {uident} -> Some uident
       | PrecRefEpsilon -> None
-      and of_token_alias = function
-      | TokenAlias {alias=ISTRING {token=alias}} -> Some alias
-      | TokenAliasEpsilon -> None
+      and of_alias = function
+      | Alias {alias=ISTRING {token=alias}} -> Some alias
+      | AliasEpsilon -> None
+      and of_token_type = function
+      | TokenType {proto; _} -> Some (of_code proto)
+      | TokenTypeEpsilon-> None
+      and of_token = function
+      | Token {cident=CIDENT {token=cident}; alias; token_type; prec_ref} -> begin
+        of_prec_ref prec_ref
+          |> Option.some_or_thunk ~f:(fun () -> of_token_type token_type)
+          |> Option.some_or_thunk ~f:(fun () -> of_alias alias)
+          |> Option.value_or_thunk ~f:(fun () -> cident)
+      end
+      and of_delimited = function
+      | DelimitedBlock {dedent=DEDENT {token}; _}
+      | DelimitedParen {rparen=RPAREN {token}; _}
+      | DelimitedCapture {rcapture=RCAPTURE {token}; _}
+      | DelimitedList {rbrack=RBRACK {token}; _}
+      | DelimitedArray {rarray=RARRAY {token}; _}
+      | DelimitedModule {rcurly=RCURLY {token}; _} -> token
+      and of_code_token = function
+      | CodeToken {token} -> token
+      and of_code_tl = function
+      | CodeTlDelimited {delimited; code_tl} -> begin
+        of_code_tl code_tl
+          |> Option.some_or_thunk ~f:(fun () -> Some (of_delimited delimited))
+      end
+      | CodeTlCodeToken {code_token; code_tl} -> begin
+        of_code_tl code_tl
+          |> Option.some_or_thunk ~f:(fun () -> Some (of_code_token code_token))
+      end
+      | CodeTlEpsilon -> None
+      and of_code = function
+      | CodeDelimited {delimited; code_tl} -> begin
+        of_code_tl code_tl
+          |> Option.value_or_thunk ~f:(fun () -> of_delimited delimited)
+      end
+      | CodeCodeToken {code_token; code_tl} -> begin
+        of_code_tl code_tl
+          |> Option.value_or_thunk ~f:(fun () -> of_code_token code_token)
+      end
+
       and of_prod_param_symbol = function
       | ProdParamSymbolCident {cident=CIDENT {token=cident}} -> cident
       | ProdParamSymbolAlias {alias=ISTRING {token=alias}} -> alias
@@ -16191,13 +16743,7 @@ let postlude_base_of_hocc (Hocc {stmts=Stmts {stmt; stmts_tl}; _}) =
         of_prec_rels prec_rels
           |> Option.value_or_thunk ~f:(fun () -> of_precs prec_set)
       end
-      | StmtToken {token=Token {cident=CIDENT {token=cident}; token_alias; symbol_type0;
-      prec_ref; _}} -> begin
-        of_prec_ref prec_ref
-          |> Option.some_or_thunk ~f:(fun () -> of_symbol_type0 symbol_type0)
-          |> Option.some_or_thunk ~f:(fun () -> of_token_alias token_alias)
-          |> Option.value_or_thunk ~f:(fun () -> cident)
-      end
+      | StmtToken {token} -> of_token token
       | StmtNonterm {nonterm} -> of_nonterm nonterm
       and of_stmts_tl = function
       | StmtsTl {stmt; stmts_tl} -> begin

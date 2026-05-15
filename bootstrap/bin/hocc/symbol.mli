@@ -29,6 +29,9 @@ type t = {
   alias: string option;
   (** Optional alias, e.g. [Some "+"] for [token PLUS "+"]. *)
 
+  proto: Parse.nonterm_code option;
+  (** Optional variant constructor prototype value, used to generate `Token.protos`. *)
+
   start: bool;
   (** True if start symbol. Always false for tokens. *)
 
@@ -50,7 +53,7 @@ val pseudo_end: t
 (** [pseudo_end] returns a pseudo-end (⊥) symbol. *)
 
 val init_token: index:Index.t -> name:string -> stype:SymbolType.t -> prec:Prec.t option
-  -> stmt:Parse.nonterm_token option -> alias:string option -> t
+  -> stmt:Parse.nonterm_token option -> alias:string option -> proto:Parse.nonterm_code option -> t
 (** Used only by [Symbols.insert_token]. *)
 
 val init_nonterm: index:Index.t -> name:string -> stype:SymbolType.t -> prec:Prec.t option

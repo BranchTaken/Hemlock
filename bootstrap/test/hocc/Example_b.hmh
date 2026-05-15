@@ -17,7 +17,9 @@ include
       | "+" -> PLUS
       | "-" -> MINUS
 
-    token INT of Zint.t
+    token INT of Zint.t (
+        0z
+      )
     nonterm Expr of Zint.t ::=
       | e0:Expr op:MulOp e1:Expr prec mul ->
         match op with

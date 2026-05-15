@@ -4,7 +4,7 @@ type t: t = {
   }
 
 hocc
-    token T of t
+    token T of t {x=0; y=0}
     token EOI
     start S of uns ::=
       | {x; y}:T EOI -> x + y

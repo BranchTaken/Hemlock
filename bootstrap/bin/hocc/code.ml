@@ -249,6 +249,9 @@ let hmi_template = {|{
     Token = {
         «tokens»
 
+        protos: array t
+          [@@doc "Token prototypes, one per variant."]
+
         include IdentifiableIntf.S with type t := t
 
         spec: t -> Spec.Symbol.t
@@ -349,19 +352,19 @@ let hmi_template = {|{
     next: Token.t -> t -> t
       [@@doc "`next token t` calls `feed token t` and fast-forwards via `step` calls to return a
       result with status in {`Prefix`, `Accept`, `Reject`}. `t.status` must be `Prefix`."]
+
+    expect: t -> Ordset.t Token.t Token.cmper_witness
+      [@@doc "`expect t` returns the set of token (proto)types which `next token t` would not
+      reject, assuming status were `Prefix`. `t.status` must be in {`Prefix`, `Reject`}."]
   }|}
 
 let expand_hmi_tokens symbols ~indentation formatter =
   let indent = mk_indent indentation in
   let fmt_tokens formatter = begin
-    let formatter, _first = Symbols.tokens_fold ~init:(formatter, true)
-      ~f:(fun (formatter, first) {name; alias; stype; _}->
+    Symbols.tokens_fold ~init:formatter
+      ~f:(fun formatter {name; alias; stype; _}->
         formatter
-        |> (fun formatter ->
-          match first with
-          | true -> formatter
-          | false -> formatter |> Fmt.fmt "\n"
-        )
+        |> Fmt.fmt "\n"
         |> indent |> Fmt.fmt "  | " |> Fmt.fmt name
         |> (fun formatter ->
           match SymbolType.is_explicit stype with
@@ -372,40 +375,30 @@ let expand_hmi_tokens symbols ~indentation formatter =
           match alias with
           | None -> formatter
           | Some alias -> formatter |> Fmt.fmt " # " |> String.fmt ~pretty:true alias
-        ),
-        false
+        )
       ) symbols
-    in
-    formatter
   end in
   formatter
-  |> indent |> Fmt.fmt "type t: t =\n"
+  |> indent |> Fmt.fmt "type t: t ="
   |> fmt_tokens
 
 let expand_hmi_nonterms symbols ~indentation formatter =
   let indent = mk_indent indentation in
   let fmt_nonterms formatter = begin
-    let formatter, _first = Symbols.nonterms_fold ~init:(formatter, true)
-      ~f:(fun (formatter, first) {name; stype; _} ->
+    Symbols.nonterms_fold ~init:formatter
+      ~f:(fun formatter {name; stype; _} ->
         formatter
-        |> (fun formatter ->
-          match first with
-          | true -> formatter
-          | false -> formatter |> Fmt.fmt "\n"
-        )
+        |> Fmt.fmt "\n"
         |> indent |> Fmt.fmt "  | " |> Fmt.fmt name
         |> (fun formatter ->
           match SymbolType.is_explicit stype with
           | false -> formatter
           | true -> formatter |> Fmt.fmt " of " |> Fmt.fmt (SymbolType.to_string stype)
-        ),
-        false
+        )
       ) symbols
-    in
-    formatter
   end in
   formatter
-  |> indent |> Fmt.fmt "type t: t =\n"
+  |> indent |> Fmt.fmt "type t: t ="
   |> fmt_nonterms
 
 let expand_hmi_starts symbols ~indentation formatter =
@@ -1287,9 +1280,25 @@ let hm_template = {|{
           | Reject _ -> t
 
     next token ({status; _} as t) =
+        let open Status
         match status with
-          | Status.Prefix -> t |> feed token |> walk
-          | _ -> not_reached ()
+          | Status.Prefix ->
+            match t |> feed token |> walk with
+              | {status=Reject _ as status; _} -> {t with status}
+              | t' -> t'
+          | _ -> halt "`token` only supports `Prefix` status"
+
+    expect ({status; _} as t) =
+        let open Status
+        let t = match status with
+          | Prefix -> t
+          | Reject _ -> {t with status=Prefix}
+          | _ -> halt "`expect` only supports `Prefix`/`Reject` status"
+        Array.fold ~init:(Ordset.empty Token) ~f:(fn expect token ->
+            match next token t with
+              | {status=Reject _; _} -> expect
+              | _ -> Ordset.insert token expect
+        ) Token.protos
   }|}
 
 let state_of_synthetic_start_symbol symbols states synthetic_start_symbol =
@@ -1314,14 +1323,10 @@ let expand_hm_algorithm algorithm ~indentation formatter =
 let expand_hm_prec_sets precs ~indentation formatter =
   let fmt_prec_sets ~indentation formatter = begin
     let indent = mk_indent indentation in
-    let formatter, _first = Precs.fold_prec_sets ~init:(formatter, true)
-      ~f:(fun (formatter, first) PrecSet.{index; names; assoc; doms; _} ->
+    Precs.fold_prec_sets ~init:formatter
+      ~f:(fun formatter PrecSet.{index; names; assoc; doms; _} ->
         formatter
-        |> (fun formatter ->
-          match first with
-          | true -> formatter
-          | false -> formatter |> Fmt.fmt "\n"
-        )
+        |> Fmt.fmt "\n"
         |> (fun formatter ->
           formatter
           |> indent
@@ -1347,29 +1352,22 @@ let expand_hm_prec_sets precs ~indentation formatter =
               end
           )
           |> Fmt.fmt ")"
-        ),
-        false
+        )
       ) precs
-    in
-    formatter
   end in
   let indent = mk_indent indentation in
   formatter
-  |> indent |> Fmt.fmt "prec_sets = [|\n"
+  |> indent |> Fmt.fmt "prec_sets = [|"
   |> fmt_prec_sets ~indentation:(indentation+4L) |> Fmt.fmt "\n"
   |> indent |> Fmt.fmt "  |]"
 
 let expand_hm_prods prods ~indentation formatter =
   let fmt_prods ~indentation formatter = begin
     let indent = mk_indent indentation in
-    let formatter, _first = Prods.fold ~init:(formatter, true)
-      ~f:(fun (formatter, first) Prod.{index; lhs_index; rhs_indexes; prec; callback; _} ->
+    Prods.fold ~init:formatter
+      ~f:(fun formatter Prod.{index; lhs_index; rhs_indexes; prec; callback; _} ->
         formatter
-        |> (fun formatter ->
-          match first with
-          | true -> formatter
-          | false -> formatter |> Fmt.fmt "\n"
-        )
+        |> Fmt.fmt "\n"
         |> (fun formatter ->
           formatter
           |> indent
@@ -1388,30 +1386,22 @@ let expand_hm_prods prods ~indentation formatter =
               end
           )
           |> Fmt.fmt " ~callback:" |> Callback.Index.pp callback.index
-        ),
-        false
+        )
       ) prods
-    in
-    formatter
   end in
   let indent = mk_indent indentation in
   formatter
-  |> indent |> Fmt.fmt "prods = [|\n"
+  |> indent |> Fmt.fmt "prods = [|"
   |> fmt_prods ~indentation:(indentation+4L) |> Fmt.fmt "\n"
   |> indent |> Fmt.fmt "  |]"
 
 let expand_hm_symbols symbols ~indentation formatter =
   let fmt_symbols ~indentation formatter = begin
     let indent = mk_indent indentation in
-    let formatter, _first_line = Symbols.symbols_fold ~init:(formatter, true)
-      ~f:(fun (formatter, first_line)
-        Symbol.{index; name; prec; alias; start; prods; first; follow; _} ->
+    Symbols.symbols_fold ~init:formatter
+      ~f:(fun formatter Symbol.{index; name; prec; alias; start; prods; first; follow; _} ->
         formatter
-        |> (fun formatter ->
-          match first_line with
-          | true -> formatter
-          | false -> formatter |> Fmt.fmt "\n"
-        )
+        |> Fmt.fmt "\n"
         |> (fun formatter ->
           formatter
           |> indent
@@ -1489,15 +1479,12 @@ let expand_hm_symbols symbols ~indentation formatter =
                 |> Fmt.fmt ")"
               end
           )
-        ),
-        false
+        )
       ) symbols
-    in
-    formatter
   end in
   let indent = mk_indent indentation in
   formatter
-  |> indent |> Fmt.fmt "symbols = [|\n"
+  |> indent |> Fmt.fmt "symbols = [|"
   |> fmt_symbols ~indentation:(indentation+4L) |> Fmt.fmt "\n"
   |> indent |> Fmt.fmt "  |]"
 
@@ -1555,15 +1542,11 @@ let expand_hm_lr1Itemset lr1itemset ~indentation formatter =
 let expand_hm_states states ~indentation formatter =
   let fmt_states ~indentation formatter = begin
     let indent = mk_indent indentation in
-    let formatter, _first = Array.fold ~init:(formatter, true)
-      ~f:(fun (formatter, first)
+    Array.fold ~init:formatter
+      ~f:(fun formatter
         State.{statenub={lr1itemsetclosure={index; kernel; _}; _}; actions; gotos; _} ->
         formatter
-        |> (fun formatter ->
-          match first with
-          | true -> formatter
-          | false -> formatter |> Fmt.fmt "\n"
-        )
+        |> Fmt.fmt "\n"
         |> (fun formatter ->
           formatter
           |> indent |> Fmt.fmt "(* " |> Lr1ItemsetClosure.Index.pp index
@@ -1625,29 +1608,22 @@ let expand_hm_states states ~indentation formatter =
               end
             | true -> formatter |> indent |> Fmt.fmt "Map.empty Uns"
           )
-        ),
-        false
+        )
       ) states
-    in
-    formatter
   end in
   let indent = mk_indent indentation in
   formatter
-  |> indent |> Fmt.fmt "states = [|\n"
+  |> indent |> Fmt.fmt "states = [|"
   |> fmt_states ~indentation:(indentation+4L) |> Fmt.fmt "\n"
   |> indent |> Fmt.fmt "  |]"
 
 let expand_hm_token_type symbols ~indentation formatter =
   let indent = mk_indent indentation in
   let fmt_tokens formatter = begin
-    let formatter, _first = Symbols.tokens_fold ~init:(formatter, true)
-      ~f:(fun (formatter, first) {name; alias; stype; _} ->
+    Symbols.tokens_fold ~init:formatter
+      ~f:(fun formatter {name; alias; stype; _} ->
         formatter
-        |> (fun formatter ->
-          match first with
-          | true -> formatter
-          | false -> formatter |> Fmt.fmt "\n"
-        )
+        |> Fmt.fmt "\n"
         |> indent |> Fmt.fmt "  | " |> Fmt.fmt name
         |> (fun formatter ->
           match SymbolType.is_explicit stype with
@@ -1658,105 +1634,114 @@ let expand_hm_token_type symbols ~indentation formatter =
           match alias with
           | None -> formatter
           | Some alias -> formatter |> Fmt.fmt " # " |> String.fmt ~pretty:true alias
-        ),
-        false
+        )
       ) symbols
-    in
-    formatter
   end in
   formatter
-  |> indent |> Fmt.fmt "type t: t =\n"
+  |> indent |> Fmt.fmt "type t: t ="
   |> fmt_tokens
 
 let expand_hm_token_index symbols ~indentation formatter =
   let indent = mk_indent indentation in
   let fmt_token_indexes formatter = begin
-    let formatter, _first = Symbols.tokens_fold ~init:(formatter, true)
-      ~f:(fun (formatter, first) {index; name; stype; _} ->
-        formatter
-        |> (fun formatter ->
-          match first with
-          | true -> formatter
-          | false -> formatter |> Fmt.fmt "\n"
-        )
-        |> indent |> Fmt.fmt "  | " |> Fmt.fmt name
-        |> (fun formatter ->
+    let formatter = Symbols.tokens_fold ~init:formatter
+        ~f:(fun formatter {index; name; stype; _} ->
           formatter
+          |> Fmt.fmt "\n"
+          |> indent |> Fmt.fmt "  | " |> Fmt.fmt name
           |> (fun formatter ->
-            match SymbolType.is_explicit stype with
-            | false -> formatter
-            | true -> formatter |> Fmt.fmt " _"
+            formatter
+            |> (fun formatter ->
+              match SymbolType.is_explicit stype with
+              | false -> formatter
+              | true -> formatter |> Fmt.fmt " _"
+            )
+            |> Fmt.fmt " -> "
+            |> Uns.pp index
           )
-          |> Fmt.fmt " -> "
-          |> Uns.pp index
-        ),
-        false
-      ) symbols
+        ) symbols
     in
     formatter
   end in
   formatter
-  |> indent |> Fmt.fmt "index t = match t with\n"
+  |> indent |> Fmt.fmt "index t = match t with"
   |> fmt_token_indexes
 
-let expand_hm_tokens symbols ~indentation formatter =
+let expand_hm_token_protos hocc_block symbols ~indentation formatter =
+  let indent = mk_indent indentation in
+  let fmt_token_protos formatter = begin
+    let indent = mk_indent (indentation + 4L) in
+    Symbols.tokens_fold ~init:formatter
+      ~f:(fun formatter {name; proto; _} ->
+        formatter
+        |> Fmt.fmt "\n"
+        |> indent |> Fmt.fmt name
+        |> (fun formatter ->
+          formatter
+          |> (fun formatter ->
+            match proto with
+            | None -> formatter
+            | Some code -> begin
+                let source = Parse.source_of_code code in
+                formatter
+                |> Fmt.fmt " "
+                |> fmt_source_directive (Parse.indentation_of_hocc_block hocc_block) source
+                |> Fmt.fmt (Hmc.Source.Slice.to_string source)
+                |> Fmt.fmt "[:]"
+              end
+          )
+        )
+      ) symbols
+  end in
+  formatter
+  |> indent |> Fmt.fmt "protos = [|"
+  |> fmt_token_protos |> Fmt.fmt "\n"
+  |> indent |> Fmt.fmt "  |]"
+
+let expand_hm_tokens hocc_block symbols ~indentation formatter =
   formatter
   |> expand_hm_token_type symbols ~indentation |> Fmt.fmt "\n"
   |> Fmt.fmt "\n"
-  |> expand_hm_token_index symbols ~indentation
+  |> expand_hm_token_index symbols ~indentation |> Fmt.fmt "\n"
+  |> Fmt.fmt "\n"
+  |> expand_hm_token_protos hocc_block symbols ~indentation
 
 let expand_hm_nonterm_type symbols ~indentation formatter =
   let indent = mk_indent indentation in
   let fmt_nonterms formatter = begin
-    let formatter, _first = Symbols.nonterms_fold ~init:(formatter, true)
-      ~f:(fun (formatter, first) {name; stype; _} ->
-        formatter
-        |> (fun formatter ->
-          match first with
-          | true -> formatter
-          | false -> formatter |> Fmt.fmt "\n"
-        )
-        |> indent |> Fmt.fmt "  | " |> Fmt.fmt name
-        |> (fun formatter ->
-          match SymbolType.is_explicit stype with
-          | false -> formatter
-          | true -> formatter |> Fmt.fmt " of " |> Fmt.fmt (SymbolType.to_string stype)
-        ),
-        false
-      ) symbols
-    in
-    formatter
+    Symbols.nonterms_fold ~init:formatter ~f:(fun formatter {name; stype; _} ->
+      formatter
+      |> Fmt.fmt "\n"
+      |> indent |> Fmt.fmt "  | " |> Fmt.fmt name
+      |> (fun formatter ->
+        match SymbolType.is_explicit stype with
+        | false -> formatter
+        | true -> formatter |> Fmt.fmt " of " |> Fmt.fmt (SymbolType.to_string stype)
+      )
+    ) symbols
   end in
   formatter
-  |> indent |> Fmt.fmt "type t: t =\n"
+  |> indent |> Fmt.fmt "type t: t ="
   |> fmt_nonterms
 
 let expand_hm_nonterm_index symbols ~indentation formatter =
   let indent = mk_indent indentation in
   let fmt_nonterm_indexes formatter = begin
-    let formatter, _first = Symbols.nonterms_fold ~init:(formatter, true)
-      ~f:(fun (formatter, first) {index; name; _} ->
+    Symbols.nonterms_fold ~init:formatter ~f:(fun formatter {index; name; _} ->
+      formatter
+      |> Fmt.fmt "\n"
+      |> (fun formatter ->
         formatter
-        |> (fun formatter ->
-          match first with
-          | true -> formatter
-          | false -> formatter |> Fmt.fmt "\n"
-        )
-        |> (fun formatter ->
-          formatter
-          |> indent
-          |> Fmt.fmt "  | "
-          |> Fmt.fmt name
-          |> Fmt.fmt " _ -> "
-          |> Uns.pp index
-        ),
-        false
-      ) symbols
-    in
-    formatter
+        |> indent
+        |> Fmt.fmt "  | "
+        |> Fmt.fmt name
+        |> Fmt.fmt " _ -> "
+        |> Uns.pp index
+      )
+    ) symbols
   end in
   formatter
-  |> indent |> Fmt.fmt "index t = match t with\n"
+  |> indent |> Fmt.fmt "index t = match t with"
   |> fmt_nonterm_indexes
 
 let expand_hm_nonterms symbols ~indentation formatter =
@@ -1768,14 +1753,10 @@ let expand_hm_nonterms symbols ~indentation formatter =
 let expand_hm_callbacks hocc_block symbols callbacks ~indentation formatter =
   let fmt_callbacks ~indentation formatter = begin
     let indent = mk_indent indentation in
-    let formatter, _first = Callbacks.fold ~init:(formatter, true)
-      ~f:(fun (formatter, first) (Callback.{index; lhs_name; rhs; code; _} as callback) ->
+    Callbacks.fold ~init:formatter
+      ~f:(fun formatter (Callback.{index; lhs_name; rhs; code; _} as callback) ->
         formatter
-        |> (fun formatter ->
-          match first with
-          | true -> formatter
-          | false -> formatter |> Fmt.fmt "\n"
-        )
+        |> Fmt.fmt "\n"
         |> (fun formatter ->
           formatter
           |> indent |> Fmt.fmt "(* " |> Callback.Index.pp index
@@ -1853,15 +1834,12 @@ let expand_hm_callbacks hocc_block symbols callbacks ~indentation formatter =
               end
             | true -> formatter |> Fmt.fmt "fn _stack -> not_reached ()"
           )
-        ),
-        false
+        )
       ) callbacks
-    in
-    formatter
   end in
   let indent = mk_indent indentation in
   formatter
-  |> indent |> Fmt.fmt "callbacks = [|\n"
+  |> indent |> Fmt.fmt "callbacks = [|"
   |> fmt_callbacks ~indentation:(indentation+4L) |> Fmt.fmt "\n"
   |> indent |> Fmt.fmt "  |]"
 
@@ -1925,7 +1903,7 @@ let expand_hm_template template_indentation template hocc_block
     ("«prods»", expand_hm_prods prods);
     ("«symbols»", expand_hm_symbols symbols);
     ("«states»", expand_hm_states states);
-    ("«tokens»", expand_hm_tokens symbols);
+    ("«tokens»", expand_hm_tokens hocc_block symbols);
     ("«nonterms»", expand_hm_nonterms symbols);
     ("«callbacks»", expand_hm_callbacks hocc_block symbols callbacks);
     ("«starts»", expand_hm_starts symbols states)
@@ -2162,6 +2140,9 @@ let mli_template = {|sig
     module Token : sig
         «tokens»
 
+        val protos: t array
+          (** Token prototypes, one per variant. *)
+
         include IdentifiableIntf.S with type t := t
 
         val spec: t -> Spec.Symbol.t
@@ -2262,64 +2243,52 @@ let mli_template = {|sig
     val next: Token.t -> t -> t
       (** `next token t` calls `feed token t` and fast-forwards via `step` calls to return a result
           with status in {`Prefix`, `Accept`, `Reject`}. `t.status` must be `Prefix`. *)
+
+    val expect: t -> (Token.t, Token.cmper_witness) Ordset.t
+      (** `expect t` returns the set of token (proto)types which `next token t` would not reject,
+          assuming status were `Prefix`. `t.status` must be in {`Prefix`, `Reject`}. *)
   end|}
 
 let expand_mli_tokens symbols ~indentation formatter =
   let indent = mk_indent indentation in
   let fmt_tokens formatter = begin
-    let formatter, _first = Symbols.tokens_fold ~init:(formatter, true)
-      ~f:(fun (formatter, first) {name; alias; stype; _}->
-        formatter
-        |> (fun formatter ->
-          match first with
-          | true -> formatter
-          | false -> formatter |> Fmt.fmt "\n"
-        )
-        |> indent |> Fmt.fmt "  | " |> Fmt.fmt name
-        |> (fun formatter ->
-          match SymbolType.is_explicit stype with
-          | false -> formatter
-          | true -> formatter |> Fmt.fmt " of " |> Fmt.fmt (SymbolType.to_string stype)
-        )
-        |> (fun formatter ->
-          match alias with
-          | None -> formatter
-          | Some alias ->
-            formatter |> Fmt.fmt " (* " |> String.fmt ~pretty:true alias |> Fmt.fmt " *)"
-        ),
-        false
-      ) symbols
-    in
-    formatter
+    Symbols.tokens_fold ~init:formatter ~f:(fun formatter {name; alias; stype; _}->
+      formatter
+      |> Fmt.fmt "\n"
+      |> indent |> Fmt.fmt "  | " |> Fmt.fmt name
+      |> (fun formatter ->
+        match SymbolType.is_explicit stype with
+        | false -> formatter
+        | true -> formatter |> Fmt.fmt " of " |> Fmt.fmt (SymbolType.to_string stype)
+      )
+      |> (fun formatter ->
+        match alias with
+        | None -> formatter
+        | Some alias ->
+          formatter |> Fmt.fmt " (* " |> String.fmt ~pretty:true alias |> Fmt.fmt " *)"
+      )
+    ) symbols
   end in
   formatter
-  |> indent |> Fmt.fmt "type t =\n"
+  |> indent |> Fmt.fmt "type t ="
   |> fmt_tokens
 
 let expand_mli_nonterms symbols ~indentation formatter =
   let indent = mk_indent indentation in
   let fmt_nonterms formatter = begin
-    let formatter, _first = Symbols.nonterms_fold ~init:(formatter, true)
-      ~f:(fun (formatter, first) {name; stype; _} ->
-        formatter
-        |> (fun formatter ->
-          match first with
-          | true -> formatter
-          | false -> formatter |> Fmt.fmt "\n"
-        )
-        |> indent |> Fmt.fmt "  | " |> Fmt.fmt name
-        |> (fun formatter ->
-          match SymbolType.is_explicit stype with
-          | false -> formatter
-          | true -> formatter |> Fmt.fmt " of " |> Fmt.fmt (SymbolType.to_string stype)
-        ),
-        false
-      ) symbols
-    in
-    formatter
+    Symbols.nonterms_fold ~init:formatter ~f:(fun formatter {name; stype; _} ->
+      formatter
+      |> Fmt.fmt "\n"
+      |> indent |> Fmt.fmt "  | " |> Fmt.fmt name
+      |> (fun formatter ->
+        match SymbolType.is_explicit stype with
+        | false -> formatter
+        | true -> formatter |> Fmt.fmt " of " |> Fmt.fmt (SymbolType.to_string stype)
+      )
+    ) symbols
   end in
   formatter
-  |> indent |> Fmt.fmt "type t =\n"
+  |> indent |> Fmt.fmt "type t ="
   |> fmt_nonterms
 
 let expand_mli_starts symbols ~indentation formatter =
@@ -3247,9 +3216,27 @@ let ml_template = {|struct
           | Reject _ -> t
 
     let next token ({status; _} as t) =
+        let open Status in
         match status with
-          | Status.Prefix -> t |> feed token |> walk
-          | _ -> not_reached ()
+          | Prefix -> begin
+            match t |> feed token |> walk with
+              | {status=Reject _ as status; _} -> {t with status}
+              | t' -> t'
+          end
+          | _ -> halt "`token` only supports `Prefix` status"
+
+    let expect ({status; _} as t) =
+        let open Status in
+        let t = match status with
+          | Prefix -> t
+          | Reject _ -> {t with status=Prefix}
+          | _ -> halt "`expect` only supports `Prefix`/`Reject` status"
+          in
+        Array.fold ~init:(Ordset.empty (module Token)) ~f:(fun expect token ->
+            match next token t with
+              | {status=Reject _; _} -> expect
+              | _ -> Ordset.insert token expect
+        ) Token.protos
   end|}
 
 let expand_ml_algorithm algorithm ~indentation formatter =
@@ -3509,218 +3496,221 @@ let expand_ml_lr1Itemset lr1itemset ~indentation formatter =
 let expand_ml_states states ~indentation formatter =
   let fmt_states ~indentation formatter = begin
     let indent = mk_indent indentation in
-    let formatter, _first = Array.fold ~init:(formatter, true)
-      ~f:(fun (formatter, first)
-        State.{statenub={lr1itemsetclosure={index; kernel; _}; _}; actions; gotos; _} ->
+    Array.fold ~init:formatter ~f:(fun formatter
+      State.{statenub={lr1itemsetclosure={index; kernel; _}; _}; actions; gotos; _} ->
+      formatter
+      |> Fmt.fmt "\n"
+      |> (fun formatter ->
         formatter
+        |> indent |> Fmt.fmt "(* " |> State.Index.pp index
+        |> Fmt.fmt " *) State.init\n"
+        |> indent |> Fmt.fmt "  ~lr1ItemsetClosure:(\n"
         |> (fun formatter ->
-          match first with
-          | true -> formatter
-          | false -> formatter |> Fmt.fmt "\n"
-        )
-        |> (fun formatter ->
+          let indentation = indentation + 4L in
+          let indent = mk_indent indentation in
           formatter
-          |> indent |> Fmt.fmt "(* " |> State.Index.pp index
-          |> Fmt.fmt " *) State.init\n"
-          |> indent |> Fmt.fmt "  ~lr1ItemsetClosure:(\n"
-          |> (fun formatter ->
-            let indentation = indentation + 4L in
-            let indent = mk_indent indentation in
-            formatter
-            |> indent |> Fmt.fmt "Lr1ItemsetClosure.init\n"
-            |> indent |> Fmt.fmt "  ~index:"
-            |> ml_uns_pp index |> Fmt.fmt "\n"
-            |> indent |> Fmt.fmt "  ~kernel:(\n"
-            |> expand_ml_lr1Itemset kernel ~indentation:(indentation+4L)
-            |> indent |> Fmt.fmt "  )\n"
-          )
+          |> indent |> Fmt.fmt "Lr1ItemsetClosure.init\n"
+          |> indent |> Fmt.fmt "  ~index:"
+          |> ml_uns_pp index |> Fmt.fmt "\n"
+          |> indent |> Fmt.fmt "  ~kernel:(\n"
+          |> expand_ml_lr1Itemset kernel ~indentation:(indentation+4L)
           |> indent |> Fmt.fmt "  )\n"
-          |> indent |> Fmt.fmt "  ~actions:(\n"
+        )
+        |> indent |> Fmt.fmt "  )\n"
+        |> indent |> Fmt.fmt "  ~actions:(\n"
+        |> (fun formatter ->
+          let indentation = indentation + 4L in
+          let indent = mk_indent indentation in
+          formatter
+          |> indent |> Fmt.fmt "Map.of_alist (module Uns) [\n"
           |> (fun formatter ->
             let indentation = indentation + 4L in
             let indent = mk_indent indentation in
-            formatter
-            |> indent |> Fmt.fmt "Map.of_alist (module Uns) [\n"
-            |> (fun formatter ->
-              let indentation = indentation + 4L in
-              let indent = mk_indent indentation in
-              Ordmap.fold ~init:formatter ~f:(fun formatter (symbol_index, action_set) ->
-                assert (State.ActionSet.length action_set = 1L);
-                let action = State.ActionSet.choose_hlt action_set in
-                formatter
-                |> indent
-                |> Fmt.fmt "("
-                |> ml_uns_pp symbol_index
-                |> Fmt.fmt ", Action."
-                |> State.Action.pp action
-                |> Fmt.fmt "L);\n"
-              ) actions
-            )
-            |> indent |> Fmt.fmt "  ]\n"
+            Ordmap.fold ~init:formatter ~f:(fun formatter (symbol_index, action_set) ->
+              assert (State.ActionSet.length action_set = 1L);
+              let action = State.ActionSet.choose_hlt action_set in
+              formatter
+              |> indent
+              |> Fmt.fmt "("
+              |> ml_uns_pp symbol_index
+              |> Fmt.fmt ", Action."
+              |> State.Action.pp action
+              |> Fmt.fmt "L);\n"
+            ) actions
           )
-          |> indent |> Fmt.fmt "  )\n"
-          |> indent |> Fmt.fmt "  ~gotos:(\n"
-          |> (fun formatter ->
-            let indentation = indentation + 4L in
-            let indent = mk_indent indentation in
-            match Ordmap.is_empty gotos with
-            | false -> begin
-                formatter
-                |> indent |> Fmt.fmt "Map.of_alist (module Uns) [\n"
-                |> (fun formatter ->
-                  let indentation = indentation + 4L in
-                  let indent = mk_indent indentation in
-                  Ordmap.fold ~init:formatter ~f:(fun formatter (symbol_index, state_index) ->
-                    formatter
-                    |> indent
-                    |> Fmt.fmt "("
-                    |> ml_uns_pp symbol_index
-                    |> Fmt.fmt ", "
-                    |> ml_uns_pp state_index
-                    |> Fmt.fmt ");\n"
-                  ) gotos
-                )
-                |> indent |> Fmt.fmt "  ]"
-              end
-            | true -> formatter |> indent |> Fmt.fmt "Map.empty (module Uns)"
-          )
-          |> Fmt.fmt "\n"
-          |> indent |> Fmt.fmt "  );"
-        ),
-        false
-      ) states
-    in
-    formatter
+          |> indent |> Fmt.fmt "  ]\n"
+        )
+        |> indent |> Fmt.fmt "  )\n"
+        |> indent |> Fmt.fmt "  ~gotos:(\n"
+        |> (fun formatter ->
+          let indentation = indentation + 4L in
+          let indent = mk_indent indentation in
+          match Ordmap.is_empty gotos with
+          | false -> begin
+              formatter
+              |> indent |> Fmt.fmt "Map.of_alist (module Uns) [\n"
+              |> (fun formatter ->
+                let indentation = indentation + 4L in
+                let indent = mk_indent indentation in
+                Ordmap.fold ~init:formatter ~f:(fun formatter (symbol_index, state_index) ->
+                  formatter
+                  |> indent
+                  |> Fmt.fmt "("
+                  |> ml_uns_pp symbol_index
+                  |> Fmt.fmt ", "
+                  |> ml_uns_pp state_index
+                  |> Fmt.fmt ");\n"
+                ) gotos
+              )
+              |> indent |> Fmt.fmt "  ]"
+            end
+          | true -> formatter |> indent |> Fmt.fmt "Map.empty (module Uns)"
+        )
+        |> Fmt.fmt "\n"
+        |> indent |> Fmt.fmt "  );"
+      )
+    ) states
   end in
   let indent = mk_indent indentation in
   formatter
-  |> indent |> Fmt.fmt "let states = [|\n"
+  |> indent |> Fmt.fmt "let states = [|"
   |> fmt_states ~indentation:(indentation+4L) |> Fmt.fmt "\n"
   |> indent |> Fmt.fmt "  |]"
 
 let expand_ml_token_type symbols ~indentation formatter =
   let indent = mk_indent indentation in
   let fmt_tokens formatter = begin
-    let formatter, _first = Symbols.tokens_fold ~init:(formatter, true)
-      ~f:(fun (formatter, first) {name; alias; stype; _} ->
-        formatter
-        |> (fun formatter ->
-          match first with
-          | true -> formatter
-          | false -> formatter |> Fmt.fmt "\n"
-        )
-        |> indent |> Fmt.fmt "  | " |> Fmt.fmt name
-        |> (fun formatter ->
-          match SymbolType.is_explicit stype with
-          | false -> formatter
-          | true -> formatter |> Fmt.fmt " of " |> Fmt.fmt (SymbolType.to_string stype)
-        )
-        |> (fun formatter ->
-          match alias with
-          | None -> formatter
-          | Some alias ->
-            formatter |> Fmt.fmt " (* " |> String.fmt ~pretty:true alias |> Fmt.fmt " *)"
-        ),
-        false
-      ) symbols
-    in
-    formatter
+    Symbols.tokens_fold ~init:formatter ~f:(fun formatter {name; alias; stype; _} ->
+      formatter
+      |> Fmt.fmt "\n"
+      |> indent |> Fmt.fmt "  | " |> Fmt.fmt name
+      |> (fun formatter ->
+        match SymbolType.is_explicit stype with
+        | false -> formatter
+        | true -> formatter |> Fmt.fmt " of " |> Fmt.fmt (SymbolType.to_string stype)
+      )
+      |> (fun formatter ->
+        match alias with
+        | None -> formatter
+        | Some alias ->
+          formatter |> Fmt.fmt " (* " |> String.fmt ~pretty:true alias |> Fmt.fmt " *)"
+      )
+    ) symbols
   end in
   formatter
-  |> indent |> Fmt.fmt "type t =\n"
+  |> indent |> Fmt.fmt "type t ="
   |> fmt_tokens
 
 let expand_ml_token_index symbols ~indentation formatter =
   let indent = mk_indent indentation in
   let fmt_token_indexes formatter = begin
+    Symbols.tokens_fold ~init:formatter ~f:(fun formatter {index; name; stype; _} ->
+      formatter
+      |> Fmt.fmt "\n"
+      |> (fun formatter ->
+        formatter
+        |> indent
+        |> Fmt.fmt "  | "
+        |> Fmt.fmt name
+        |> (fun formatter ->
+          match SymbolType.is_explicit stype with
+          | false -> formatter
+          | true -> formatter |> Fmt.fmt " _"
+        )
+        |> Fmt.fmt " -> "
+        |> ml_uns_pp index
+      )
+    ) symbols
+  end in
+  formatter
+  |> indent |> Fmt.fmt "let index = function"
+  |> fmt_token_indexes
+
+let expand_ml_token_protos symbols ~indentation formatter =
+  let indent = mk_indent indentation in
+  let fmt_token_indexes formatter = begin
+    let indent = mk_indent (indentation + 4L) in
     let formatter, _first = Symbols.tokens_fold ~init:(formatter, true)
-      ~f:(fun (formatter, first) {index; name; stype; _} ->
+      ~f:(fun (formatter, first) {name; proto; _} ->
         formatter
         |> (fun formatter ->
-          match first with
-          | true -> formatter
-          | false -> formatter |> Fmt.fmt "\n"
-        )
-        |> (fun formatter ->
-          formatter
-          |> indent
-          |> Fmt.fmt "  | "
-          |> Fmt.fmt name
-          |> (fun formatter ->
-            match SymbolType.is_explicit stype with
-            | false -> formatter
-            | true -> formatter |> Fmt.fmt " _"
-          )
-          |> Fmt.fmt " -> "
-          |> ml_uns_pp index
+          match proto with
+          | None -> begin
+              formatter
+              |> (fun formatter ->
+                match first with
+                | true -> formatter
+                | false -> formatter |> Fmt.fmt ";\n"
+              )
+              |> indent |> Fmt.fmt name
+            end
+          | Some code -> begin
+              let source = Parse.source_of_code code in
+              formatter
+              |> (fun formatter ->
+                match first with
+                | true -> formatter
+                | false -> formatter |> Fmt.fmt ";"
+              )
+              |> fmt_ml_source_directive source
+              |> indent |> Fmt.fmt name
+              |> Fmt.fmt " "
+              |> Fmt.fmt (Hmc.Source.Slice.to_string source)
+            end
         ),
         false
-      ) symbols
-    in
+      ) symbols in
     formatter
   end in
   formatter
-  |> indent |> Fmt.fmt "let index = function\n"
-  |> fmt_token_indexes
+  |> indent |> Fmt.fmt "let protos = [|\n"
+  |> fmt_token_indexes |> Fmt.fmt "\n"
+  |> indent |> Fmt.fmt "  |]"
 
 let expand_ml_tokens symbols ~indentation formatter =
   formatter
   |> expand_ml_token_type symbols ~indentation |> Fmt.fmt "\n"
   |> Fmt.fmt "\n"
-  |> expand_ml_token_index symbols ~indentation
+  |> expand_ml_token_index symbols ~indentation |> Fmt.fmt "\n"
+  |> Fmt.fmt "\n"
+  |> expand_ml_token_protos symbols ~indentation
 
 let expand_ml_nonterm_type symbols ~indentation formatter =
   let indent = mk_indent indentation in
   let fmt_nonterms formatter = begin
-    let formatter, _first = Symbols.nonterms_fold ~init:(formatter, true)
-      ~f:(fun (formatter, first) {name; stype; _} ->
-        formatter
-        |> (fun formatter ->
-          match first with
-          | true -> formatter
-          | false -> formatter |> Fmt.fmt "\n"
-        )
-        |> indent |> Fmt.fmt "  | " |> Fmt.fmt name
-        |> (fun formatter ->
-          match SymbolType.is_explicit stype with
-          | false -> formatter
-          | true -> formatter |> Fmt.fmt " of " |> Fmt.fmt (SymbolType.to_string stype)
-        ),
-        false
-      ) symbols
-    in
-    formatter
+    Symbols.nonterms_fold ~init:formatter ~f:(fun formatter {name; stype; _} ->
+      formatter
+      |> Fmt.fmt "\n"
+      |> indent |> Fmt.fmt "  | " |> Fmt.fmt name
+      |> (fun formatter ->
+        match SymbolType.is_explicit stype with
+        | false -> formatter
+        | true -> formatter |> Fmt.fmt " of " |> Fmt.fmt (SymbolType.to_string stype)
+      )
+    ) symbols
   end in
   formatter
-  |> indent |> Fmt.fmt "type t =\n"
+  |> indent |> Fmt.fmt "type t ="
   |> fmt_nonterms
 
 let expand_ml_nonterm_index symbols ~indentation formatter =
   let indent = mk_indent indentation in
   let fmt_nonterm_indexes formatter = begin
-    let formatter, _first = Symbols.nonterms_fold ~init:(formatter, true)
-      ~f:(fun (formatter, first) {index; name; _} ->
+    Symbols.nonterms_fold ~init:formatter ~f:(fun formatter {index; name; _} ->
+      formatter
+      |> Fmt.fmt "\n"
+      |> (fun formatter ->
         formatter
-        |> (fun formatter ->
-          match first with
-          | true -> formatter
-          | false -> formatter |> Fmt.fmt "\n"
-        )
-        |> (fun formatter ->
-          formatter
-          |> indent
-          |> Fmt.fmt "  | "
-          |> Fmt.fmt name
-          |> Fmt.fmt " _ -> "
-          |> ml_uns_pp index
-        ),
-        false
-      ) symbols
-    in
-    formatter
+        |> indent
+        |> Fmt.fmt "  | "
+        |> Fmt.fmt name
+        |> Fmt.fmt " _ -> "
+        |> ml_uns_pp index
+      )
+    ) symbols
   end in
   formatter
-  |> indent |> Fmt.fmt "let index = function\n"
+  |> indent |> Fmt.fmt "let index = function"
   |> fmt_nonterm_indexes
 
 let expand_ml_nonterms symbols ~indentation formatter =
