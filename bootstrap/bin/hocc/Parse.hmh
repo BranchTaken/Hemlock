@@ -1,9 +1,9 @@
 (* To bootstrap the `hocc` parser, run one of the following commands:
  *
  * - Compilable (trivial update):
- *   dune exec -- hocc -v -ml -s Parse
+ *   dune exec -- hocc -v -w -ml -s Parse
  * - Not compilable (use external `hocc`):
- *   hocc -v -ml -s Parse
+ *   hocc -v -w -ml -s Parse
  *)
 open Basis
 open! Basis.Rudiments
@@ -156,18 +156,18 @@ type nonterm_uident =
   | SymbolTypeQualifierEpsilon
   and nonterm_symbol_type =
   | SymbolType of {symbol_type_qualifier: nonterm_symbol_type_qualifier; symbol_type: Scan.Token.t}
-  and nonterm_symbol_type0 =
-  | SymbolType0SymbolType of {symbol_type: nonterm_symbol_type}
-  | SymbolType0Epsilon
   and nonterm_prec_ref =
   | PrecRefUident of {uident: Scan.Token.t}
   | PrecRefEpsilon
-  and nonterm_token_alias =
-  | TokenAlias of {alias: token_istring}
-  | TokenAliasEpsilon
+  and nonterm_alias =
+  | Alias of {alias: token_istring}
+  | AliasEpsilon
+  and nonterm_token_type =
+  | TokenType of {symbol_type: nonterm_symbol_type; proto: nonterm_code}
+  | TokenTypeEpsilon
   and nonterm_token =
-  | Token of {cident: token_cident; token_alias: nonterm_token_alias;
-  symbol_type0: nonterm_symbol_type0; prec_ref: nonterm_prec_ref}
+  | Token of {cident: token_cident; alias: nonterm_alias; token_type: nonterm_token_type;
+  prec_ref: nonterm_prec_ref}
   and nonterm_sep =
   | SepLineDelim of {line_delim: token_line_delim}
   | SepSemi of {semi: token_semi}
@@ -274,65 +274,123 @@ type nonterm_uident =
   and nonterm_hmhi =
   | Hmhi of {prelude: nonterm_matter; hocc_: token_hocc; postlude: nonterm_matter; eoi: token_eoi}
 
+(* Fake prototype token payload. *)
+let fake_token =
+    let source =
+      ""
+      |> String.C.Slice.of_string
+      |> Text.of_string_slice
+      |> Hmc.Source.init
+      in
+    let base = Hmc.Source.Cursor.hd source in
+    let past = Hmc.Source.Cursor.tl source in
+    let slice = Hmc.Source.Slice.of_cursors ~base ~past in
+    Scan.Token.HmcToken (Hmc.Scan.Token.Tok_error {source=slice; error=[]})
+
+(* Prototype tokens. *)
+let proto_hocc = HOCC {token=fake_token}
+let proto_nonterm = NONTERM {token=fake_token}
+let proto_epsilon = EPSILON {token=fake_token}
+let proto_start = START {token=fake_token}
+let proto_token = TOKEN {token=fake_token}
+let proto_neutral = NEUTRAL {token=fake_token}
+let proto_left = LEFT {token=fake_token}
+let proto_right = RIGHT {token=fake_token}
+let proto_nonassoc = NONASSOC {token=fake_token}
+let proto_prec = PREC {token=fake_token}
+let proto_uident = UIDENT {token=fake_token}
+let proto_cident = CIDENT {token=fake_token}
+let proto_uscore = USCORE {token=fake_token}
+let proto_istring = ISTRING {token=fake_token}
+let proto_colon_colon_eq = COLON_COLON_EQ {token=fake_token}
+let proto_of = OF {token=fake_token}
+let proto_colon = COLON {token=fake_token}
+let proto_dot = DOT {token=fake_token}
+let proto_arrow = ARROW {token=fake_token}
+let proto_bar = BAR {token=fake_token}
+let proto_lt = LT {token=fake_token}
+let proto_eq = EQ {token=fake_token}
+let proto_comma = COMMA {token=fake_token}
+let proto_semi = SEMI {token=fake_token}
+let proto_as = AS {token=fake_token}
+let proto_line_delim = LINE_DELIM {token=fake_token}
+let proto_indent = INDENT {token=fake_token}
+let proto_dedent = DEDENT {token=fake_token}
+let proto_lparen = LPAREN {token=fake_token}
+let proto_rparen = RPAREN {token=fake_token}
+let proto_lcapture = LCAPTURE {token=fake_token}
+let proto_rcapture = RCAPTURE {token=fake_token}
+let proto_lbrack = LBRACK {token=fake_token}
+let proto_rbrack = RBRACK {token=fake_token}
+let proto_larray = LARRAY {token=fake_token}
+let proto_rarray = RARRAY {token=fake_token}
+let proto_lcurly = LCURLY {token=fake_token}
+let proto_rcurly = RCURLY {token=fake_token}
+let proto_other_token = OTHER_TOKEN {token=fake_token}
+let proto_eoi = EOI {token=fake_token}
+
 include hocc
+    neutral pCodeTlEpsilon
+    neutral pPrec < pCodeTlEpsilon
+
     (* hocc-specific keywords *)
-    token HOCC "hocc" of token_hocc
-    token NONTERM "nonterm" of token_nonterm
-    token EPSILON_ "epsilon" of token_epsilon
-    token START "start" of token_start
-    token TOKEN "token" of token_token
-    token NEUTRAL "neutral" of token_neutral
-    token LEFT "left" of token_left
-    token RIGHT "right" of token_right
-    token NONASSOC "nonassoc" of token_nonassoc
-    token PREC "prec" of token_prec
+    token HOCC "hocc" of token_hocc proto_hocc
+    token NONTERM "nonterm" of token_nonterm proto_nonterm
+    token EPSILON_ "epsilon" of token_epsilon proto_epsilon
+    token START "start" of token_start proto_start
+    token TOKEN "token" of token_token proto_token
+    token NEUTRAL "neutral" of token_neutral proto_neutral
+    token LEFT "left" of token_left proto_left
+    token RIGHT "right" of token_right proto_right
+    token NONASSOC "nonassoc" of token_nonassoc proto_nonassoc
+    token PREC "prec" of token_prec proto_prec prec pPrec
 
     (* Identifiers *)
-    token UIDENT of token_uident # Uncapitalized
+    token UIDENT of token_uident proto_uident # Uncapitalized
     neutral pCIDENT
-    token CIDENT of token_cident # Capitalized
-    token USCORE "_" of token_uscore
+    token CIDENT of token_cident proto_cident # Capitalized
+    token USCORE "_" of token_uscore proto_uscore
 
     (* Token alias *)
-    token ISTRING of token_istring
+    token ISTRING of token_istring proto_istring
 
     (* Punctuation/separators *)
-    token COLON_COLON_EQ "::=" of token_colon_colon_eq
-    token OF "of" of token_of
-    token COLON ":" of token_colon
+    token COLON_COLON_EQ "::=" of token_colon_colon_eq proto_colon_colon_eq
+    token OF "of" of token_of proto_of
+    token COLON ":" of token_colon proto_colon
     left pDOT
-    token DOT "." of token_dot prec pDOT
-    token ARROW "->" of token_arrow
-    token BAR "|" of token_bar
-    token LT "<" of token_lt
-    token EQ "=" of token_eq
+    token DOT "." of token_dot proto_dot prec pDOT
+    token ARROW "->" of token_arrow proto_arrow
+    token BAR "|" of token_bar proto_bar
+    token LT "<" of token_lt proto_lt
+    token EQ "=" of token_eq proto_eq
     left pCOMMA < pCIDENT
-    token COMMA "," of token_comma prec pCOMMA
+    token COMMA "," of token_comma proto_comma prec pCOMMA
     right pSEMI
-    token SEMI ";" of token_semi prec pSEMI
+    token SEMI ";" of token_semi proto_semi prec pSEMI
     neutral pAS < pCOMMA
-    token AS "as" of token_as prec pAS
-    token LINE_DELIM of token_line_delim
+    token AS "as" of token_as proto_as prec pAS
+    token LINE_DELIM of token_line_delim proto_line_delim
 
     (* Left-right paired delimiters *)
-    token INDENT of token_indent
-    token DEDENT of token_dedent
-    token LPAREN "(" of token_lparen
-    token RPAREN ")" of token_rparen
-    token LCAPTURE "(|" of token_lcapture
-    token RCAPTURE "|)" of token_rcapture
-    token LBRACK "[" of token_lbrack
-    token RBRACK "]" of token_rbrack
-    token LARRAY "[|" of token_larray
-    token RARRAY "|]" of token_rarray
-    token LCURLY "{" of token_lcurly
-    token RCURLY "}" of token_rcurly
+    token INDENT of token_indent proto_indent
+    token DEDENT of token_dedent proto_dedent
+    token LPAREN "(" of token_lparen proto_lparen
+    token RPAREN ")" of token_rparen proto_rparen
+    token LCAPTURE "(|" of token_lcapture proto_lcapture
+    token RCAPTURE "|)" of token_rcapture proto_rcapture
+    token LBRACK "[" of token_lbrack proto_lbrack
+    token RBRACK "]" of token_rbrack proto_rbrack
+    token LARRAY "[|" of token_larray proto_larray
+    token RARRAY "|]" of token_rarray proto_rarray
+    token LCURLY "{" of token_lcurly proto_lcurly
+    token RCURLY "}" of token_rcurly proto_rcurly
 
     (* Miscellaneous Hemlock token in embedded code *)
-    token OTHER_TOKEN of token_other_token
+    token OTHER_TOKEN of token_other_token proto_other_token
 
     (* End of input, used to terminate start symbols *)
-    token EOI of token_eoi
+    token EOI of token_eoi proto_eoi
 
     nonterm Uident of nonterm_uident ::=
       | (HOCC {token}):"hocc"
@@ -378,21 +436,21 @@ include hocc
       | "of" symbol_type_qualifier:SymbolTypeQualifier (Uident {token}):Uident ->
         SymbolType {symbol_type_qualifier; symbol_type=token}
 
-    nonterm SymbolType0 of nonterm_symbol_type0 ::=
-      | symbol_type:SymbolType -> SymbolType0SymbolType {symbol_type}
-      | epsilon -> SymbolType0Epsilon
-
     nonterm PrecRef of nonterm_prec_ref ::=
       | "prec" (Uident {token}):Uident -> PrecRefUident {uident=token}
       | epsilon -> PrecRefEpsilon
 
-    nonterm TokenAlias of nonterm_token_alias ::=
-      | alias:ISTRING -> TokenAlias {alias}
-      | epsilon -> TokenAliasEpsilon
+    nonterm Alias of nonterm_alias ::=
+      | alias:ISTRING -> Alias {alias}
+      | epsilon -> AliasEpsilon
+
+    nonterm TokenType of nonterm_token_type ::=
+      | symbol_type:SymbolType proto:Code -> TokenType {symbol_type; proto}
+      | epsilon -> TokenTypeEpsilon
 
     nonterm Token of nonterm_token ::=
-      | "token" cident:CIDENT token_alias:TokenAlias symbol_type0:SymbolType0 prec_ref:PrecRef ->
-        Token {cident; token_alias; symbol_type0; prec_ref}
+      | "token" cident:CIDENT alias:Alias token_type:TokenType prec_ref:PrecRef ->
+        Token {cident; alias; token_type; prec_ref}
 
     nonterm Sep of nonterm_sep ::=
       | line_delim:LINE_DELIM -> SepLineDelim {line_delim}
@@ -438,7 +496,7 @@ include hocc
     nonterm CodeTl of nonterm_code_tl ::=
       | delimited:Delimited code_tl:CodeTl -> CodeTlDelimited {delimited; code_tl}
       | code_token:CodeToken code_tl:CodeTl -> CodeTlCodeToken {code_token; code_tl}
-      | epsilon -> CodeTlEpsilon
+      | epsilon prec pCodeTlEpsilon -> CodeTlEpsilon
 
     nonterm Code of nonterm_code ::=
       | delimited:Delimited code_tl:CodeTl -> CodeDelimited {delimited; code_tl}
@@ -676,6 +734,21 @@ let rec scan scanner =
       end
       | mals -> scanner, scan_token, Token.OTHER_TOKEN (OTHER_TOKEN {token=scan_token}), mals
 
+let pp_expect expect formatter =
+    let names =
+      expect
+      |> Ordset.to_list
+      |> List.map ~f:(fun token ->
+        match Token.spec token with
+          | {alias=Some alias; _} -> alias
+          | {name; _} -> name
+      )
+      in
+    formatter
+      |> Fmt.fmt "{⸱"
+      |> Fmt.fmt (String.join ~sep:"⸱" names)
+      |> Fmt.fmt "⸱}"
+
 let hmhi scanner =
     let rec inner scanner errs parser = begin
         let scanner, scan_token, token, mals = scan scanner in
@@ -689,7 +762,13 @@ let hmhi scanner =
           | Accept (Hmhi hmhi), [] -> scanner, Ok hmhi
           | Accept (Hmhi _), _ -> scanner, Error errs
           | Reject _, _ ->
-            let errs = Error.init_token scan_token "Unexpected token" :: errs in
+            let msg =
+              String.Fmt.empty
+              |> Fmt.fmt "Unexpected token not in "
+              |> pp_expect (expect parser)
+              |> Fmt.to_string
+              in
+            let errs = Error.init_token scan_token msg :: errs in
             scanner, Error errs
           | _ -> not_reached ()
       end in
@@ -709,7 +788,13 @@ let hmh scanner =
           | Accept (Hmh hmh), [] -> scanner, Ok hmh
           | Accept (Hmh _), _ -> scanner, Error errs
           | Reject _, _ -> begin
-            let errs = Error.init_token scan_token "Unexpected token" :: errs in
+            let msg =
+              String.Fmt.empty
+              |> Fmt.fmt "Unexpected token not in "
+              |> pp_expect (expect parser)
+              |> Fmt.to_string
+              in
+            let errs = Error.init_token scan_token msg :: errs in
             scanner, Error errs
           end
           | _ -> not_reached ()
@@ -1088,20 +1173,6 @@ let rec pp_token_hocc (HOCC {token}) formatter =
   and pp_symbol_type symbol_type formatter =
     fmt_symbol_type symbol_type formatter
 
-  and fmt_symbol_type0 ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) symbol_type0
-  formatter =
-    let width' = width + 4L in
-    match symbol_type0 with
-      | SymbolType0SymbolType {symbol_type} ->
-        formatter |> Fmt.fmt "SymbolType0SymbolType "
-          |> fmt_lcurly ~alt ~width
-          |> Fmt.fmt "symbol_type=" |> fmt_symbol_type ~alt ~width:width' symbol_type
-          |> fmt_rcurly ~alt ~width
-      | SymbolType0Epsilon ->
-        formatter |> Fmt.fmt "SymbolType0Epsilon"
-  and pp_symbol_type0 symbol_type0 formatter =
-    fmt_symbol_type0 symbol_type0 formatter
-
   and fmt_prec_ref ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) prec_ref formatter =
     match prec_ref with
       | PrecRefUident {uident} ->
@@ -1114,29 +1185,44 @@ let rec pp_token_hocc (HOCC {token}) formatter =
   and pp_prec_ref prec_ref formatter =
     fmt_prec_ref prec_ref formatter
 
-  and fmt_token_alias ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) token_alias formatter =
-    match token_alias with
-      | TokenAlias {alias} ->
-        formatter |> Fmt.fmt "Token "
+  and fmt_alias ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) token formatter =
+    match token with
+      | Alias {alias} ->
+        formatter |> Fmt.fmt "Alias "
           |> fmt_lcurly ~alt ~width
           |> Fmt.fmt "alias=" |> pp_token_istring alias
           |> fmt_rcurly ~alt ~width
-      | TokenAliasEpsilon ->
-        formatter |> Fmt.fmt "TokenAliasEpsilon"
-  and pp_token_alias token_alias formatter =
-    fmt_token_alias token_alias formatter
+      | AliasEpsilon ->
+        formatter |> Fmt.fmt "AliasEpsilon"
+  and pp_alias alias formatter =
+    fmt_alias alias formatter
+
+  and fmt_token_type ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) token formatter =
+    let width' = width + 4L in
+    match token with
+      | TokenType {symbol_type; proto} ->
+        formatter |> Fmt.fmt "TokenType "
+          |> fmt_lcurly ~alt ~width
+          |> Fmt.fmt "symbol_type=" |> pp_symbol_type symbol_type
+          |> fmt_semi ~alt ~width
+          |> Fmt.fmt "proto=" |> fmt_code ~alt ~width:width' proto
+          |> fmt_rcurly ~alt ~width
+      | TokenTypeEpsilon ->
+        formatter |> Fmt.fmt "TokenTypeEpsilon"
+  and pp_token_type token_type formatter =
+    fmt_token_type token_type formatter
 
   and fmt_token ?(alt=Fmt.alt_default) ?(width=Fmt.width_default) token formatter =
     let width' = width + 4L in
     match token with
-      | Token {cident; token_alias; symbol_type0; prec_ref} ->
+      | Token {cident; alias; token_type; prec_ref} ->
         formatter |> Fmt.fmt "Token "
           |> fmt_lcurly ~alt ~width
           |> Fmt.fmt "cident=" |> pp_token_cident cident
           |> fmt_semi ~alt ~width
-          |> Fmt.fmt "token_alias=" |> fmt_token_alias ~alt ~width:width' token_alias
+          |> Fmt.fmt "alias=" |> pp_alias alias
           |> fmt_semi ~alt ~width
-          |> Fmt.fmt "symbol_type0=" |> fmt_symbol_type0 ~alt ~width:width' symbol_type0
+          |> Fmt.fmt "token_type=" |> fmt_token_type ~alt ~width:width' token_type
           |> fmt_semi ~alt ~width
           |> Fmt.fmt "prec_ref=" |> fmt_prec_ref ~alt ~width:width' prec_ref
           |> fmt_rcurly ~alt ~width
@@ -1821,7 +1907,7 @@ let rec source_of_binding = function
 (**************************************************************************************************)
 (* Miscellaneous helper functions. *)
 
-let min_comment_indentation_of_hocc_block = function
+let indentation_of_hocc_block = function
   | Hocc {indent=INDENT {token=indent}; _} ->
     Scan.Token.source indent
       |> Hmc.Source.Slice.base
@@ -1901,7 +1987,7 @@ let source_of_code code =
     Hmc.Source.Slice.of_cursors ~base ~past
 
 let indentation_of_code hocc_block code =
-    let min_comment_indentation = min_comment_indentation_of_hocc_block hocc_block in
+    let min_comment_indentation = indentation_of_hocc_block hocc_block in
     match code with
       | CodeDelimited _ -> min_comment_indentation + 4L
       | CodeCodeToken _ -> min_comment_indentation
@@ -1924,17 +2010,51 @@ let postlude_base_of_hocc (Hocc {stmts=Stmts {stmt; stmts_tl}; _}) =
       and of_prec_rels = function
       | PrecRelsPrecs {precs} -> Some (of_precs precs)
       | PrecRelsEpsilon -> None
-      and of_symbol_type = function
-      | SymbolType {symbol_type; _} -> symbol_type
-      and of_symbol_type0 = function
-      | SymbolType0SymbolType {symbol_type} -> Some (of_symbol_type symbol_type)
-      | SymbolType0Epsilon -> None
       and of_prec_ref = function
       | PrecRefUident {uident} -> Some uident
       | PrecRefEpsilon -> None
-      and of_token_alias = function
-      | TokenAlias {alias=ISTRING {token=alias}} -> Some alias
-      | TokenAliasEpsilon -> None
+      and of_alias = function
+      | Alias {alias=ISTRING {token=alias}} -> Some alias
+      | AliasEpsilon -> None
+      and of_token_type = function
+      | TokenType {proto; _} -> Some (of_code proto)
+      | TokenTypeEpsilon-> None
+      and of_token = function
+      | Token {cident=CIDENT {token=cident}; alias; token_type; prec_ref} -> begin
+        of_prec_ref prec_ref
+          |> Option.some_or_thunk ~f:(fun () -> of_token_type token_type)
+          |> Option.some_or_thunk ~f:(fun () -> of_alias alias)
+          |> Option.value_or_thunk ~f:(fun () -> cident)
+      end
+      and of_delimited = function
+      | DelimitedBlock {dedent=DEDENT {token}; _}
+      | DelimitedParen {rparen=RPAREN {token}; _}
+      | DelimitedCapture {rcapture=RCAPTURE {token}; _}
+      | DelimitedList {rbrack=RBRACK {token}; _}
+      | DelimitedArray {rarray=RARRAY {token}; _}
+      | DelimitedModule {rcurly=RCURLY {token}; _} -> token
+      and of_code_token = function
+      | CodeToken {token} -> token
+      and of_code_tl = function
+      | CodeTlDelimited {delimited; code_tl} -> begin
+        of_code_tl code_tl
+          |> Option.some_or_thunk ~f:(fun () -> Some (of_delimited delimited))
+      end
+      | CodeTlCodeToken {code_token; code_tl} -> begin
+        of_code_tl code_tl
+          |> Option.some_or_thunk ~f:(fun () -> Some (of_code_token code_token))
+      end
+      | CodeTlEpsilon -> None
+      and of_code = function
+      | CodeDelimited {delimited; code_tl} -> begin
+        of_code_tl code_tl
+          |> Option.value_or_thunk ~f:(fun () -> of_delimited delimited)
+      end
+      | CodeCodeToken {code_token; code_tl} -> begin
+        of_code_tl code_tl
+          |> Option.value_or_thunk ~f:(fun () -> of_code_token code_token)
+      end
+
       and of_prod_param_symbol = function
       | ProdParamSymbolCident {cident=CIDENT {token=cident}} -> cident
       | ProdParamSymbolAlias {alias=ISTRING {token=alias}} -> alias
@@ -1993,13 +2113,7 @@ let postlude_base_of_hocc (Hocc {stmts=Stmts {stmt; stmts_tl}; _}) =
         of_prec_rels prec_rels
           |> Option.value_or_thunk ~f:(fun () -> of_precs prec_set)
       end
-      | StmtToken {token=Token {cident=CIDENT {token=cident}; token_alias; symbol_type0;
-      prec_ref; _}} -> begin
-        of_prec_ref prec_ref
-          |> Option.some_or_thunk ~f:(fun () -> of_symbol_type0 symbol_type0)
-          |> Option.some_or_thunk ~f:(fun () -> of_token_alias token_alias)
-          |> Option.value_or_thunk ~f:(fun () -> cident)
-      end
+      | StmtToken {token} -> of_token token
       | StmtNonterm {nonterm} -> of_nonterm nonterm
       and of_stmts_tl = function
       | StmtsTl {stmt; stmts_tl} -> begin

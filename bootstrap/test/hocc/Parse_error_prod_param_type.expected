@@ -1,2 +1,2 @@
 hocc: Parsing "./Parse_error_prod_param_type.hmh"
-hocc: At ["./Parse_error_prod_param_type.hmh":3:10.."./Parse_error_prod_param_type.hmh":3:12): Unexpected token
+hocc: At ["./Parse_error_prod_param_type.hmh":3:10.."./Parse_error_prod_param_type.hmh":3:12): Unexpected token not in {⸱CIDENT⸱ISTRING⸱}

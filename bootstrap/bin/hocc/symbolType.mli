@@ -8,7 +8,7 @@ type t
 include IdentifiableIntf.S with type t := t
 
 val is_synthetic: t -> bool
-(** [is_synthetic t] returns true if [t] is an synthetic symbol type, false otherwise. *)
+(** [is_synthetic t] returns true if [t] is a synthetic symbol type, false otherwise. *)
 
 val is_explicit: t -> bool
 (** [is_explicit t] returns true if [t] is an explicit symbol type, false otherwise. *)

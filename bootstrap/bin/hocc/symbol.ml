@@ -19,6 +19,7 @@ module T = struct
     prec: Prec.t option;
     stmt: stmt option;
     alias: string option;
+    proto: Parse.nonterm_code option;
     start: bool;
     prods: Prod.t array;
     first: Bitset.t;
@@ -31,7 +32,7 @@ module T = struct
   let cmp {index=index0; _} {index=index1; _} =
     Index.cmp index0 index1
 
-  let pp {index; name; stype; prec; stmt; alias; start; prods; first; follow} formatter =
+  let pp {index; name; stype; prec; stmt; alias; proto; start; prods; first; follow} formatter =
     formatter
     |> Fmt.fmt "{index=" |> Index.pp index
     |> Fmt.fmt "; name=" |> String.pp name
@@ -39,6 +40,7 @@ module T = struct
     |> Fmt.fmt "; prec=" |> (Option.pp Prec.pp) prec
     |> Fmt.fmt "; stmt=" |> (Option.pp pp_stmt) stmt
     |> Fmt.fmt "; alias=" |> (Option.pp String.pp) alias
+    |> Fmt.fmt "; proto=" |> (Option.pp Parse.pp_code) proto
     |> Fmt.fmt "; start=" |> Bool.pp start
     |> Fmt.fmt "; prods=" |> (Array.pp Prod.pp) prods
     |> Fmt.fmt "; first=" |> Bitset.pp first
@@ -57,7 +59,7 @@ end
 include T
 include Identifiable.Make(T)
 
-let init_token ~index ~name ~stype ~prec ~stmt ~alias =
+let init_token ~index ~name ~stype ~prec ~stmt ~alias ~proto =
   let stmt = match stmt with
     | None -> None
     | Some stmt -> Some (Token stmt)
@@ -67,11 +69,11 @@ let init_token ~index ~name ~stype ~prec ~stmt ~alias =
   (* Tokens are in their own `first` sets. *)
   let first = Bitset.singleton index in
   let follow = Bitset.empty in
-  {index; name; stype; prec; stmt; alias; start; prods; first; follow}
+  {index; name; stype; prec; stmt; alias; proto; start; prods; first; follow}
 
 let init_synthetic_token ~index ~name ~alias =
   init_token ~index ~name ~stype:SymbolType.synthetic_implicit ~prec:None ~stmt:None
-    ~alias:(Some alias)
+    ~alias:(Some alias) ~proto:None
 
 let epsilon = init_synthetic_token ~index:0L ~name:"EPSILON" ~alias:"ε"
 
@@ -84,6 +86,7 @@ let init_nonterm ~index ~name ~stype ~prec ~stmt ~start ~prods =
   in
   let prods = Ordset.to_array prods in
   let alias = None in
+  let proto = None in
   (* Insert "ε" into the `first` set if there is an epsilon production. *)
   let has_epsilon_prod = Array.fold_until ~init:false ~f:(fun _has_epsilon_prod prod ->
     let is_epsilon = Prod.is_epsilon prod in
@@ -98,7 +101,7 @@ let init_nonterm ~index ~name ~stype ~prec ~stmt ~start ~prods =
     | Some _ -> Bitset.empty
     | None -> Bitset.singleton epsilon.index
   in
-  {index; name; stype; prec; stmt; alias; start; prods; first; follow}
+  {index; name; stype; prec; stmt; alias; proto; start; prods; first; follow}
 
 let is_token {prods; _} =
   Array.is_empty prods

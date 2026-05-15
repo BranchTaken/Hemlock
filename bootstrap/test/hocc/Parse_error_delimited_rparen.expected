@@ -1,2 +1,2 @@
 hocc: Parsing "./Parse_error_delimited_rparen.hmh"
-hocc: At ["./Parse_error_delimited_rparen.hmh":4:0.."./Parse_error_delimited_rparen.hmh":4:0): Unexpected token
+hocc: At ["./Parse_error_delimited_rparen.hmh":4:0.."./Parse_error_delimited_rparen.hmh":4:0): Unexpected token not in {⸱hocc⸱nonterm⸱epsilon⸱start⸱token⸱neutral⸱left⸱right⸱nonassoc⸱prec⸱UIDENT⸱CIDENT⸱_⸱ISTRING⸱::=⸱of⸱:⸱.⸱->⸱<⸱=⸱,⸱as⸱INDENT⸱(⸱)⸱(|⸱[⸱[|⸱{⸱OTHER_TOKEN⸱}

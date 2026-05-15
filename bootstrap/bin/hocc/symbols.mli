@@ -21,6 +21,9 @@ module Builder : sig
     alias: string option;
     (** Optional token alias. *)
 
+    proto: Parse.nonterm_code option;
+    (** Optional variant constructor prototype value, used to generate `Token.protos`. *)
+
     stype: SymbolType.t;
     (** Symbol type, e.g. implicit for [token SOME_TOKEN], or explicit "Zint.t" for [token INT of
         Zint.t]. *)
@@ -30,9 +33,10 @@ module Builder : sig
   (** [empty] returns an empty symbols builder. *)
 
   val insert_token: name:string -> stype:SymbolType.t -> prec:Prec.t option
-    -> stmt:Parse.nonterm_token option -> alias:string option -> t -> t
-  (** [insert_token ~name ~stype ~prec ~stmt ~alias t] creates a token [Symbol.t] with unique index
-      and returns a new [t] with the symbol inserted. Must not be called after any
+    -> stmt:Parse.nonterm_token option -> alias:string option -> proto:Parse.nonterm_code option
+    -> t -> t
+  (** [insert_token ~name ~stype ~prec ~stmt ~alias ~proto t] creates a token [Symbol.t] with unique
+      index and returns a new [t] with the symbol inserted. Must not be called after any
       [insert_nonterm_info] call. *)
 
   val insert_nonterm_info: name:string -> stype:SymbolType.t -> t -> t

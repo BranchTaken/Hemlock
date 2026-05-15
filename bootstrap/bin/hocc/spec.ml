@@ -168,18 +168,9 @@ let rec qualify_symbol_type symbol_type_qualifier symbol_type =
 
 let tokens_init io precs hmh =
   let fold_token io precs symbols_builder token = begin
-    match token with
-    | Parse.Token {cident=CIDENT {token=cident}; token_alias; symbol_type0; prec_ref; _}
-      -> begin
+    let name, prec = match token with
+      | Parse.Token {cident=CIDENT {token=cident}; prec_ref; _} -> begin
           let name = string_of_token cident in
-          let stype = match symbol_type0 with
-            | SymbolType0SymbolType {symbol_type=SymbolType {
-              symbol_type_qualifier; symbol_type; _}} -> begin
-                SymbolType.explicit (string_of_token symbol_type)
-                |> qualify_symbol_type symbol_type_qualifier
-              end
-            | SymbolType0Epsilon -> SymbolType.implicit
-          in
           let prec = match prec_ref with
             | PrecRefUident {uident} -> begin
                 let prec_name = string_of_token uident in
@@ -209,30 +200,42 @@ let tokens_init io precs hmh =
                 Io.fatal io
               end
           in
-          let alias = match token_alias with
-            | TokenAlias {alias=ISTRING {token=a}} -> begin
-                let alias_name = string_of_alias_token a in
-                let () = match Symbols.Builder.symbol_index_of_alias alias_name symbols_builder with
-                  | None -> ()
-                  | Some _ -> begin
-                      let io =
-                        io.err
-                        |> Fmt.fmt "hocc: At " |> Hmc.Source.Slice.pp (Scan.Token.source a)
-                        |> Fmt.fmt ": Redefined token alias: " |> Fmt.fmt alias_name |> Fmt.fmt "\n"
-                        |> Io.with_err io
-                      in
-                      Io.fatal io
-                    end
-                in
-                Some alias_name
-              end
-            | TokenAliasEpsilon -> None
-          in
-          let symbols_builder =
-            Symbols.Builder.insert_token ~name ~stype ~prec ~stmt:(Some token) ~alias
-              symbols_builder in
-          io, symbols_builder
+          name, prec
         end
+    in
+    let alias = match token with
+      | Token {alias=Alias {alias=ISTRING {token=a}}; _} -> begin
+          let alias_name = string_of_alias_token a in
+          let () = match Symbols.Builder.symbol_index_of_alias alias_name symbols_builder with
+            | None -> ()
+            | Some _ -> begin
+                let io =
+                  io.err
+                  |> Fmt.fmt "hocc: At " |> Hmc.Source.Slice.pp (Scan.Token.source a)
+                  |> Fmt.fmt ": Redefined token alias: " |> Fmt.fmt alias_name |> Fmt.fmt "\n"
+                  |> Io.with_err io
+                in
+                Io.fatal io
+              end
+          in
+          Some alias_name
+        end
+      | Token {alias=AliasEpsilon; _} -> None
+    in
+    let stype, proto = match token with
+      | Token {token_type=TokenType {symbol_type=SymbolType {symbol_type_qualifier; symbol_type};
+        proto}; _} -> begin
+          let stype = SymbolType.explicit (string_of_token symbol_type)
+            |> qualify_symbol_type symbol_type_qualifier in
+          let proto = Some proto in
+          stype, proto
+        end
+      | Token {token_type=TokenTypeEpsilon; _} -> SymbolType.implicit, None
+    in
+    let symbols_builder =
+      Symbols.Builder.insert_token ~name ~stype ~prec ~stmt:(Some token) ~alias ~proto
+        symbols_builder in
+    io, symbols_builder
   end in
   let fold_stmt io precs symbols_builder stmt = begin
     match stmt with
@@ -649,6 +652,7 @@ let symbols_init io precs symbols_builder hmh =
             index=index';
             name=name';
             alias=None;
+            proto=None;
             stype=SymbolType.synthetic_wrapper stype;
           } in
           let Symbol.{index=pe_index; name=pe_name; stype=pe_stype; _} = Symbol.pseudo_end in

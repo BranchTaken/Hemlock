@@ -159,6 +159,9 @@ Parser = {
               | INT of Zint.t
               | EOI
 
+            protos: array t
+              [@@doc "Token prototypes, one per variant."]
+
             include IdentifiableIntf.S with type t := t
 
             spec: t -> Spec.Symbol.t
@@ -266,6 +269,10 @@ Parser = {
         next: Token.t -> t -> t
           [@@doc "`next token t` calls `feed token t` and fast-forwards via `step` calls to return a
           result with status in {`Prefix`, `Accept`, `Reject`}. `t.status` must be `Prefix`."]
+
+        expect: t -> Ordset.t Token.t Token.cmper_witness
+          [@@doc "`expect t` returns the set of token (proto)types which `next token t` would not
+          reject, assuming status were `Prefix`. `t.status` must be in {`Prefix`, `Reject`}."]
       }[:"./Example_c.hmhi":5:4+12]
   }
 

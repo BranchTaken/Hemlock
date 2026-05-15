@@ -1048,6 +1048,18 @@ include struct
               | INT _ -> 6L
               | EOI -> 7L
 
+            let protos = [|
+                EPSILON;
+                PSEUDO_END;
+                STAR;
+                SLASH;
+                PLUS;
+                MINUS;
+#19 "./Example_introspect.hmh"
+                INT Zint.zero;
+                EOI
+              |]
+
             let hash_fold t state =
                 state |> Uns.hash_fold (index t)
 
@@ -1494,9 +1506,27 @@ e
           | Reject _ -> t
 
     let next token ({status; _} as t) =
+        let open Status in
         match status with
-          | Status.Prefix -> t |> feed token |> walk
-          | _ -> not_reached ()
+          | Prefix -> begin
+            match t |> feed token |> walk with
+              | {status=Reject _ as status; _} -> {t with status}
+              | t' -> t'
+          end
+          | _ -> halt "`token` only supports `Prefix` status"
+
+    let expect ({status; _} as t) =
+        let open Status in
+        let t = match status with
+          | Prefix -> t
+          | Reject _ -> {t with status=Prefix}
+          | _ -> halt "`expect` only supports `Prefix`/`Reject` status"
+          in
+        Array.fold ~init:(Ordset.empty (module Token)) ~f:(fun expect token ->
+            match next token t with
+              | {status=Reject _; _} -> expect
+              | _ -> Ordset.insert token expect
+        ) Token.protos
   end
 #36 "./Example_introspect.hmh"
 

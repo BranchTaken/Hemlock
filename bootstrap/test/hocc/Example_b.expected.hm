@@ -945,6 +945,19 @@ include
               | INT _ -> 6
               | EOI -> 7
 
+            protos = [|
+                EPSILON
+                PSEUDO_END
+                STAR
+                SLASH
+                PLUS
+                MINUS
+                INT [:"./Example_b.hmh":20:4+20](
+        0z
+      )[:]
+                EOI
+              |]
+
             hash_fold t state =
                 state |> Uns.hash_fold (index t)
 
@@ -1141,7 +1154,7 @@ include
                   :: {symbol=Symbol.Nonterm (Expr e0); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Expr (
                   # ________________________________________________________________________________
-                  [:"./Example_b.hmh":23:8+0]match op with
+                  [:"./Example_b.hmh":25:8+0]match op with
           | STAR -> Zint.(e0 * e1)
           | SLASH -> Zint.(e0 / e1)
           | _ -> not_reached ()[:]
@@ -1154,7 +1167,7 @@ include
                   :: {symbol=Symbol.Nonterm (Expr e0); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Expr (
                   # ________________________________________________________________________________
-                  [:"./Example_b.hmh":28:8+0]match op with
+                  [:"./Example_b.hmh":30:8+0]match op with
           | PLUS -> Zint.(e0 + e1)
           | MINUS -> Zint.(e0 - e1)
           | _ -> not_reached ()[:]
@@ -1165,7 +1178,7 @@ include
                   | {symbol=Symbol.Token (INT x); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Expr (
                   # ________________________________________________________________________________
-                  [:"./Example_b.hmh":32:4+13]x[:]
+                  [:"./Example_b.hmh":34:4+13]x[:]
                   # ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
                   )), tl__hocc__
                   | _ -> not_reached ()
@@ -1174,7 +1187,7 @@ include
                   :: {symbol=Symbol.Nonterm (Expr e); _}
                   :: tl__hocc__ -> Symbol.Nonterm (Answer (
                   # ________________________________________________________________________________
-                  [:"./Example_b.hmh":36:4+18]e[:]
+                  [:"./Example_b.hmh":38:4+18]e[:]
                   # ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
                   )), tl__hocc__
                   | _ -> not_reached ()
@@ -1353,10 +1366,26 @@ include
           | Reject _ -> t
 
     next token ({status; _} as t) =
+        let open Status
         match status with
-          | Status.Prefix -> t |> feed token |> walk
-          | _ -> not_reached ()
-  }[:"./Example_b.hmh":36:0+23]
+          | Status.Prefix ->
+            match t |> feed token |> walk with
+              | {status=Reject _ as status; _} -> {t with status}
+              | t' -> t'
+          | _ -> halt "`token` only supports `Prefix` status"
+
+    expect ({status; _} as t) =
+        let open Status
+        let t = match status with
+          | Prefix -> t
+          | Reject _ -> {t with status=Prefix}
+          | _ -> halt "`expect` only supports `Prefix`/`Reject` status"
+        Array.fold ~init:(Ordset.empty Token) ~f:(fn expect token ->
+            match next token t with
+              | {status=Reject _; _} -> expect
+              | _ -> Ordset.insert token expect
+        ) Token.protos
+  }[:"./Example_b.hmh":38:0+23]
 
 # Tokenize `s`, e.g. "2 + 3 * 4", and append an `EOI` token.
 tokenize s =

@@ -14,6 +14,7 @@ module Builder = struct
     index: Symbol.Index.t;
     name: string;
     alias: string option;
+    proto: Parse.nonterm_code option;
     stype: SymbolType.t;
   }
 
@@ -30,8 +31,9 @@ module Builder = struct
     let infos, names, aliases, symbols = List.fold
         ~init:(Map.empty (module String), Map.empty (module String), Map.empty (module String),
           Ordmap.empty (module Symbol.Index))
-        ~f:(fun (infos, names, aliases, symbols) (Symbol.{index; name; stype; alias; _} as token) ->
-          let info = {index; name; alias; stype} in
+        ~f:(fun (infos, names, aliases, symbols)
+          (Symbol.{index; name; stype; alias; proto; _} as token) ->
+          let info = {index; name; alias; proto; stype} in
           let infos' = Map.insert_hlt ~k:name ~v:info infos in
           let names' = Map.insert_hlt ~k:name ~v:index names in
           let aliases' = Map.insert_hlt ~k:(Option.value_hlt alias) ~v:index aliases in
@@ -52,12 +54,12 @@ module Builder = struct
     | None -> None
     | Some symbol_index -> info_of_name Symbol.((Ordmap.get_hlt symbol_index tokens).name) t
 
-  let insert_token ~name ~stype ~prec ~stmt ~alias
+  let insert_token ~name ~stype ~prec ~stmt ~alias ~proto
       ({infos; names; aliases; symbols; tokens; nonterms} as t) =
     assert (Ordmap.is_empty nonterms);
     let index = Map.length infos in
-    let info = {index; name; alias; stype} in
-    let token = Symbol.init_token ~index ~name ~stype ~prec ~stmt ~alias in
+    let info = {index; name; alias; proto; stype} in
+    let token = Symbol.init_token ~index ~name ~stype ~prec ~stmt ~alias ~proto in
     let infos' = Map.insert_hlt ~k:name ~v:info infos in
     let names' = Map.insert_hlt ~k:name ~v:index names in
     let aliases' = match alias with
@@ -70,7 +72,7 @@ module Builder = struct
 
   let insert_nonterm_info ~name ~stype ({infos; _} as t) =
     let index = Map.length infos in
-    let info = {index; name; alias=None; stype} in
+    let info = {index; name; alias=None; proto=None; stype} in
     let infos' = Map.insert_hlt ~k:name ~v:info infos in
     {t with infos=infos'}
 
