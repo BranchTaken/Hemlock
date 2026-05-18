@@ -5,14 +5,14 @@ hocc: Generating LALR(1) specification as IELR(1) prerequisite
 hocc: LR(1) item set compatibility: lalr
 hocc: Generating LR(1) item set closures (workq/total) 0/15
 hocc: Generating 15 LR(1) states
-hocc: 0 conflicts in 0 states
+hocc: 0 conflicts
 hocc: Gathering IELR(1) conflict state attributions (/=none/some)
 hocc: LR(1) item set compatibility: ielr
 hocc: Generating LR(1) item set closures (workq/total) 0/15
 hocc: Generating 15 LR(1) states
 hocc: Tracing automaton (.+=actions[+gotos])+...+.+++.+
 hocc: 0 unreachable states
-hocc: 0 unresolvable conflicts in 0 states
+hocc: 0 unresolvable conflicts
 hocc: Generating text report
 hocc: Generating hocc report
 hocc: Writing "./hocc/IelrFig6.txt"

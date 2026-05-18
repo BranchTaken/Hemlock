@@ -13,7 +13,7 @@ hocc: Generating 21 LR(1) states
 hocc: Tracing automaton (.+=actions[+gotos])+...+.+.+
 hocc: 2 unreachable states
 hocc: Reindexing 19 LR(1) states
-hocc: 0 unresolvable conflicts in 0 states
+hocc: 0 unresolvable conflicts
 hocc: 1 unused production:
 hocc:    S ::= Tb C Ta
 hocc: Generating text report

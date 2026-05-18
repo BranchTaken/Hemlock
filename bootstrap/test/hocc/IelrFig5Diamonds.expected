@@ -12,7 +12,7 @@ hocc: Generating LR(1) item set closures (workq/total) 0/34
 hocc: Generating 34 LR(1) states
 hocc: Tracing automaton (.+=actions[+gotos])+.....+++.++.+++.+.+
 hocc: 0 unreachable states
-hocc: 0 unresolvable conflicts in 0 states
+hocc: 0 unresolvable conflicts
 hocc: Generating text report
 hocc: Generating hocc report
 hocc: Writing "./hocc/IelrFig5Diamonds.txt"
