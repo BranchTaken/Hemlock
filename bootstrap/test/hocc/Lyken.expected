@@ -7,7 +7,7 @@ hocc: Generating 1_375 LR(1) states
 hocc: Tracing automaton (.+=actions[+gotos])+........+.....+.....+.....+...+....+..+.+.+.+.++
 hocc: 35 unreachable states
 hocc: Reindexing 1_340 LR(1) states
-hocc: 0 unresolvable conflicts in 0 states
+hocc: 0 unresolvable conflicts
 hocc: 15 unused precedence set associativities:
 hocc:    left pColon < pGenericParamOne
 hocc:    left pRparen < pProcParmBody

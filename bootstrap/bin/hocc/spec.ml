@@ -1040,9 +1040,18 @@ and log_conflicts io ~resolve states =
     )
     |> Fmt.fmt " conflict"
     |> (fun formatter -> match conflicts with 1L -> formatter | _ -> formatter |> Fmt.fmt "s")
-    |> Fmt.fmt " in " |> Uns.pp conflict_states
-    |> Fmt.fmt " state"
-    |> (fun formatter -> match conflict_states with 1L -> formatter | _ -> formatter |> Fmt.fmt "s")
+    |> (fun formatter ->
+      match conflicts with
+      | 0L -> formatter
+      | _ -> begin
+          formatter
+          |> Fmt.fmt " in " |> Uns.pp conflict_states
+          |> Fmt.fmt " state"
+          |> (fun formatter ->
+            match conflict_states with 1L -> formatter | _ -> formatter |> Fmt.fmt "s"
+          )
+        end
+    )
     |> (fun formatter -> match conflicts = 0L with
       | true -> formatter
       | false -> begin

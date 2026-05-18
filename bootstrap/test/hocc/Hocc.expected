@@ -10,7 +10,7 @@ hocc: Reindexing 859 LR(1) states
 hocc: Searching for remergeable state subgraphs (mergeable/max[worklst]) 0/601[785] 601/601[0]
 hocc: Remerging 601 LR(1) states
 hocc: Reindexing 258 LR(1) states
-hocc: 0 unresolvable conflicts in 0 states
+hocc: 0 unresolvable conflicts
 hocc: Generating text report
 hocc: Generating hocc report
 hocc: Writing "./hocc/Hocc.txt"

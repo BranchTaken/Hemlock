@@ -9,6 +9,6 @@ hocc: Remerging 223 LR(1) states
 hocc: Reindexing 45 LR(1) states
 hocc: Tracing automaton (.+=actions[+gotos])+.+..+.+.+..+.+.+.+
 hocc: 0 unreachable states
-hocc: 0 unresolvable conflicts in 0 states
+hocc: 0 unresolvable conflicts
 hocc: Generating text report
 hocc: Writing "./hocc/IelrRemergeable_aaplr_gpost.txt"
