@@ -1,15 +1,15 @@
 hocc: Parsing "./Hocc.hmh"
 hocc: Generating APLR(1) specification
-hocc: 5 precedences, 42 tokens, 48 non-terminals (2 starts), 158 productions
+hocc: 7 precedences, 42 tokens, 48 non-terminals (2 starts), 158 productions
 hocc: LR(1) item set compatibility: lr
-hocc: Generating LR(1) item set closures (workq/total) 0/860
-hocc: Generating 860 LR(1) states
-hocc: Tracing automaton (.+=actions[+gotos])+.+.....+...+....+..+..+....+..+..+..+.+...+.++.+.+.++
+hocc: Generating LR(1) item set closures (workq/total) 0/912
+hocc: Generating 912 LR(1) states
+hocc: Tracing automaton (.+=actions[+gotos])+.+.....+...+....+..+..+....+..+..+..+.+..+.+++.+++
 hocc: 1 unreachable state
-hocc: Reindexing 859 LR(1) states
-hocc: Searching for remergeable states: 601/601
-hocc: Remerging 601 LR(1) states
-hocc: Reindexing 258 LR(1) states
+hocc: Reindexing 911 LR(1) states
+hocc: Searching for remergeable states: 648/652
+hocc: Remerging 648 LR(1) states
+hocc: Reindexing 263 LR(1) states
 hocc: 0 unresolvable conflicts
 hocc: Generating text report
 hocc: Generating hocc report

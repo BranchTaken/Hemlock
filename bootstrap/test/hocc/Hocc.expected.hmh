@@ -1,4 +1,6 @@
 hocc
+    neutral pCodeTlEpsilon
+    neutral pPrec < pCodeTlEpsilon
     neutral pCIDENT
     left pDOT
     left pCOMMA < pCIDENT
@@ -13,7 +15,7 @@ hocc
     token LEFT "left"
     token RIGHT "right"
     token NONASSOC "nonassoc"
-    token PREC "prec"
+    token PREC "prec" prec pPrec
     token UIDENT
     token CIDENT
     token USCORE "_"
@@ -73,16 +75,16 @@ hocc
       | CIDENT "." SymbolTypeQualifier
       | epsilon
     nonterm SymbolType ::= "of" SymbolTypeQualifier Uident
-    nonterm SymbolType0 ::=
-      | SymbolType
-      | epsilon
     nonterm PrecRef ::=
       | "prec" Uident
       | epsilon
-    nonterm TokenAlias ::=
+    nonterm Alias ::=
       | ISTRING
       | epsilon
-    nonterm Token ::= "token" CIDENT TokenAlias SymbolType0 PrecRef
+    nonterm TokenType ::=
+      | SymbolType Code
+      | epsilon
+    nonterm Token ::= "token" CIDENT Alias TokenType PrecRef
     nonterm Sep ::=
       | LINE_DELIM
       | ";"
@@ -119,7 +121,7 @@ hocc
     nonterm CodeTl ::=
       | Delimited CodeTl
       | CodeToken CodeTl
-      | epsilon
+      | epsilon prec pCodeTlEpsilon
     nonterm Code ::=
       | Delimited CodeTl
       | CodeToken CodeTl
