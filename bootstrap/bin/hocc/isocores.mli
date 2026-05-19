@@ -75,7 +75,8 @@ val fold: init:'accum -> f:('accum -> StateNub.t -> 'accum) -> t -> 'accum
 (** [fold ~init ~f t] iteratively applies [f] to the state nubs in [t], in increasing state nub
     index order. *)
 
-val fold_isocore_sets: init:'accum
+val fold_non_singleton_isocore_sets: init:'accum
   -> f:('accum -> (StateNub.t, StateNub.cmper_witness) Ordset.t -> 'accum) -> t -> 'accum
-(** [fold_isocore_sets ~init ~f t] iteratively applies [f] to the isocore sets in [t], in increasing
+(** [fold_non_singleton_isocore_sets ~init ~f t] iteratively applies [f] to the non-singleton
+    isocore sets in [t], ordered primarily by increasing set cardinality, secondarily by stable
     isocore sequence number order. *)
