@@ -1360,12 +1360,12 @@ module Level = struct
   let ( = ) t0 t1 =
     Cmp.is_eq (cmp t0 t1)
 
-  let init u =
-    Primary u
+  let init t =
+    Primary t
 
-  let update u = function
-    | Primary _ -> Primary u
-    | Embedded e -> Embedded {e with embedded=u}
+  let update t = function
+    | Primary _ -> Primary t
+    | Embedded e -> Embedded {e with embedded=t}
 
   let succ t =
     update (succ (level t)) t
@@ -1373,9 +1373,9 @@ module Level = struct
   let pred t =
     update (pred (level t)) t
 
-  let embed u = function
-    | Primary primary -> Embedded {primary; embedded=u}
-    | Embedded e -> Embedded {e with embedded=u}
+  let embed t = function
+    | Primary primary -> Embedded {primary; embedded=t}
+    | Embedded e -> Embedded {e with embedded=t}
 
   let reset = function
     | Primary _ as level -> level
@@ -1481,7 +1481,9 @@ let pp_fstring_state fstring_state formatter =
   | Fstring_body -> formatter |> Fmt.fmt "Fstring_body"
   | Fstring_rditto_seen tok -> formatter |> Fmt.fmt "Fstring_spec_pct " |> Token.pp tok
 
-type t = {
+(* Internal non-lazy state machine data. Arbitrarily named `y` because `u` is used in various places
+ * to denote "unsigned". *)
+type y = {
   tok_base: Source.Cursor.t;
   level: Level.t;
   block_state: block_state;
@@ -1489,38 +1491,23 @@ type t = {
   fstring_states: fstring_state list;
 }
 
-let init text =
-  {
-    tok_base=Source.Cursor.hd (Source.init text);
-    level=Level.init 0L;
-    block_state=Block_primal;
-    line_state=Line_begin;
-    fstring_states=[];
-  }
-
-let pp t formatter =
+let pp_y {tok_base; level; block_state; line_state; fstring_states} formatter =
   formatter
-  |> Fmt.fmt "{tok_base=" |> Text.Pos.pp (Source.Cursor.pos t.tok_base)
-  |> Fmt.fmt "; level=" |> Level.pp t.level
-  |> Fmt.fmt "; block_state=" |> pp_block_state t.block_state
-  |> Fmt.fmt "; line_state=" |> pp_line_state t.line_state
-  |> Fmt.fmt "; fstring_states=" |> (List.pp pp_fstring_state) t.fstring_states
+  |> Fmt.fmt "{tok_base=" |> Text.Pos.pp (Source.Cursor.pos tok_base)
+  |> Fmt.fmt "; level=" |> Level.pp level
+  |> Fmt.fmt "; block_state=" |> pp_block_state block_state
+  |> Fmt.fmt "; line_state=" |> pp_line_state line_state
+  |> Fmt.fmt "; fstring_states=" |> (List.pp pp_fstring_state) fstring_states
   |> Fmt.fmt "}"
 
-let view_of_t t =
-  View.init ~ppcursor:t.tok_base ~pcursor:t.tok_base ~cursor:t.tok_base
+let view_of_y {tok_base; _} =
+  View.init ~ppcursor:tok_base ~pcursor:tok_base ~cursor:tok_base
 
-let text t =
-  Source.(text (Cursor.container t.tok_base))
+let str_of_cursor cursor {tok_base; _} =
+  Source.Slice.to_string (Source.Slice.of_cursors ~base:tok_base ~past:cursor)
 
-let cursor {tok_base; _} =
-  tok_base
-
-let str_of_cursor cursor t =
-  Source.Slice.to_string (Source.Slice.of_cursors ~base:t.tok_base ~past:cursor)
-
-let in_fstring t =
-  match t.fstring_states with
+let in_fstring {fstring_states; _} =
+  match fstring_states with
   | []
   | Fstring_expr_width :: _
   | Fstring_expr_precision :: _
@@ -3087,21 +3074,21 @@ module Dfa = struct
     | Retry of State.t
     | Accept of Token.t
 
-  type action0 = View.t -> t -> t * transition
+  type action0 = View.t -> y -> y * transition
   and node0 = {
     edges0: (codepoint, action0, Codepoint.cmper_witness) Map.t;
     default0: action0;
     eoi0: action0;
   }
 
-  type 'a action1 = 'a -> View.t -> t -> t * transition
+  type 'a action1 = 'a -> View.t -> y -> y * transition
   and 'a node1 = {
     eoi1: 'a action1;
     edges1: (codepoint, 'a action1, Codepoint.cmper_witness) Map.t;
     default1: 'a action1;
   }
 
-  let act0 trace node view t =
+  let act0 trace node view y =
     let action0, view' = match View.next view with
       | Some (cp, view') -> begin
           match Map.get cp node.edges0 with
@@ -3123,10 +3110,10 @@ module Dfa = struct
           node.eoi0, view
         end
     in
-    let t', transition = action0 view' t in
-    t', transition
+    let y', transition = action0 view' y in
+    y', transition
 
-  let act1 trace node state_payload view t =
+  let act1 trace node state_payload view y =
     let action1, view' = match View.next view with
       | Some (cp, view') -> begin
           match Map.get cp node.edges1 with
@@ -3148,38 +3135,38 @@ module Dfa = struct
           node.eoi1, view
         end
     in
-    let t', transition = action1 state_payload view' t in
-    t', transition
+    let y', transition = action1 state_payload view' y in
+    y', transition
 
-  let accept_tok tok cursor t =
-    {t with tok_base=cursor}, Accept tok
+  let accept_tok tok cursor y =
+    {y with tok_base=cursor}, Accept tok
 
-  let accept_tok_incl tok View.{cursor; _} t =
-    accept_tok tok cursor t
+  let accept_tok_incl tok View.{cursor; _} y =
+    accept_tok tok cursor y
 
-  let accept_tok_excl tok View.{pcursor; _} t =
-    accept_tok tok pcursor t
+  let accept_tok_excl tok View.{pcursor; _} y =
+    accept_tok tok pcursor y
 
-  let accept_tok_pexcl tok View.{ppcursor; _} t =
-    accept_tok tok ppcursor t
+  let accept_tok_pexcl tok View.{ppcursor; _} y =
+    accept_tok tok ppcursor y
 
-  let source_at cursor t =
-    Source.Slice.of_cursors ~base:t.tok_base ~past:cursor
+  let source_at cursor {tok_base; _} =
+    Source.Slice.of_cursors ~base:tok_base ~past:cursor
 
-  let source_incl View.{cursor; _} t =
-    source_at cursor t
+  let source_incl View.{cursor; _} y =
+    source_at cursor y
 
-  let source_excl View.{pcursor; _} t =
-    source_at pcursor t
+  let source_excl View.{pcursor; _} y =
+    source_at pcursor y
 
-  let source_pexcl {View.ppcursor; _} t =
-    source_at ppcursor t
+  let source_pexcl {View.ppcursor; _} y =
+    source_at ppcursor y
 
-  let accept_source_directive source_directive View.{cursor; _} t =
+  let accept_source_directive source_directive View.{cursor; _} ({tok_base; level; _} as y) =
     (* Treat the directive as having come from the unbiased source. Rebias the cursors such that
      * they are unbiased. This is different than unbiasing, in that it preserves the cursors' bias
      * chain, which enables recovering source bias when moving leftwards. *)
-    let base = Source.Cursor.bias (Source.unbias (Source.Cursor.container t.tok_base)) t.tok_base in
+    let base = Source.Cursor.bias (Source.unbias (Source.Cursor.container tok_base)) tok_base in
     let past = begin
       let rec f cursor cursor_fork = begin
         match Source.Cursor.(cursor < cursor_fork) with
@@ -3192,7 +3179,7 @@ module Dfa = struct
       | Token.Rendition.Constant Token.{path=None; line=None; io=None}
         -> begin
             (* Rebias the source such that it is unbiased. *)
-            past, Level.reset t.level
+            past, Level.reset level
           end
       | Constant {path; line; io} -> begin
           let source = Source.Cursor.container past in
@@ -3214,84 +3201,84 @@ module Dfa = struct
           let col_bias = Sint.((Uns.bits_to_sint col) - (Uns.bits_to_sint (Text.(Pos.col (Cursor.pos
               (Source.Cursor.text_cursor past)))))) in
           let source' = Source.bias ~path ~line_bias ~col_bias source in
-          (Source.Cursor.bias source' past), Level.embed (indent / 4L) t.level
+          (Source.Cursor.bias source' past), Level.embed (indent / 4L) level
         end
-      | Malformed _ -> past, t.level
+      | Malformed _ -> past, level
     in
     let source = Source.Slice.of_cursors ~base ~past in
     let tok = Token.Tok_source_directive {source; source_directive} in
-    {t with tok_base=cursor'; level=level'}, Accept tok
+    {y with tok_base=cursor'; level=level'}, Accept tok
 
-  let accept_line_break tok cursor t =
-    {t with tok_base=cursor; line_state=Line_begin}, Accept tok
+  let accept_line_break tok cursor y =
+    {y with tok_base=cursor; line_state=Line_begin}, Accept tok
 
-  let accept_line_break_incl tok View.{cursor; _} t =
-    accept_line_break tok cursor t
+  let accept_line_break_incl tok View.{cursor; _} y =
+    accept_line_break tok cursor y
 
-  let fstring_push fstring_state t =
-    {t with fstring_states=fstring_state :: t.fstring_states}
+  let fstring_push fstring_state ({fstring_states; _} as y) =
+    {y with fstring_states=fstring_state :: fstring_states}
 
-  let fstring_pop t =
-    {t with fstring_states=List.tl t.fstring_states}
+  let fstring_pop ({fstring_states; _} as y) =
+    {y with fstring_states=List.tl fstring_states}
 
-  let fstring_trans fstring_state t =
-    fstring_push fstring_state (fstring_pop t)
+  let fstring_trans fstring_state y =
+    fstring_push fstring_state (fstring_pop y)
 
-  let accept_fstring_push_tok fstring_state tok cursor t =
-    accept_tok tok cursor (fstring_push fstring_state t)
+  let accept_fstring_push_tok fstring_state tok cursor y =
+    accept_tok tok cursor (fstring_push fstring_state y)
 
-  let accept_fstring_push_tok_incl fstring_state tok View.{cursor; _} t =
-    accept_fstring_push_tok fstring_state tok cursor t
+  let accept_fstring_push_tok_incl fstring_state tok View.{cursor; _} y =
+    accept_fstring_push_tok fstring_state tok cursor y
 
-  let accept_fstring_pop_tok tok cursor t =
-    accept_tok tok cursor (fstring_pop t)
+  let accept_fstring_pop_tok tok cursor y =
+    accept_tok tok cursor (fstring_pop y)
 
-  let accept_fstring_trans_tok fstring_state tok cursor t =
-    accept_tok tok cursor (fstring_trans fstring_state t)
+  let accept_fstring_trans_tok fstring_state tok cursor y =
+    accept_tok tok cursor (fstring_trans fstring_state y)
 
-  let accept_fstring_trans_tok_incl fstring_state tok View.{cursor; _} t =
-    accept_fstring_trans_tok fstring_state tok cursor t
+  let accept_fstring_trans_tok_incl fstring_state tok View.{cursor; _} y =
+    accept_fstring_trans_tok fstring_state tok cursor y
 
-  let accept_fstring_trans fstring_state tok cursor t =
-    accept_fstring_trans_tok fstring_state tok cursor t
+  let accept_fstring_trans fstring_state tok cursor y =
+    accept_fstring_trans_tok fstring_state tok cursor y
 
-  let accept_fstring_trans_incl trans tok View.{cursor; _} t =
-    accept_fstring_trans trans tok cursor t
+  let accept_fstring_trans_incl trans tok View.{cursor; _} y =
+    accept_fstring_trans trans tok cursor y
 
-  let accept_fstring_trans_excl trans tok View.{pcursor; _} t =
-    accept_fstring_trans trans tok pcursor t
+  let accept_fstring_trans_excl trans tok View.{pcursor; _} y =
+    accept_fstring_trans trans tok pcursor y
 
-  let retry_fstring_eoi t =
-    let rec f t = begin
-      let t' = fstring_pop t in
-      match State.start_of_t t' with
-      | Some state' -> t', Retry state'
-      | None -> f t'
+  let retry_fstring_eoi y =
+    let rec f y = begin
+      let y' = fstring_pop y in
+      match State.start_of_t y' with
+      | Some state' -> y', Retry state'
+      | None -> f y'
     end in
-    f t
+    f y
 
-  let advance state' view t =
-    t, Advance (view, state')
+  let advance state' view y =
+    y, Advance (view, state')
 
-  let retry state' t =
-    t, Retry state'
+  let retry state' y =
+    y, Retry state'
 
   let node0_start =
     {
       edges0=map_of_cps_alist [
-        (",", fun view t -> accept_tok_incl (Tok_comma {source=source_incl view t}) view t);
-        (";", fun view t -> accept_tok_incl (Tok_semi {source=source_incl view t}) view t);
+        (",", fun view y -> accept_tok_incl (Tok_comma {source=source_incl view y}) view y);
+        (";", fun view y -> accept_tok_incl (Tok_semi {source=source_incl view y}) view y);
         ("(", advance State_lparen);
-        (")", fun view t -> accept_tok_incl (Tok_rparen {source=source_incl view t}) view t);
+        (")", fun view y -> accept_tok_incl (Tok_rparen {source=source_incl view y}) view y);
         ("[", advance State_lbrack);
-        ("]", fun view t -> accept_tok_incl (Tok_rbrack {source=source_incl view t}) view t);
+        ("]", fun view y -> accept_tok_incl (Tok_rbrack {source=source_incl view y}) view y);
         ("{", advance State_qstring_ltag);
-        ("}", fun view t -> accept_tok_incl (Tok_rcurly {source=source_incl view t}) view t);
-        ("\\", fun view t -> accept_tok_incl (Tok_bslash {source=source_incl view t}) view t);
+        ("}", fun view y -> accept_tok_incl (Tok_rcurly {source=source_incl view y}) view y);
+        ("\\", fun view y -> accept_tok_incl (Tok_bslash {source=source_incl view y}) view y);
         ("&", advance State_amp);
-        ("!", fun view t -> accept_tok_incl (Tok_xmark {source=source_incl view t}) view t);
-        ("\n", fun view t ->
-            accept_line_break_incl (Tok_whitespace {source=source_incl view t}) view t);
+        ("!", fun view y -> accept_tok_incl (Tok_xmark {source=source_incl view y}) view y);
+        ("\n", fun view y ->
+            accept_line_break_incl (Tok_whitespace {source=source_incl view y}) view y);
         ("~", advance State_tilde);
         ("?", advance State_qmark);
         ("*", advance State_star);
@@ -3314,72 +3301,72 @@ module Dfa = struct
         (ident_cident_cps, advance State_ident_cident);
         (ident_uident_cps, advance State_ident_uident);
         ("'", advance State_tick);
-        ("\"", fun view t -> advance (State_istring_body (State.Istring_body.empty)) view t);
-        ("`", fun (View.{cursor; _} as view) t ->
-            advance (State_rstring_ltag (State.Rstring_ltag.init ~ltag_base:cursor)) view t);
+        ("\"", fun view y -> advance (State_istring_body (State.Istring_body.empty)) view y);
+        ("`", fun (View.{cursor; _} as view) y ->
+            advance (State_rstring_ltag (State.Rstring_ltag.init ~ltag_base:cursor)) view y);
         ("0", advance State_integer_0);
-        (dec_lead_cps, fun (View.{pcursor; _} as view) t ->
+        (dec_lead_cps, fun (View.{pcursor; _} as view) y ->
             let digit = nat_of_cp (Source.Cursor.rget pcursor) in
-            advance (State_integer_dec (State.Integer_dec.init ~n:digit)) view t
+            advance (State_integer_dec (State.Integer_dec.init ~n:digit)) view y
         );
       ];
-      default0=(fun view t ->
-        let mal = malformation_incl view t "Unsupported codepoint" in
-        accept_tok_incl (Tok_error {source=source_incl view t; error=[mal]}) view t
+      default0=(fun view y ->
+        let mal = malformation_incl view y "Unsupported codepoint" in
+        accept_tok_incl (Tok_error {source=source_incl view y; error=[mal]}) view y
       );
-      eoi0=(fun view t ->
-        match Level.level t.level, t.line_state with
-        | 0L, Line_begin -> accept_tok_incl (Tok_line_delim {source=source_incl view t}) view t
-        | 0L, _ ->  accept_tok_incl (Tok_end_of_input {source=source_incl view t}) view t
+      eoi0=(fun view ({level; line_state; _} as y) ->
+        match Level.level level, line_state with
+        | 0L, Line_begin -> accept_tok_incl (Tok_line_delim {source=source_incl view y}) view y
+        | 0L, _ ->  accept_tok_incl (Tok_end_of_input {source=source_incl view y}) view y
         | _ -> begin
             accept_tok_incl (Tok_dedent {
-              source=source_incl view t;
+              source=source_incl view y;
               dedent=(Constant ())
-            }) view {t with level=Level.pred t.level}
+            }) view {y with level=Level.pred level}
           end
       );
     }
 
   let node0_lparen = {
     edges0=map_of_cps_alist [
-      ("|", fun view t -> accept_tok_incl (Tok_lcapture {source=source_incl view t}) view t);
+      ("|", fun view y -> accept_tok_incl (Tok_lcapture {source=source_incl view y}) view y);
       ("*", advance (State_paren_comment_body (State.Paren_comment_body.init ~nesting:1L)));
     ];
-    default0=(fun view t -> accept_tok_excl (Tok_lparen {source=source_excl view t}) view t);
-    eoi0=(fun view t -> accept_tok_incl (Tok_lparen {source=source_incl view t}) view t);
+    default0=(fun view y -> accept_tok_excl (Tok_lparen {source=source_excl view y}) view y);
+    eoi0=(fun view y -> accept_tok_incl (Tok_lparen {source=source_incl view y}) view y);
   }
 
   let node0_lbrack = {
     edges0=map_of_cps_alist [
-      ("|", fun view t -> accept_tok_incl (Tok_larray {source=source_incl view t}) view t);
+      ("|", fun view y -> accept_tok_incl (Tok_larray {source=source_incl view y}) view y);
       (":", advance State_src_directive_colon);
     ];
-    default0=(fun view t -> accept_tok_excl (Tok_lbrack {source=source_excl view t}) view t);
-    eoi0=(fun view t -> accept_tok_incl (Tok_lbrack {source=source_incl view t}) view t);
+    default0=(fun view y -> accept_tok_excl (Tok_lbrack {source=source_excl view y}) view y);
+    eoi0=(fun view y -> accept_tok_incl (Tok_lbrack {source=source_incl view y}) view y);
   }
 
   let node0_amp = {
     edges0=map_of_cps_alist [
-      ("&", fun view t -> accept_tok_incl (Tok_amp_amp {source=source_incl view t}) view t);
+      ("&", fun view y -> accept_tok_incl (Tok_amp_amp {source=source_incl view y}) view y);
     ];
-    default0=(fun view t -> accept_tok_excl (Tok_amp {source=source_excl view t}) view t);
-    eoi0=(fun view t -> accept_tok_incl (Tok_amp {source=source_incl view t}) view t);
+    default0=(fun view y -> accept_tok_excl (Tok_amp {source=source_excl view y}) view y);
+    eoi0=(fun view y -> accept_tok_incl (Tok_amp {source=source_incl view y}) view y);
   }
 
   let node0_tilde = {
     edges0=map_of_cps_alist [
       (operator_cps, advance State_operator_tilde);
     ];
-    default0=(fun view t -> accept_tok_excl (Tok_tilde {source=source_excl view t}) view t);
-    eoi0=(fun view t -> accept_tok_incl (Tok_tilde {source=source_incl view t}) view t);
+    default0=(fun view y -> accept_tok_excl (Tok_tilde {source=source_excl view y}) view y);
+    eoi0=(fun view y -> accept_tok_incl (Tok_tilde {source=source_incl view y}) view y);
   }
 
   let node0_qmark = {
     edges0=map_of_cps_alist [
       (operator_cps, advance State_operator_qmark);
     ];
-    default0=(fun view t -> accept_tok_excl (Tok_qmark {source=source_excl view t}) view t);
-    eoi0=(fun view t -> accept_tok_incl (Tok_qmark {source=source_incl view t}) view t);
+    default0=(fun view y -> accept_tok_excl (Tok_qmark {source=source_excl view y}) view y);
+    eoi0=(fun view y -> accept_tok_incl (Tok_qmark {source=source_incl view y}) view y);
   }
 
   let node0_star = {
@@ -3388,20 +3375,20 @@ module Dfa = struct
       (Set.diff (cpset_of_cps operator_cps) (cpset_of_cps "*"),
         advance State_operator_star);
     ];
-    default0=(fun view t ->
-      accept_tok_excl (Tok_star_op {source=source_excl view t; star_op="*"}) view t);
-    eoi0=(fun view t ->
-      accept_tok_incl (Tok_star_op {source=source_incl view t; star_op="*"}) view t);
+    default0=(fun view y ->
+      accept_tok_excl (Tok_star_op {source=source_excl view y; star_op="*"}) view y);
+    eoi0=(fun view y ->
+      accept_tok_incl (Tok_star_op {source=source_incl view y; star_op="*"}) view y);
   }
 
   let node0_bar = {
     edges0=map_of_cps_alist [
-      (")", fun view t -> accept_tok_incl (Tok_rcapture {source=source_incl view t}) view t);
-      ("]", fun view t -> accept_tok_incl (Tok_rarray {source=source_incl view t}) view t);
+      (")", fun view y -> accept_tok_incl (Tok_rcapture {source=source_incl view y}) view y);
+      ("]", fun view y -> accept_tok_incl (Tok_rarray {source=source_incl view y}) view y);
       (operator_cps, advance State_operator_bar);
     ];
-    default0=(fun view t -> accept_tok_excl (Tok_bar {source=source_excl view t}) view t);
-    eoi0=(fun view t -> accept_tok_incl (Tok_bar {source=source_incl view t}) view t);
+    default0=(fun view y -> accept_tok_excl (Tok_bar {source=source_excl view y}) view y);
+    eoi0=(fun view y -> accept_tok_incl (Tok_bar {source=source_incl view y}) view y);
   }
 
   let node0_uscore = {
@@ -3411,28 +3398,28 @@ module Dfa = struct
       (ident_uident_cps, advance State_ident_uident);
       (ident_continue_cps, advance State_ident_mal);
     ];
-    default0=(fun view t -> accept_tok_excl (Tok_uscore {source=source_excl view t}) view t);
-    eoi0=(fun view t -> accept_tok_incl (Tok_uscore {source=source_incl view t}) view t);
+    default0=(fun view y -> accept_tok_excl (Tok_uscore {source=source_excl view y}) view y);
+    eoi0=(fun view y -> accept_tok_incl (Tok_uscore {source=source_incl view y}) view y);
   }
 
   let node0_tick = {
     edges0=map_of_cps_alist [
       (String.join [" _"; ident_uident_cps], advance State_tick_lookahead);
-      ("\n", fun view t -> accept_tok_excl (Tok_tick {source=source_excl view t}) view t);
+      ("\n", fun view y -> accept_tok_excl (Tok_tick {source=source_excl view y}) view y);
     ];
-    default0=(fun _view t -> retry State_codepoint_tick t);
-    eoi0=(fun view t -> accept_tok_incl (Tok_tick {source=source_incl view t}) view t);
+    default0=(fun _view y -> retry State_codepoint_tick y);
+    eoi0=(fun view y -> accept_tok_incl (Tok_tick {source=source_incl view y}) view y);
   }
 
   let node0_tick_lookahead = {
     edges0=map_of_cps_alist [
-      ("'", fun (View.{ppcursor; _} as view) t ->
+      ("'", fun (View.{ppcursor; _} as view) y ->
           let cp = Source.Cursor.rget ppcursor in
-          accept_tok_incl (Tok_codepoint {source=source_incl view t; codepoint=Constant cp}) view t
+          accept_tok_incl (Tok_codepoint {source=source_incl view y; codepoint=Constant cp}) view y
       );
     ];
-    default0=(fun view t -> accept_tok_pexcl (Tok_tick {source=source_pexcl view t}) view t);
-    eoi0=(fun view t -> accept_tok_incl (Tok_tick {source=source_incl view t}) view t);
+    default0=(fun view y -> accept_tok_pexcl (Tok_tick {source=source_pexcl view y}) view y);
+    eoi0=(fun view y -> accept_tok_incl (Tok_tick {source=source_incl view y}) view y);
   }
 
   module Real = struct
@@ -3440,55 +3427,55 @@ module Dfa = struct
       | Subtype_r32
       | Subtype_r64
 
-    let accept_mals mals cursor t =
+    let accept_mals mals cursor y =
       let malformed = Token.Rendition.of_mals mals in
-      accept_tok (Tok_r64 {source=source_at cursor t; r64=malformed}) cursor t
+      accept_tok (Tok_r64 {source=source_at cursor y; r64=malformed}) cursor y
 
-    let accept_mals_incl mals View.{cursor; _} t =
-      accept_mals mals cursor t
+    let accept_mals_incl mals View.{cursor; _} y =
+      accept_mals mals cursor y
 
-    let accept_mals_excl mals View.{pcursor; _} t =
-      accept_mals mals pcursor t
+    let accept_mals_excl mals View.{pcursor; _} y =
+      accept_mals mals pcursor y
 
-    let accept_precise subtype ~r cursor t =
+    let accept_precise subtype ~r cursor ({tok_base; _} as y) =
       let open Token in
-      let source = source_at cursor t in
+      let source = source_at cursor y in
       let tok = match subtype with
         | Subtype_r32 -> Tok_r32 {
           source;
           r32=match Realer.to_r32_opt r with
             | Some r32 -> Constant r32
-            | None -> malformed (out_of_range_real t.tok_base cursor)
+            | None -> malformed (out_of_range_real tok_base cursor)
         }
         | Subtype_r64 -> Tok_r64 {
           source;
           r64=match Realer.to_r64_opt r with
             | Some r64 -> Constant r64
-            | None -> malformed (out_of_range_real t.tok_base cursor)
+            | None -> malformed (out_of_range_real tok_base cursor)
         }
       in
-      accept_tok tok cursor t
+      accept_tok tok cursor y
 
-    let accept_precise_incl subtype ~r View.{cursor; _} t =
-      accept_precise subtype ~r cursor t
+    let accept_precise_incl subtype ~r View.{cursor; _} y =
+      accept_precise subtype ~r cursor y
 
-    let accept_precise_excl subtype ~r View.{pcursor; _} t =
-      accept_precise subtype ~r pcursor t
+    let accept_precise_excl subtype ~r View.{pcursor; _} y =
+      accept_precise subtype ~r pcursor y
 
-    let accept_approx subtype ~r cursor t =
+    let accept_approx subtype ~r cursor y =
       let open Token in
-      let source = source_at cursor t in
+      let source = source_at cursor y in
       let tok = match subtype with
         | Subtype_r32 -> Tok_r32 {source; r32=Constant r}
         | Subtype_r64 -> Tok_r64 {source; r64=Constant r}
       in
-      accept_tok tok cursor t
+      accept_tok tok cursor y
 
-    let accept_approx_incl subtype ~r View.{cursor; _} t =
-      accept_approx subtype ~r cursor t
+    let accept_approx_incl subtype ~r View.{cursor; _} y =
+      accept_approx subtype ~r cursor y
 
-    let accept_approx_excl subtype ~r View.{pcursor; _} t =
-      accept_approx subtype ~r pcursor t
+    let accept_approx_excl subtype ~r View.{pcursor; _} y =
+      accept_approx subtype ~r pcursor y
 
     let nat_32 = Nat.of_string "32"
     let nat_64 = Nat.of_string "64"
@@ -3504,33 +3491,33 @@ module Dfa = struct
         edges1=map_of_cpsets_alist [
           (cpset_of_cps "_", under_advance);
           (cpset_of_cps digit_cps, digit_advance);
-          (cpset_of_cps "p", fun state view t ->
+          (cpset_of_cps "p", fun state view y ->
               let state' = match m_of_state state with
                 | Ok m -> State.Real_p.init ~m
                 | Error mals -> State.Real_p.mals ~mals
               in
-              advance (State_real_p state') view t
+              advance (State_real_p state') view y
           );
-          (cpset_of_cps "r", fun state view t ->
+          (cpset_of_cps "r", fun state view y ->
               let state' = match m_of_state state with
                 | Ok m -> State.Real_precise_r.init ~r:m
                 | Error mals -> State.Real_precise_r.mals ~mals
               in
-              advance (State_real_precise_r state') view t
+              advance (State_real_precise_r state') view y
           );
           (Set.diff (cpset_of_cps ident_cps)
               (Set.union (cpset_of_cps digit_cps) (cpset_of_cps "_pr")),
             ident_advance);
         ];
-        default1=(fun state view t ->
+        default1=(fun state view y ->
           match m_of_state state with
-          | Ok m -> accept_precise_excl Subtype_r64 ~r:m view t
-          | Error mals -> accept_mals_excl mals view t
+          | Ok m -> accept_precise_excl Subtype_r64 ~r:m view y
+          | Error mals -> accept_mals_excl mals view y
         );
-        eoi1=(fun state view t ->
+        eoi1=(fun state view y ->
           match m_of_state state with
-          | Ok m -> accept_precise_incl Subtype_r64 ~r:m view t
-          | Error mals -> accept_mals_incl mals view t
+          | Ok m -> accept_precise_incl Subtype_r64 ~r:m view y
+          | Error mals -> accept_mals_incl mals view y
         );
       }
     let node1_bin_dot = node1_precise_dot
@@ -3538,86 +3525,86 @@ module Dfa = struct
           | State.Real_bin_dot.R {m; point_shift=_} -> Ok m
           | State.Real_bin_dot.Malformations mals -> Error mals
         )
-        ~under_advance:(fun state view t -> advance (State_real_bin_dot state) view t)
+        ~under_advance:(fun state view y -> advance (State_real_bin_dot state) view y)
         ~digit_cps:bin_cps
-        ~digit_advance:(fun state ({pcursor; _} as view) t ->
+        ~digit_advance:(fun state ({pcursor; _} as view) y ->
           let digit = nat_of_cp (Source.Cursor.rget pcursor) in
-          advance (State_real_bin_dot (state |> State.Real_bin_dot.accum_digit digit)) view t
+          advance (State_real_bin_dot (state |> State.Real_bin_dot.accum_digit digit)) view y
         )
-        ~ident_advance:(fun state (View.{pcursor; cursor; _} as view) t ->
+        ~ident_advance:(fun state (View.{pcursor; cursor; _} as view) y ->
           let mal = invalid_numerical pcursor cursor in
-          advance (State_real_bin_dot (state |> State.Real_bin_dot.accum_mal mal)) view t
+          advance (State_real_bin_dot (state |> State.Real_bin_dot.accum_mal mal)) view y
         )
     let node1_oct_dot = node1_precise_dot
         ~m_of_state:(fun state -> match state with
           | State.Real_oct_dot.R {m; point_shift=_} -> Ok m
           | State.Real_oct_dot.Malformations mals -> Error mals
         )
-        ~under_advance:(fun state view t -> advance (State_real_oct_dot state) view t)
+        ~under_advance:(fun state view y -> advance (State_real_oct_dot state) view y)
         ~digit_cps:oct_cps
-        ~digit_advance:(fun state ({pcursor; _} as view) t ->
+        ~digit_advance:(fun state ({pcursor; _} as view) y ->
           let digit = nat_of_cp (Source.Cursor.rget pcursor) in
-          advance (State_real_oct_dot (state |> State.Real_oct_dot.accum_digit digit)) view t
+          advance (State_real_oct_dot (state |> State.Real_oct_dot.accum_digit digit)) view y
         )
-        ~ident_advance:(fun state (View.{pcursor; cursor; _} as view) t ->
+        ~ident_advance:(fun state (View.{pcursor; cursor; _} as view) y ->
           let mal = invalid_numerical pcursor cursor in
-          advance (State_real_oct_dot (state |> State.Real_oct_dot.accum_mal mal)) view t
+          advance (State_real_oct_dot (state |> State.Real_oct_dot.accum_mal mal)) view y
         )
     let node1_hex_dot = node1_precise_dot
         ~m_of_state:(fun state -> match state with
           | State.Real_hex_dot.R {m; point_shift=_} -> Ok m
           | State.Real_hex_dot.Malformations mals -> Error mals
         )
-        ~under_advance:(fun state view t -> advance (State_real_hex_dot state) view t)
+        ~under_advance:(fun state view y -> advance (State_real_hex_dot state) view y)
         ~digit_cps:hex_cps
-        ~digit_advance:(fun state ({pcursor; _} as view) t ->
+        ~digit_advance:(fun state ({pcursor; _} as view) y ->
           let digit = nat_of_cp (Source.Cursor.rget pcursor) in
-          advance (State_real_hex_dot (state |> State.Real_hex_dot.accum_digit digit)) view t
+          advance (State_real_hex_dot (state |> State.Real_hex_dot.accum_digit digit)) view y
         )
-        ~ident_advance:(fun state (View.{pcursor; cursor; _} as view) t ->
+        ~ident_advance:(fun state (View.{pcursor; cursor; _} as view) y ->
           let mal = invalid_numerical pcursor cursor in
-          advance (State_real_hex_dot (state |> State.Real_hex_dot.accum_mal mal)) view t
+          advance (State_real_hex_dot (state |> State.Real_hex_dot.accum_mal mal)) view y
         )
 
     let node1_dec_dot =
       let open State.Real_dec_dot in
       {
         edges1=map_of_cpsets_alist [
-          (cpset_of_cps "_", fun state view t -> advance (State_real_dec_dot state) view t);
-          (cpset_of_cps dec_cps, fun state ({pcursor; _} as view) t ->
+          (cpset_of_cps "_", fun state view y -> advance (State_real_dec_dot state) view y);
+          (cpset_of_cps dec_cps, fun state ({pcursor; _} as view) y ->
               let digit = real_of_cp (Source.Cursor.rget pcursor) in
-              advance (State_real_dec_dot (state |> State.Real_dec_dot.accum_digit digit)) view t
+              advance (State_real_dec_dot (state |> State.Real_dec_dot.accum_digit digit)) view y
           );
-          (cpset_of_cps "e", fun state view t ->
+          (cpset_of_cps "e", fun state view y ->
               let state' = match state with
                 | R {m; ds=_} -> State.Real_e.init ~m
                 | Malformations mals -> State.Real_e.mals ~mals
               in
-              advance (State_real_e state') view t
+              advance (State_real_e state') view y
           );
-          (cpset_of_cps "r", fun state view t ->
+          (cpset_of_cps "r", fun state view y ->
               let state' = match state with
                 | R {m; ds=_} -> State.Real_approx_r.init ~r:m
                 | Malformations mals -> State.Real_approx_r.mals ~mals
               in
-              advance (State_real_approx_r state') view t
+              advance (State_real_approx_r state') view y
           );
           (Set.diff (cpset_of_cps ident_cps)
               (Set.union (cpset_of_cps dec_cps) (cpset_of_cps "_er")),
-            fun state (View.{pcursor; cursor; _} as view) t ->
+            fun state (View.{pcursor; cursor; _} as view) y ->
               let mal = invalid_numerical pcursor cursor in
-              advance (State_real_dec_dot (state |> State.Real_dec_dot.accum_mal mal)) view t
+              advance (State_real_dec_dot (state |> State.Real_dec_dot.accum_mal mal)) view y
           );
         ];
-        default1=(fun state view t ->
+        default1=(fun state view y ->
           match state with
-          | R {m; ds=_} -> accept_approx_excl Subtype_r64 ~r:m view t
-          | Malformations mals -> accept_mals_excl mals view t
+          | R {m; ds=_} -> accept_approx_excl Subtype_r64 ~r:m view y
+          | Malformations mals -> accept_mals_excl mals view y
         );
-        eoi1=(fun state view t ->
+        eoi1=(fun state view y ->
           match state with
-          | R {m; ds=_} -> accept_approx_incl Subtype_r64 ~r:m view t
-          | Malformations mals -> accept_mals_incl mals view t
+          | R {m; ds=_} -> accept_approx_incl Subtype_r64 ~r:m view y
+          | Malformations mals -> accept_mals_incl mals view y
         );
       }
 
@@ -3625,8 +3612,8 @@ module Dfa = struct
       let open State.Real_p in
       {
         edges1=map_of_cpsets_alist [
-          (cpset_of_cps "_", fun state view t -> advance (State_real_p state) view t);
-          (cpset_of_cps dec_cps, fun state (View.{pcursor; _} as view) t ->
+          (cpset_of_cps "_", fun state view y -> advance (State_real_p state) view y);
+          (cpset_of_cps dec_cps, fun state (View.{pcursor; _} as view) y ->
               let state' = match state with
                 | R {m} -> begin
                     let exp = nat_of_cp (Source.Cursor.rget pcursor) in
@@ -3634,52 +3621,52 @@ module Dfa = struct
                   end
                 | Malformations mals -> State.Real_p_exp.mals ~mals
               in
-              advance (State_real_p_exp state') view t
+              advance (State_real_p_exp state') view y
           );
-          (cpset_of_cps "-", fun state view t ->
+          (cpset_of_cps "-", fun state view y ->
               let state' = match state with
                 | R {m} -> State.Real_p_sign.init ~m ~exp_sign:Neg
                 | Malformations mals -> State.Real_p_sign.mals ~mals
               in
-              advance (State_real_p_sign state') view t
+              advance (State_real_p_sign state') view y
           );
-          (cpset_of_cps "+", fun state view t ->
+          (cpset_of_cps "+", fun state view y ->
               let state' = match state with
                 | R {m} -> State.Real_p_sign.init ~m ~exp_sign:Pos
                 | Malformations mals -> State.Real_p_sign.mals ~mals
               in
-              advance (State_real_p_sign state') view t
+              advance (State_real_p_sign state') view y
           );
-          (cpset_of_cps "r", fun state (View.{pcursor; cursor; _} as view) t ->
+          (cpset_of_cps "r", fun state (View.{pcursor; cursor; _} as view) y ->
               let mal = invalid_numerical pcursor cursor in
               let mals = match state with
                 | R _ -> [mal]
                 | Malformations mals -> mal :: mals
               in
-              advance (State_real_precise_r (State.Real_precise_r.mals ~mals)) view t
+              advance (State_real_precise_r (State.Real_precise_r.mals ~mals)) view y
           );
           (Set.diff (cpset_of_cps ident_cps)
               (Set.union (cpset_of_cps dec_cps) (cpset_of_cps "_-+r")),
-            fun state (View.{pcursor; cursor; _} as view) t ->
+            fun state (View.{pcursor; cursor; _} as view) y ->
               let mal = invalid_numerical pcursor cursor in
-              advance (State_real_p (state |> State.Real_p.accum_mal mal)) view t
+              advance (State_real_p (state |> State.Real_p.accum_mal mal)) view y
           );
         ];
-        default1=(fun state (View.{pcursor; cursor; _} as view) t ->
+        default1=(fun state (View.{pcursor; cursor; _} as view) y ->
           let mal = invalid_numerical pcursor cursor in
           let mals = match state with
             | R _ -> [mal]
             | Malformations mals -> mal :: mals
           in
-          accept_mals_excl mals view t
+          accept_mals_excl mals view y
         );
-        eoi1=(fun state (View.{cursor; _} as view) t ->
+        eoi1=(fun state (View.{cursor; _} as view) y ->
           let mal = invalid_numerical cursor cursor in
           let mals = match state with
             | R _ -> [mal]
             | Malformations mals -> mal :: mals
           in
-          accept_mals_incl mals view t
+          accept_mals_incl mals view y
         );
       }
 
@@ -3687,8 +3674,8 @@ module Dfa = struct
       let open State.Real_e in
       {
         edges1=map_of_cpsets_alist [
-          (cpset_of_cps "_", fun state view t -> advance (State_real_e state) view t);
-          (cpset_of_cps dec_cps, fun state (View.{pcursor; _} as view) t ->
+          (cpset_of_cps "_", fun state view y -> advance (State_real_e state) view y);
+          (cpset_of_cps dec_cps, fun state (View.{pcursor; _} as view) y ->
               let state' = match state with
                 | R {m} -> begin
                     let exp = nat_of_cp (Source.Cursor.rget pcursor) in
@@ -3696,52 +3683,52 @@ module Dfa = struct
                   end
                 | Malformations mals -> State.Real_e_exp.mals ~mals
               in
-              advance (State_real_e_exp state') view t
+              advance (State_real_e_exp state') view y
           );
-          (cpset_of_cps "-", fun state view t ->
+          (cpset_of_cps "-", fun state view y ->
               let state' = match state with
                 | R {m} -> State.Real_e_sign.init ~m ~exp_sign:Neg
                 | Malformations mals -> State.Real_e_sign.mals ~mals
               in
-              advance (State_real_e_sign state') view t
+              advance (State_real_e_sign state') view y
           );
-          (cpset_of_cps "+", fun state view t ->
+          (cpset_of_cps "+", fun state view y ->
               let state' = match state with
                 | R {m} -> State.Real_e_sign.init ~m ~exp_sign:Pos
                 | Malformations mals -> State.Real_e_sign.mals ~mals
               in
-              advance (State_real_e_sign state') view t
+              advance (State_real_e_sign state') view y
           );
-          (cpset_of_cps "r", fun state (View.{pcursor; cursor; _} as view) t ->
+          (cpset_of_cps "r", fun state (View.{pcursor; cursor; _} as view) y ->
               let mal = invalid_numerical pcursor cursor in
               let mals = match state with
                 | R _ -> [mal]
                 | Malformations mals -> mal :: mals
               in
-              advance (State_real_approx_r (State.Real_approx_r.mals ~mals)) view t
+              advance (State_real_approx_r (State.Real_approx_r.mals ~mals)) view y
           );
           (Set.diff (cpset_of_cps ident_cps)
               (Set.union (cpset_of_cps dec_cps) (cpset_of_cps "_-+r")),
-            fun state (View.{pcursor; cursor; _} as view) t ->
+            fun state (View.{pcursor; cursor; _} as view) y ->
               let mal = invalid_numerical pcursor cursor in
-              advance (State_real_e (state |> State.Real_e.accum_mal mal)) view t
+              advance (State_real_e (state |> State.Real_e.accum_mal mal)) view y
           );
         ];
-        default1=(fun state (View.{pcursor; cursor; _} as view) t ->
+        default1=(fun state (View.{pcursor; cursor; _} as view) y ->
           let mal = invalid_numerical pcursor cursor in
           let mals = match state with
             | R _ -> [mal]
             | Malformations mals -> mal :: mals
           in
-          accept_mals_excl mals view t
+          accept_mals_excl mals view y
         );
-        eoi1=(fun state (View.{cursor; _} as view) t ->
+        eoi1=(fun state (View.{cursor; _} as view) y ->
           let mal = invalid_numerical cursor cursor in
           let mals = match state with
             | R _ -> [mal]
             | Malformations mals -> mal :: mals
           in
-          accept_mals_incl mals view t
+          accept_mals_incl mals view y
         );
       }
 
@@ -3749,8 +3736,8 @@ module Dfa = struct
       let open State.Real_p_sign in
       {
         edges1=map_of_cpsets_alist [
-          (cpset_of_cps "_", fun state view t -> advance (State_real_p_sign state) view t);
-          (cpset_of_cps dec_cps, fun state (View.{pcursor; _} as view) t ->
+          (cpset_of_cps "_", fun state view y -> advance (State_real_p_sign state) view y);
+          (cpset_of_cps dec_cps, fun state (View.{pcursor; _} as view) y ->
               let state' = match state with
                 | R {m; exp_sign} -> begin
                     let exp = nat_of_cp (Source.Cursor.rget pcursor) in
@@ -3758,38 +3745,38 @@ module Dfa = struct
                   end
                 | Malformations mals -> State.Real_p_exp.mals ~mals
               in
-              advance (State_real_p_exp state') view t
+              advance (State_real_p_exp state') view y
           );
-          (cpset_of_cps "r", fun state (View.{pcursor; cursor; _} as view) t ->
+          (cpset_of_cps "r", fun state (View.{pcursor; cursor; _} as view) y ->
               let mal = invalid_numerical pcursor cursor in
               let mals = match state with
                 | R _ -> [mal]
                 | Malformations mals -> mal :: mals
               in
-              advance (State_real_precise_r (State.Real_precise_r.mals ~mals)) view t
+              advance (State_real_precise_r (State.Real_precise_r.mals ~mals)) view y
           );
           (Set.union (Set.diff (cpset_of_cps ident_cps)
               (Set.union (cpset_of_cps dec_cps) (cpset_of_cps "_r"))) (cpset_of_cps "-+"),
-            fun state (View.{pcursor; cursor; _} as view) t ->
+            fun state (View.{pcursor; cursor; _} as view) y ->
               let mal = invalid_numerical pcursor cursor in
-              advance (State_real_p_sign (state |> State.Real_p_sign.accum_mal mal)) view t
+              advance (State_real_p_sign (state |> State.Real_p_sign.accum_mal mal)) view y
           );
         ];
-        default1=(fun state (View.{pcursor; cursor; _} as view) t ->
+        default1=(fun state (View.{pcursor; cursor; _} as view) y ->
           let mal = invalid_numerical pcursor cursor in
           let mals = match state with
             | R _ -> [mal]
             | Malformations mals -> mal :: mals
           in
-          accept_mals_excl mals view t
+          accept_mals_excl mals view y
         );
-        eoi1=(fun state (View.{cursor; _} as view) t ->
+        eoi1=(fun state (View.{cursor; _} as view) y ->
           let mal = invalid_numerical cursor cursor in
           let mals = match state with
             | R _ -> [mal]
             | Malformations mals -> mal :: mals
           in
-          accept_mals_incl mals view t
+          accept_mals_incl mals view y
         );
       }
 
@@ -3797,8 +3784,8 @@ module Dfa = struct
       let open State.Real_e_sign in
       {
         edges1=map_of_cpsets_alist [
-          (cpset_of_cps "_", fun state view t -> advance (State_real_e_sign state) view t);
-          (cpset_of_cps dec_cps, fun state (View.{pcursor; _} as view) t ->
+          (cpset_of_cps "_", fun state view y -> advance (State_real_e_sign state) view y);
+          (cpset_of_cps dec_cps, fun state (View.{pcursor; _} as view) y ->
               let state' = match state with
                 | R {m; exp_sign} -> begin
                     let exp = nat_of_cp (Source.Cursor.rget pcursor) in
@@ -3806,38 +3793,38 @@ module Dfa = struct
                   end
                 | Malformations mals -> State.Real_e_exp.mals ~mals
               in
-              advance (State_real_e_exp state') view t
+              advance (State_real_e_exp state') view y
           );
-          (cpset_of_cps "r", fun state (View.{pcursor; cursor; _} as view) t ->
+          (cpset_of_cps "r", fun state (View.{pcursor; cursor; _} as view) y ->
               let mal = invalid_numerical pcursor cursor in
               let mals = match state with
                 | R _ -> [mal]
                 | Malformations mals -> mal :: mals
               in
-              advance (State_real_approx_r (State.Real_approx_r.mals ~mals)) view t
+              advance (State_real_approx_r (State.Real_approx_r.mals ~mals)) view y
           );
           (Set.union (Set.diff (cpset_of_cps ident_cps)
               (Set.union (cpset_of_cps dec_cps) (cpset_of_cps "_r"))) (cpset_of_cps "-+"),
-            fun state (View.{pcursor; cursor; _} as view) t ->
+            fun state (View.{pcursor; cursor; _} as view) y ->
               let mal = invalid_numerical pcursor cursor in
-              advance (State_real_e_sign (state |> State.Real_e_sign.accum_mal mal)) view t
+              advance (State_real_e_sign (state |> State.Real_e_sign.accum_mal mal)) view y
           );
         ];
-        default1=(fun state (View.{pcursor; cursor; _} as view) t ->
+        default1=(fun state (View.{pcursor; cursor; _} as view) y ->
           let mal = invalid_numerical pcursor cursor in
           let mals = match state with
             | R _ -> [mal]
             | Malformations mals -> mal :: mals
           in
-          accept_mals_excl mals view t
+          accept_mals_excl mals view y
         );
-        eoi1=(fun state (View.{cursor; _} as view) t ->
+        eoi1=(fun state (View.{cursor; _} as view) y ->
           let mal = invalid_numerical cursor cursor in
           let mals = match state with
             | R _ -> [mal]
             | Malformations mals -> mal :: mals
           in
-          accept_mals_incl mals view t
+          accept_mals_incl mals view y
         );
       }
 
@@ -3845,34 +3832,34 @@ module Dfa = struct
       let open State.Real_p_exp in
       {
         edges1=map_of_cpsets_alist [
-          (cpset_of_cps "_", fun state view t -> advance (State_real_p_exp state) view t);
-          (cpset_of_cps dec_cps, fun state (View.{pcursor; _} as view) t ->
+          (cpset_of_cps "_", fun state view y -> advance (State_real_p_exp state) view y);
+          (cpset_of_cps dec_cps, fun state (View.{pcursor; _} as view) y ->
               let digit = nat_of_cp (Source.Cursor.rget pcursor) in
-              advance (State_real_p_exp (state |> State.Real_p_exp.accum_digit digit)) view t
+              advance (State_real_p_exp (state |> State.Real_p_exp.accum_digit digit)) view y
           );
-          (cpset_of_cps "r", fun state view t ->
+          (cpset_of_cps "r", fun state view y ->
               let state' = match to_r state with
                 | Ok r -> State.Real_precise_r.init ~r
                 | Error mals -> State.Real_precise_r.mals ~mals
               in
-              advance (State_real_precise_r state') view t
+              advance (State_real_precise_r state') view y
           );
           (Set.diff (cpset_of_cps ident_cps)
               (Set.union (cpset_of_cps dec_cps) (cpset_of_cps "_r")),
-            fun state (View.{pcursor; cursor; _} as view) t ->
+            fun state (View.{pcursor; cursor; _} as view) y ->
               let mal = invalid_numerical pcursor cursor in
-              advance (State_real_p_exp (state |> State.Real_p_exp.accum_mal mal)) view t
+              advance (State_real_p_exp (state |> State.Real_p_exp.accum_mal mal)) view y
           );
         ];
-        default1=(fun state view t ->
+        default1=(fun state view y ->
           match to_r state with
-          | Ok r -> accept_precise_excl Subtype_r64 ~r view t
-          | Error mals -> accept_mals_excl mals view t
+          | Ok r -> accept_precise_excl Subtype_r64 ~r view y
+          | Error mals -> accept_mals_excl mals view y
         );
-        eoi1=(fun state view t ->
+        eoi1=(fun state view y ->
           match to_r state with
-          | Ok r -> accept_precise_incl Subtype_r64 ~r view t
-          | Error mals -> accept_mals_incl mals view t
+          | Ok r -> accept_precise_incl Subtype_r64 ~r view y
+          | Error mals -> accept_mals_incl mals view y
         );
       }
 
@@ -3880,34 +3867,34 @@ module Dfa = struct
       let open State.Real_e_exp in
       {
         edges1=map_of_cpsets_alist [
-          (cpset_of_cps "_", fun state view t -> advance (State_real_e_exp state) view t);
-          (cpset_of_cps dec_cps, fun state (View.{pcursor; _} as view) t ->
+          (cpset_of_cps "_", fun state view y -> advance (State_real_e_exp state) view y);
+          (cpset_of_cps dec_cps, fun state (View.{pcursor; _} as view) y ->
               let digit = nat_of_cp (Source.Cursor.rget pcursor) in
-              advance (State_real_e_exp (state |> State.Real_e_exp.accum_digit digit)) view t
+              advance (State_real_e_exp (state |> State.Real_e_exp.accum_digit digit)) view y
           );
-          (cpset_of_cps "r", fun state view t ->
+          (cpset_of_cps "r", fun state view y ->
               let state' = match to_r state with
                 | Ok r -> State.Real_approx_r.init ~r
                 | Error mals -> State.Real_approx_r.mals ~mals
               in
-              advance (State_real_approx_r state') view t
+              advance (State_real_approx_r state') view y
           );
           (Set.diff (cpset_of_cps ident_cps)
               (Set.union (cpset_of_cps dec_cps) (cpset_of_cps "_r")),
-            fun state (View.{pcursor; cursor; _} as view) t ->
+            fun state (View.{pcursor; cursor; _} as view) y ->
               let mal = invalid_numerical pcursor cursor in
-              advance (State_real_e_exp (state |> State.Real_e_exp.accum_mal mal)) view t
+              advance (State_real_e_exp (state |> State.Real_e_exp.accum_mal mal)) view y
           );
         ];
-        default1=(fun state view t ->
+        default1=(fun state view y ->
           match to_r state with
-          | Ok r -> accept_approx_excl Subtype_r64 ~r view t
-          | Error mals -> accept_mals_excl mals view t
+          | Ok r -> accept_approx_excl Subtype_r64 ~r view y
+          | Error mals -> accept_mals_excl mals view y
         );
-        eoi1=(fun state view t ->
+        eoi1=(fun state view y ->
           match to_r state with
-          | Ok r -> accept_approx_incl Subtype_r64 ~r view t
-          | Error mals -> accept_mals_incl mals view t
+          | Ok r -> accept_approx_incl Subtype_r64 ~r view y
+          | Error mals -> accept_mals_incl mals view y
         );
       }
 
@@ -3915,7 +3902,7 @@ module Dfa = struct
       let open State.Real_precise_r in
       {
         edges1=map_of_cpsets_alist [
-          ((cpset_of_cps dec_lead_cps), fun state (View.{pcursor; _} as view) t ->
+          ((cpset_of_cps dec_lead_cps), fun state (View.{pcursor; _} as view) y ->
               let state' = match state with
                 | R {r} -> begin
                     let digit = nat_of_cp (Source.Cursor.rget pcursor) in
@@ -3923,28 +3910,28 @@ module Dfa = struct
                   end
                 | Malformations mals -> State.Real_precise_r_bitwidth.mals ~mals
               in
-              advance (State_real_precise_r_bitwidth state') view t
+              advance (State_real_precise_r_bitwidth state') view y
           );
           (cpset_of_cps "0",
-            fun state (View.{pcursor; cursor; _} as view) t ->
+            fun state (View.{pcursor; cursor; _} as view) y ->
               let mal = unsupported_bitwidth pcursor cursor in
-              advance (State_real_precise_r (state |> State.Real_precise_r.accum_mal mal)) view t
+              advance (State_real_precise_r (state |> State.Real_precise_r.accum_mal mal)) view y
           );
           (Set.diff (cpset_of_cps ident_cps) (cpset_of_cps dec_cps),
-            fun state (View.{pcursor; cursor; _} as view) t ->
+            fun state (View.{pcursor; cursor; _} as view) y ->
               let mal = invalid_numerical pcursor cursor in
-              advance (State_real_precise_r (state |> State.Real_precise_r.accum_mal mal)) view t
+              advance (State_real_precise_r (state |> State.Real_precise_r.accum_mal mal)) view y
           );
         ];
-        default1=(fun state view t ->
+        default1=(fun state view y ->
           match state with
-          | R {r} -> accept_precise_excl Subtype_r64 ~r view t
-          | Malformations mals -> accept_mals_excl mals view t
+          | R {r} -> accept_precise_excl Subtype_r64 ~r view y
+          | Malformations mals -> accept_mals_excl mals view y
         );
-        eoi1=(fun state view t ->
+        eoi1=(fun state view y ->
           match state with
-          | R {r} -> accept_precise_incl Subtype_r64 ~r view t
-          | Malformations mals -> accept_mals_incl mals view t
+          | R {r} -> accept_precise_incl Subtype_r64 ~r view y
+          | Malformations mals -> accept_mals_incl mals view y
         );
       }
 
@@ -3952,7 +3939,7 @@ module Dfa = struct
       let open State.Real_approx_r in
       {
         edges1=map_of_cpsets_alist [
-          ((cpset_of_cps dec_lead_cps), fun state (View.{pcursor; _} as view) t ->
+          ((cpset_of_cps dec_lead_cps), fun state (View.{pcursor; _} as view) y ->
               let state' = match state with
                 | R {r} -> begin
                     let digit = nat_of_cp (Source.Cursor.rget pcursor) in
@@ -3960,28 +3947,28 @@ module Dfa = struct
                   end
                 | Malformations mals -> State.Real_approx_r_bitwidth.mals ~mals
               in
-              advance (State_real_approx_r_bitwidth state') view t
+              advance (State_real_approx_r_bitwidth state') view y
           );
           (cpset_of_cps "0",
-            fun state (View.{pcursor; cursor; _} as view) t ->
+            fun state (View.{pcursor; cursor; _} as view) y ->
               let mal = unsupported_bitwidth pcursor cursor in
-              advance (State_real_approx_r (state |> State.Real_approx_r.accum_mal mal)) view t
+              advance (State_real_approx_r (state |> State.Real_approx_r.accum_mal mal)) view y
           );
           (Set.diff (cpset_of_cps ident_cps) (cpset_of_cps dec_cps),
-            fun state (View.{pcursor; cursor; _} as view) t ->
+            fun state (View.{pcursor; cursor; _} as view) y ->
               let mal = invalid_numerical pcursor cursor in
-              advance (State_real_approx_r (state |> State.Real_approx_r.accum_mal mal)) view t
+              advance (State_real_approx_r (state |> State.Real_approx_r.accum_mal mal)) view y
           );
         ];
-        default1=(fun state view t ->
+        default1=(fun state view y ->
           match state with
-          | R {r} -> accept_approx_excl Subtype_r64 ~r view t
-          | Malformations mals -> accept_mals_excl mals view t
+          | R {r} -> accept_approx_excl Subtype_r64 ~r view y
+          | Malformations mals -> accept_mals_excl mals view y
         );
-        eoi1=(fun state view t ->
+        eoi1=(fun state view y ->
           match state with
-          | R {r} -> accept_approx_incl Subtype_r64 ~r view t
-          | Malformations mals -> accept_mals_incl mals view t
+          | R {r} -> accept_approx_incl Subtype_r64 ~r view y
+          | Malformations mals -> accept_mals_incl mals view y
         );
       }
 
@@ -3989,41 +3976,41 @@ module Dfa = struct
       let open State.Real_precise_r_bitwidth in
       {
         edges1=map_of_cpsets_alist [
-          ((cpset_of_cps dec_cps), fun state (View.{pcursor; _} as view) t ->
+          ((cpset_of_cps dec_cps), fun state (View.{pcursor; _} as view) y ->
               let digit = nat_of_cp (Source.Cursor.rget pcursor) in
               advance (State_real_precise_r_bitwidth
-                  (state |> State.Real_precise_r_bitwidth.accum_digit digit)) view t
+                  (state |> State.Real_precise_r_bitwidth.accum_digit digit)) view y
           );
           (Set.diff (cpset_of_cps ident_cps) (cpset_of_cps dec_cps),
-            fun state (View.{pcursor; cursor; _} as view) t ->
+            fun state (View.{pcursor; cursor; _} as view) y ->
               let mal = invalid_numerical pcursor cursor in
               advance (State_real_precise_r_bitwidth
-                  (state |> State.Real_precise_r_bitwidth.accum_mal mal)) view t
+                  (state |> State.Real_precise_r_bitwidth.accum_mal mal)) view y
           );
         ];
-        default1=(fun state (View.{cursor; _} as view) t ->
+        default1=(fun state (View.{cursor; _} as view) ({tok_base; _} as y) ->
           match state with
           | R {r; bitwidth} -> begin
               match subtype_of_bitwidth bitwidth with
-              | Some subtype -> accept_precise_excl subtype ~r view t
+              | Some subtype -> accept_precise_excl subtype ~r view y
               | None -> begin
-                  let mal = unsupported_bitwidth t.tok_base cursor in
-                  accept_mals_excl [mal] view t
+                  let mal = unsupported_bitwidth tok_base cursor in
+                  accept_mals_excl [mal] view y
                 end
             end
-          | Malformations mals -> accept_mals_excl mals view t
+          | Malformations mals -> accept_mals_excl mals view y
         );
-        eoi1=(fun state (View.{cursor; _} as view) t ->
+        eoi1=(fun state (View.{cursor; _} as view) ({tok_base; _} as y) ->
           match state with
           | R {r; bitwidth} -> begin
               match subtype_of_bitwidth bitwidth with
-              | Some subtype -> accept_precise_incl subtype ~r view t
+              | Some subtype -> accept_precise_incl subtype ~r view y
               | None -> begin
-                  let mal = unsupported_bitwidth t.tok_base cursor in
-                  accept_mals_incl [mal] view t
+                  let mal = unsupported_bitwidth tok_base cursor in
+                  accept_mals_incl [mal] view y
                 end
             end
-          | Malformations mals -> accept_mals_incl mals view t
+          | Malformations mals -> accept_mals_incl mals view y
         );
       }
 
@@ -4031,41 +4018,41 @@ module Dfa = struct
       let open State.Real_approx_r_bitwidth in
       {
         edges1=map_of_cpsets_alist [
-          ((cpset_of_cps dec_cps), fun state (View.{pcursor; _} as view) t ->
+          ((cpset_of_cps dec_cps), fun state (View.{pcursor; _} as view) y ->
               let digit = nat_of_cp (Source.Cursor.rget pcursor) in
               advance (State_real_approx_r_bitwidth
-                  (state |> State.Real_approx_r_bitwidth.accum_digit digit)) view t
+                  (state |> State.Real_approx_r_bitwidth.accum_digit digit)) view y
           );
           (Set.diff (cpset_of_cps ident_cps) (cpset_of_cps dec_cps),
-            fun state (View.{pcursor; cursor; _} as view) t ->
+            fun state (View.{pcursor; cursor; _} as view) y ->
               let mal = invalid_numerical pcursor cursor in
               advance (State_real_approx_r_bitwidth
-                  (state |> State.Real_approx_r_bitwidth.accum_mal mal)) view t
+                  (state |> State.Real_approx_r_bitwidth.accum_mal mal)) view y
           );
         ];
-        default1=(fun state (View.{cursor; _} as view) t ->
+        default1=(fun state (View.{cursor; _} as view) ({tok_base; _} as y) ->
           match state with
           | R {r; bitwidth} -> begin
               match subtype_of_bitwidth bitwidth with
-              | Some subtype -> accept_approx_excl subtype ~r view t
+              | Some subtype -> accept_approx_excl subtype ~r view y
               | None -> begin
-                  let mal = unsupported_bitwidth t.tok_base cursor in
-                  accept_mals_excl [mal] view t
+                  let mal = unsupported_bitwidth tok_base cursor in
+                  accept_mals_excl [mal] view y
                 end
             end
-          | Malformations mals -> accept_mals_excl mals view t
+          | Malformations mals -> accept_mals_excl mals view y
         );
-        eoi1=(fun state (View.{cursor; _} as view) t ->
+        eoi1=(fun state (View.{cursor; _} as view) ({tok_base; _} as y) ->
           match state with
           | R {r; bitwidth} -> begin
               match subtype_of_bitwidth bitwidth with
-              | Some subtype -> accept_approx_incl subtype ~r view t
+              | Some subtype -> accept_approx_incl subtype ~r view y
               | None -> begin
-                  let mal = unsupported_bitwidth t.tok_base cursor in
-                  accept_mals_incl [mal] view t
+                  let mal = unsupported_bitwidth tok_base cursor in
+                  accept_mals_incl [mal] view y
                 end
             end
-          | Malformations mals -> accept_mals_incl mals view t
+          | Malformations mals -> accept_mals_incl mals view y
         );
       }
   end
@@ -4127,7 +4114,7 @@ module Dfa = struct
       | Subtype_nat
       | Subtype_zint -> None
 
-    let accept_integer ?subtype n radix cursor t =
+    let accept_integer ?subtype n radix cursor ({tok_base; _} as y) =
       let subtype = match subtype with
         | None -> Subtype_u64
         | Some subtype -> subtype
@@ -4137,10 +4124,10 @@ module Dfa = struct
         | Some limit when Nat.(n <= limit) -> None
         | Some limit -> Some limit
       in
-      let source = source_at cursor t in
+      let source = source_at cursor y in
       let tok = match limit with
         | Some limit -> begin
-            let mal = out_of_range_int radix limit t.tok_base cursor in
+            let mal = out_of_range_int radix limit tok_base cursor in
             let malformed = Token.Rendition.of_mals [mal] in
             match subtype with
             | Subtype_u8 -> Token.Tok_u8 {source; u8=malformed}
@@ -4185,21 +4172,21 @@ module Dfa = struct
             | Subtype_zint -> Tok_zint {source; zint=Constant (Nat.bits_to_zint n)}
           end
       in
-      accept_tok tok cursor t
+      accept_tok tok cursor y
 
-    let accept_integer_incl ?subtype n radix View.{cursor; _} t =
-      accept_integer ?subtype n radix cursor t
+    let accept_integer_incl ?subtype n radix View.{cursor; _} y =
+      accept_integer ?subtype n radix cursor y
 
-    let accept_integer_excl ?subtype n radix View.{pcursor; _} t =
-      accept_integer ?subtype n radix pcursor t
+    let accept_integer_excl ?subtype n radix View.{pcursor; _} y =
+      accept_integer ?subtype n radix pcursor y
 
-    let accept_integer_pexcl ?subtype n radix View.{ppcursor; _} t =
-      accept_integer ?subtype n radix ppcursor t
+    let accept_integer_pexcl ?subtype n radix View.{ppcursor; _} y =
+      accept_integer ?subtype n radix ppcursor y
 
-    let accept_zero cursor t =
-      accept_integer Nat.zero Hex cursor t
+    let accept_zero cursor y =
+      accept_integer Nat.zero Hex cursor y
 
-    let accept_integer_bitwidth ~signedness ~bitwidth n radix cursor t =
+    let accept_integer_bitwidth ~signedness ~bitwidth n radix cursor ({tok_base; _} as y) =
       let subtype_opt = match signedness, Nat.to_uns_opt bitwidth with
         | Unsigned, Some 8L -> Some Subtype_u8
         | Signed, Some 8L -> Some Subtype_i8
@@ -4219,43 +4206,43 @@ module Dfa = struct
       in
       match subtype_opt with
       | None -> begin
-          let mal = unsupported_bitwidth t.tok_base cursor in
+          let mal = unsupported_bitwidth tok_base cursor in
           let malformed = Token.Rendition.of_mals [mal] in
-          accept_tok (Tok_u64 {source=source_at cursor t; u64=malformed}) cursor t
+          accept_tok (Tok_u64 {source=source_at cursor y; u64=malformed}) cursor y
         end
-      | Some subtype -> accept_integer ~subtype n radix cursor t
+      | Some subtype -> accept_integer ~subtype n radix cursor y
 
-    let accept_integer_bitwidth_incl ~signedness ~bitwidth n radix View.{cursor; _} t =
-      accept_integer_bitwidth ~signedness ~bitwidth n radix cursor t
+    let accept_integer_bitwidth_incl ~signedness ~bitwidth n radix View.{cursor; _} y =
+      accept_integer_bitwidth ~signedness ~bitwidth n radix cursor y
 
-    let accept_integer_bitwidth_excl ~signedness ~bitwidth n radix View.{pcursor; _} t =
-      accept_integer_bitwidth ~signedness ~bitwidth n radix pcursor t
+    let accept_integer_bitwidth_excl ~signedness ~bitwidth n radix View.{pcursor; _} y =
+      accept_integer_bitwidth ~signedness ~bitwidth n radix pcursor y
 
-    let accept_zero_incl View.{cursor; _} t =
-      accept_zero cursor t
+    let accept_zero_incl View.{cursor; _} y =
+      accept_zero cursor y
 
-    let accept_zero_excl View.{pcursor; _} t =
-      accept_zero pcursor t
+    let accept_zero_excl View.{pcursor; _} y =
+      accept_zero pcursor y
 
-    let accept_zero_pexcl View.{ppcursor; _} t =
-      accept_zero ppcursor t
+    let accept_zero_pexcl View.{ppcursor; _} y =
+      accept_zero ppcursor y
 
-    let accept_mal cursor t =
-      let mal = malformed (invalid_numerical t.tok_base cursor) in
-      accept_tok (Tok_u64 {source=source_at cursor t; u64=mal}) cursor t
+    let accept_mal cursor ({tok_base; _} as y) =
+      let mal = malformed (invalid_numerical tok_base cursor) in
+      accept_tok (Tok_u64 {source=source_at cursor y; u64=mal}) cursor y
 
-    let accept_mal_incl View.{cursor; _} t =
-      accept_mal cursor t
+    let accept_mal_incl View.{cursor; _} y =
+      accept_mal cursor y
 
-    let accept_mal_excl View.{pcursor; _} t =
-      accept_mal pcursor t
+    let accept_mal_excl View.{pcursor; _} y =
+      accept_mal pcursor y
 
     let node0_0 = {
       edges0=map_of_cpsets_alist [
         (cpset_of_cps "_", advance (State_integer_dec (State.Integer_dec.init ~n:Nat.k_0)));
-        (cpset_of_cps dec_cps, fun (View.{pcursor; _} as view) t ->
+        (cpset_of_cps dec_cps, fun (View.{pcursor; _} as view) y ->
             let digit = nat_of_cp (Source.Cursor.rget pcursor) in
-            advance (State_integer_dec (State.Integer_dec.init ~n:digit)) view t;
+            advance (State_integer_dec (State.Integer_dec.init ~n:digit)) view y;
         );
         (cpset_of_cps "b", advance State_integer_0b);
         (cpset_of_cps "o", advance State_integer_0o);
@@ -4280,32 +4267,32 @@ module Dfa = struct
       edges0=map_of_cpsets_alist [
         (cpset_of_cps operator_cps, accept_zero_pexcl);
         (cpset_of_cps "e", advance (State_real_e (State.Real_e.init ~m:0.)));
-        (cpset_of_cps dec_cps, fun (View.{pcursor; _} as view) t ->
+        (cpset_of_cps dec_cps, fun (View.{pcursor; _} as view) y ->
             let digit = real_of_cp (Source.Cursor.rget pcursor) in
             advance (State_real_dec_dot (State.Real_dec_dot.(init ~m:0. |> accum_digit digit))) view
-              t
+              y
         );
         (cpset_of_cps "_", advance (State_real_dec_dot (State.Real_dec_dot.init ~m:0.)));
         (cpset_of_cps "r", advance (State_real_approx_r (State.Real_approx_r.init ~r:0.)));
         (Set.diff (cpset_of_cps ident_cps) (Set.union (cpset_of_cps dec_cps) (cpset_of_cps "er_")),
-          fun (View.{cursor; _} as view) t ->
-            let mal = invalid_numerical t.tok_base cursor in
-            advance (State_real_dec_dot (State.Real_dec_dot.mals ~mals:[mal])) view t
+          fun (View.{cursor; _} as view) ({tok_base; _} as y) ->
+            let mal = invalid_numerical tok_base cursor in
+            advance (State_real_dec_dot (State.Real_dec_dot.mals ~mals:[mal])) view y
         );
       ];
-      default0=(fun view t ->
-        accept_tok_excl (Tok_r64 {source=source_excl view t; r64=(Constant 0.)}) view t);
-      eoi0=(fun view t ->
-        accept_tok_incl (Tok_r64 {source=source_incl view t; r64=(Constant 0.)}) view t);
+      default0=(fun view y ->
+        accept_tok_excl (Tok_r64 {source=source_excl view y; r64=(Constant 0.)}) view y);
+      eoi0=(fun view y ->
+        accept_tok_incl (Tok_r64 {source=source_incl view y; r64=(Constant 0.)}) view y);
     }
 
     let node0_0box ~base_cps ~state ~state_base_init =
       {
         edges0=map_of_cpsets_alist [
           (cpset_of_cps "_", advance state);
-          (cpset_of_cps base_cps, fun (View.{pcursor; _} as view) t ->
+          (cpset_of_cps base_cps, fun (View.{pcursor; _} as view) y ->
               let digit = nat_of_cp (Source.Cursor.rget pcursor) in
-              advance (state_base_init digit) view t
+              advance (state_base_init digit) view y
           );
           (Set.diff (cpset_of_cps ident_cps) (Set.union (cpset_of_cps "_") (cpset_of_cps base_cps)),
             advance State_integer_mal_ident);
@@ -4325,44 +4312,44 @@ module Dfa = struct
         ~state_dot_init ~r_advance =
       {
         edges1=map_of_cpsets_alist [
-          (cpset_of_cps "_", fun state view t -> advance (state_init state) view t);
-          (cpset_of_cps base_cps, fun state (View.{pcursor; _} as view) t ->
+          (cpset_of_cps "_", fun state view y -> advance (state_init state) view y);
+          (cpset_of_cps base_cps, fun state (View.{pcursor; _} as view) y ->
               let digit = nat_of_cp (Source.Cursor.rget pcursor) in
-              advance (state_init (state |> accum_digit digit)) view t);
-          (cpset_of_cps ".", fun state view t -> advance (state_dot_init state) view t);
+              advance (state_init (state |> accum_digit digit)) view y);
+          (cpset_of_cps ".", fun state view y -> advance (state_dot_init state) view y);
           (cpset_of_cps ep_cp, ep_advance);
-          (cpset_of_cps "L", fun state view t ->
+          (cpset_of_cps "L", fun state view y ->
               let n = n_of_state state in
-              advance (State_integer_l (State.Integer_l.init ~n ~radix)) view t
+              advance (State_integer_l (State.Integer_l.init ~n ~radix)) view y
           );
-          (cpset_of_cps "u", fun state view t ->
+          (cpset_of_cps "u", fun state view y ->
               let n = n_of_state state in
-              advance (State_integer_u (State.Integer_u.init ~n ~radix)) view t
+              advance (State_integer_u (State.Integer_u.init ~n ~radix)) view y
           );
-          (cpset_of_cps "i", fun state view t ->
+          (cpset_of_cps "i", fun state view y ->
               let n = n_of_state state in
-              advance (State_integer_i (State.Integer_i.init ~n ~radix)) view t
+              advance (State_integer_i (State.Integer_i.init ~n ~radix)) view y
           );
-          (cpset_of_cps "n", fun state view t ->
+          (cpset_of_cps "n", fun state view y ->
               let n = n_of_state state in
-              advance (State_integer_n (State.Integer_n.init ~n ~radix)) view t
+              advance (State_integer_n (State.Integer_n.init ~n ~radix)) view y
           );
-          (cpset_of_cps "z", fun state view t ->
+          (cpset_of_cps "z", fun state view y ->
               let n = n_of_state state in
-              advance (State_integer_z (State.Integer_z.init ~n ~radix)) view t
+              advance (State_integer_z (State.Integer_z.init ~n ~radix)) view y
           );
           (cpset_of_cps "r", r_advance);
           (Set.diff (cpset_of_cps ident_cps)
               (Set.union (cpset_of_cps base_cps) (cpset_of_cps (String.join ["_Linruz"; ep_cp]))),
-            fun _state view t -> advance State_integer_mal_ident view t);
+            fun _state view y -> advance State_integer_mal_ident view y);
         ];
-        default1=(fun state view t ->
+        default1=(fun state view y ->
           let n = n_of_state state in
-          accept_integer_excl n radix view t
+          accept_integer_excl n radix view y
         );
-        eoi1=(fun state view t ->
+        eoi1=(fun state view y ->
           let n = n_of_state state in
-          accept_integer_incl n radix view t
+          accept_integer_incl n radix view y
         );
       }
     let node1_bin =
@@ -4370,68 +4357,68 @@ module Dfa = struct
         ~state_init:(fun state -> State.State_integer_bin state)
         ~n_of_state:(fun State.Integer_bin.{n} -> n)
         ~ep_cp:"p"
-        ~ep_advance:(fun State.Integer_bin.{n} view t ->
+        ~ep_advance:(fun State.Integer_bin.{n} view y ->
           let m = realer_of_nat n in
-          advance (State_real_p (State.Real_p.init ~m)) view t
+          advance (State_real_p (State.Real_p.init ~m)) view y
         )
         ~accum_digit:State.Integer_bin.accum_digit
         ~state_dot_init:(fun state -> State.State_integer_bin_dot state)
-        ~r_advance:(fun State.Integer_bin.{n} view t ->
+        ~r_advance:(fun State.Integer_bin.{n} view y ->
           let r = realer_of_nat n in
-          advance (State_real_precise_r (State.Real_precise_r.init ~r)) view t
+          advance (State_real_precise_r (State.Real_precise_r.init ~r)) view y
         )
     let node1_oct =
       node1_base ~radix:Oct ~base_cps:oct_cps
         ~state_init:(fun state -> State.State_integer_oct state)
         ~n_of_state:(fun State.Integer_oct.{n} -> n)
         ~ep_cp:"p"
-        ~ep_advance:(fun State.Integer_oct.{n} view t ->
+        ~ep_advance:(fun State.Integer_oct.{n} view y ->
           let m = realer_of_nat n in
-          advance (State_real_p (State.Real_p.init ~m)) view t
+          advance (State_real_p (State.Real_p.init ~m)) view y
         )
         ~accum_digit:State.Integer_oct.accum_digit
         ~state_dot_init:(fun state -> State.State_integer_oct_dot state)
-        ~r_advance:(fun State.Integer_oct.{n} view t ->
+        ~r_advance:(fun State.Integer_oct.{n} view y ->
           let r = realer_of_nat n in
-          advance (State_real_precise_r (State.Real_precise_r.init ~r)) view t
+          advance (State_real_precise_r (State.Real_precise_r.init ~r)) view y
         )
     let node1_dec =
       node1_base ~radix:Dec ~base_cps:dec_cps
         ~state_init:(fun state -> State.State_integer_dec state)
         ~n_of_state:(fun State.Integer_dec.{n} -> n)
         ~ep_cp:"e"
-        ~ep_advance:(fun State.Integer_dec.{n} view t ->
+        ~ep_advance:(fun State.Integer_dec.{n} view y ->
           let m = Nat.to_real n in
-          advance (State_real_e (State.Real_e.init ~m)) view t
+          advance (State_real_e (State.Real_e.init ~m)) view y
         )
         ~accum_digit:State.Integer_dec.accum_digit
         ~state_dot_init:(fun state -> State.State_integer_dec_dot state)
-        ~r_advance:(fun State.Integer_dec.{n} view t ->
+        ~r_advance:(fun State.Integer_dec.{n} view y ->
           let r = Nat.to_real n in
-          advance (State_real_approx_r (State.Real_approx_r.init ~r)) view t
+          advance (State_real_approx_r (State.Real_approx_r.init ~r)) view y
         )
     let node1_hex =
       node1_base ~radix:Hex ~base_cps:hex_cps
         ~state_init:(fun state -> State.State_integer_hex state)
         ~n_of_state:(fun State.Integer_hex.{n} -> n)
         ~ep_cp:"p"
-        ~ep_advance:(fun State.Integer_hex.{n} view t ->
+        ~ep_advance:(fun State.Integer_hex.{n} view y ->
           let m = realer_of_nat n in
-          advance (State_real_p (State.Real_p.init ~m)) view t
+          advance (State_real_p (State.Real_p.init ~m)) view y
         )
         ~accum_digit:State.Integer_hex.accum_digit
         ~state_dot_init:(fun state -> State.State_integer_hex_dot state)
-        ~r_advance:(fun State.Integer_hex.{n} view t ->
+        ~r_advance:(fun State.Integer_hex.{n} view y ->
           let r = realer_of_nat n in
-          advance (State_real_precise_r (State.Real_precise_r.init ~r)) view t
+          advance (State_real_precise_r (State.Real_precise_r.init ~r)) view y
         )
 
     let node1_base_dot ~radix ~n_of_state ~real_dot_retry =
       {
         edges1=map_of_cps_alist [
-          (".", fun state view t ->
+          (".", fun state view y ->
               let n = n_of_state state in
-              accept_integer_pexcl n radix view t
+              accept_integer_pexcl n radix view y
           );
         ];
         default1=real_dot_retry;
@@ -4440,121 +4427,121 @@ module Dfa = struct
     let node1_bin_dot =
       node1_base_dot ~radix:Bin
         ~n_of_state:(fun State.Integer_bin_dot.{n} -> n)
-        ~real_dot_retry:(fun State.Integer_bin_dot.{n} _view t ->
+        ~real_dot_retry:(fun State.Integer_bin_dot.{n} _view y ->
           let m = realer_of_nat n in
-          retry (State_real_bin_dot (State.Real_bin_dot.init ~m)) t
+          retry (State_real_bin_dot (State.Real_bin_dot.init ~m)) y
         )
     let node1_oct_dot =
       node1_base_dot ~radix:Oct
         ~n_of_state:(fun State.Integer_oct_dot.{n} -> n)
-        ~real_dot_retry:(fun State.Integer_oct_dot.{n} _view t ->
+        ~real_dot_retry:(fun State.Integer_oct_dot.{n} _view y ->
           let m = realer_of_nat n in
-          retry (State_real_oct_dot (State.Real_oct_dot.init ~m)) t
+          retry (State_real_oct_dot (State.Real_oct_dot.init ~m)) y
         )
     let node1_dec_dot =
       node1_base_dot ~radix:Dec
         ~n_of_state:(fun State.Integer_dec_dot.{n} -> n)
-        ~real_dot_retry:(fun State.Integer_bin_dot.{n} _view t ->
+        ~real_dot_retry:(fun State.Integer_bin_dot.{n} _view y ->
           let m = Nat.to_real n in
-          retry (State_real_dec_dot (State.Real_dec_dot.init ~m)) t
+          retry (State_real_dec_dot (State.Real_dec_dot.init ~m)) y
         )
     let node1_hex_dot =
       node1_base_dot ~radix:Hex
         ~n_of_state:(fun State.Integer_hex_dot.{n} -> n)
-        ~real_dot_retry:(fun State.Integer_hex_dot.{n} _view t ->
+        ~real_dot_retry:(fun State.Integer_hex_dot.{n} _view y ->
           let m = realer_of_nat n in
-          retry (State_real_hex_dot (State.Real_hex_dot.init ~m)) t
+          retry (State_real_hex_dot (State.Real_hex_dot.init ~m)) y
         )
 
     let node1_l =
       let open State.Integer_l in
       {
         edges1=map_of_cps_alist [
-          (dec_cps, fun _state view t -> advance State_integer_mal_ident view t);
+          (dec_cps, fun _state view y -> advance State_integer_mal_ident view y);
         ];
-        default1=(fun {n; radix} view t ->
-          accept_integer_excl ~subtype:Subtype_long n radix view t
+        default1=(fun {n; radix} view y ->
+          accept_integer_excl ~subtype:Subtype_long n radix view y
         );
-        eoi1=(fun {n; radix} view t -> accept_integer_incl ~subtype:Subtype_long n radix view t);
+        eoi1=(fun {n; radix} view y -> accept_integer_incl ~subtype:Subtype_long n radix view y);
       }
 
     let node1_u =
       let open State.Integer_u in
       {
         edges1=map_of_cps_alist [
-          (dec_cps, fun {n; radix} (View.{pcursor; _} as view) t ->
+          (dec_cps, fun {n; radix} (View.{pcursor; _} as view) y ->
               let digit = nat_of_cp (Source.Cursor.rget pcursor) in
               advance (State_integer_u_bitwidth (State.Integer_u_bitwidth.init ~n ~radix
-                  ~bitwidth:digit)) view t
+                  ~bitwidth:digit)) view y
           );
         ];
-        default1=(fun {n; radix} view t -> accept_integer_excl ~subtype:Subtype_u64 n radix view t);
-        eoi1=(fun {n; radix} view t -> accept_integer_incl ~subtype:Subtype_u64 n radix view t);
+        default1=(fun {n; radix} view y -> accept_integer_excl ~subtype:Subtype_u64 n radix view y);
+        eoi1=(fun {n; radix} view y -> accept_integer_incl ~subtype:Subtype_u64 n radix view y);
       }
 
     let node1_i =
       let open State.Integer_i in
       {
         edges1=map_of_cps_alist [
-          (dec_cps, fun {n; radix} (View.{pcursor; _} as view) t ->
+          (dec_cps, fun {n; radix} (View.{pcursor; _} as view) y ->
               let digit = nat_of_cp (Source.Cursor.rget pcursor) in
               advance (State_integer_i_bitwidth (State.Integer_i_bitwidth.init ~n ~radix
-                  ~bitwidth:digit)) view t
+                  ~bitwidth:digit)) view y
           );
         ];
-        default1=(fun {n; radix} view t -> accept_integer_excl ~subtype:Subtype_i64 n radix view t);
-        eoi1=(fun {n; radix} view t -> accept_integer_incl ~subtype:Subtype_i64 n radix view t);
+        default1=(fun {n; radix} view y -> accept_integer_excl ~subtype:Subtype_i64 n radix view y);
+        eoi1=(fun {n; radix} view y -> accept_integer_incl ~subtype:Subtype_i64 n radix view y);
       }
 
     let node1_n =
       let open State.Integer_n in
       {
         edges1=map_of_cps_alist [
-          (dec_cps, fun _state view t -> advance State_integer_mal_ident view t);
+          (dec_cps, fun _state view y -> advance State_integer_mal_ident view y);
         ];
-        default1=(fun {n; radix} view t -> accept_integer_excl ~subtype:Subtype_nat n radix view t);
-        eoi1=(fun {n; radix} view t -> accept_integer_incl ~subtype:Subtype_nat n radix view t);
+        default1=(fun {n; radix} view y -> accept_integer_excl ~subtype:Subtype_nat n radix view y);
+        eoi1=(fun {n; radix} view y -> accept_integer_incl ~subtype:Subtype_nat n radix view y);
       }
 
     let node1_z =
       let open State.Integer_z in
       {
         edges1=map_of_cps_alist [
-          (dec_cps, fun _state view t -> advance State_integer_mal_ident view t);
+          (dec_cps, fun _state view y -> advance State_integer_mal_ident view y);
         ];
-        default1=(fun {n; radix} view t ->
-          accept_integer_excl ~subtype:Subtype_zint n radix view t);
-        eoi1=(fun {n; radix} view t -> accept_integer_incl ~subtype:Subtype_zint n radix view t);
+        default1=(fun {n; radix} view y ->
+          accept_integer_excl ~subtype:Subtype_zint n radix view y);
+        eoi1=(fun {n; radix} view y -> accept_integer_incl ~subtype:Subtype_zint n radix view y);
       }
 
     let node1_u_bitwidth =
       let open State.Integer_u_bitwidth in
       {
         edges1=map_of_cps_alist [
-          (dec_cps, fun state (View.{pcursor; _} as view) t ->
+          (dec_cps, fun state (View.{pcursor; _} as view) y ->
               let digit = nat_of_cp (Source.Cursor.rget pcursor) in
-              advance (State_integer_u_bitwidth (state |> accum_bitwidth digit)) view t
+              advance (State_integer_u_bitwidth (state |> accum_bitwidth digit)) view y
           );
         ];
-        default1=(fun {n; radix; bitwidth} view t ->
-          accept_integer_bitwidth_excl ~signedness:Unsigned ~bitwidth n radix view t);
-        eoi1=(fun {n; radix; bitwidth} view t ->
-          accept_integer_bitwidth_incl ~signedness:Unsigned ~bitwidth n radix view t);
+        default1=(fun {n; radix; bitwidth} view y ->
+          accept_integer_bitwidth_excl ~signedness:Unsigned ~bitwidth n radix view y);
+        eoi1=(fun {n; radix; bitwidth} view y ->
+          accept_integer_bitwidth_incl ~signedness:Unsigned ~bitwidth n radix view y);
       }
 
     let node1_i_bitwidth =
       let open State.Integer_i_bitwidth in
       {
         edges1=map_of_cps_alist [
-          (dec_cps, fun state (View.{pcursor; _} as view) t ->
+          (dec_cps, fun state (View.{pcursor; _} as view) y ->
               let digit = nat_of_cp (Source.Cursor.rget pcursor) in
-              advance (State_integer_i_bitwidth (state |> accum_bitwidth digit)) view t
+              advance (State_integer_i_bitwidth (state |> accum_bitwidth digit)) view y
           );
         ];
-        default1=(fun {n; radix; bitwidth} view t ->
-          accept_integer_bitwidth_excl ~signedness:Signed ~bitwidth n radix view t);
-        eoi1=(fun {n; radix; bitwidth} view t ->
-          accept_integer_bitwidth_incl ~signedness:Signed  ~bitwidth n radix view t);
+        default1=(fun {n; radix; bitwidth} view y ->
+          accept_integer_bitwidth_excl ~signedness:Signed ~bitwidth n radix view y);
+        eoi1=(fun {n; radix; bitwidth} view y ->
+          accept_integer_bitwidth_incl ~signedness:Signed  ~bitwidth n radix view y);
       }
 
     let node0_mal_ident = {
@@ -4567,9 +4554,9 @@ module Dfa = struct
   end
 
   module Ident = struct
-    let accept_uident cursor t =
-      let uident_str = str_of_cursor cursor t in
-      let source = source_at cursor t in
+    let accept_uident cursor y =
+      let uident_str = str_of_cursor cursor y in
+      let source = source_at cursor y in
       let tok = match uident_str with
         | "and" -> Token.Tok_and {source}
         | "also" -> Token.Tok_also {source}
@@ -4600,26 +4587,26 @@ module Dfa = struct
         | "with" -> Token.Tok_with {source}
         | _ -> Tok_uident {source; uident=Constant uident_str}
       in
-      accept_tok tok cursor t
+      accept_tok tok cursor y
 
-    let accept_uident_incl View.{cursor; _} t =
-      accept_uident cursor t
+    let accept_uident_incl View.{cursor; _} y =
+      accept_uident cursor y
 
-    let accept_uident_excl View.{pcursor; _} t =
-      accept_uident pcursor t
+    let accept_uident_excl View.{pcursor; _} y =
+      accept_uident pcursor y
 
-    let accept_cident cursor t =
-      let cident_str = str_of_cursor cursor t in
-      accept_tok (Tok_cident {source=source_at cursor t; cident=cident_str}) cursor t
+    let accept_cident cursor y =
+      let cident_str = str_of_cursor cursor y in
+      accept_tok (Tok_cident {source=source_at cursor y; cident=cident_str}) cursor y
 
-    let accept_cident_incl View.{cursor; _} t =
-      accept_cident cursor t
+    let accept_cident_incl View.{cursor; _} y =
+      accept_cident cursor y
 
-    let accept_cident_excl View.{pcursor; _} t =
-      accept_cident pcursor t
+    let accept_cident_excl View.{pcursor; _} y =
+      accept_cident pcursor y
 
-    let accept_mal cursor t =
-      let uident_str = str_of_cursor cursor t in
+    let accept_mal cursor ({tok_base; _} as y) =
+      let uident_str = str_of_cursor cursor y in
       let description =
         String.Fmt.empty
         |> Fmt.fmt "Identifier "
@@ -4627,14 +4614,14 @@ module Dfa = struct
         |> Fmt.fmt " lacks _*[A-Za-z] prefix"
         |> Fmt.to_string
       in
-      let mal = malformed (malformation ~base:t.tok_base ~past:cursor description) in
-      accept_tok (Tok_uident {source=source_at cursor t; uident=mal}) cursor t
+      let mal = malformed (malformation ~base:tok_base ~past:cursor description) in
+      accept_tok (Tok_uident {source=source_at cursor y; uident=mal}) cursor y
 
-    let accept_mal_incl View.{cursor; _} t =
-      accept_mal cursor t
+    let accept_mal_incl View.{cursor; _} y =
+      accept_mal cursor y
 
-    let accept_mal_excl View.{pcursor; _} t =
-      accept_mal pcursor t
+    let accept_mal_excl View.{pcursor; _} y =
+      accept_mal pcursor y
 
     let node0_uscore = {
       edges0=map_of_cps_alist [
@@ -4673,9 +4660,9 @@ module Dfa = struct
   end
 
   module Operator = struct
-    let accept_operator f cursor t =
-      let op = str_of_cursor cursor t in
-      let source = source_at cursor t in
+    let accept_operator f cursor y =
+      let op = str_of_cursor cursor y in
+      let source = source_at cursor y in
       let tok = match op with
         | "|" -> Token.Tok_bar {source}
         | ":" -> Tok_colon {source}
@@ -4696,13 +4683,13 @@ module Dfa = struct
         | "~->" -> Tok_carrow {source}
         | _ -> f source op
       in
-      accept_tok tok cursor t
+      accept_tok tok cursor y
 
-    let accept_operator_incl f View.{cursor; _} t =
-      accept_operator f cursor t
+    let accept_operator_incl f View.{cursor; _} y =
+      accept_operator f cursor y
 
-    let accept_operator_excl f View.{pcursor; _} t =
-      accept_operator f pcursor t
+    let accept_operator_excl f View.{pcursor; _} y =
+      accept_operator f pcursor y
 
     let node0_tilde = {
       edges0=map_of_cps_alist [(operator_cps, advance State_operator_tilde)];
@@ -4808,19 +4795,19 @@ module Dfa = struct
   end
 
   module ParenComment = struct
-    let eoi1 _state View.{cursor; _} t =
+    let eoi1 _state View.{cursor; _} ({tok_base; _} as y) =
       accept_tok (Tok_paren_comment {
-        source=source_at cursor t;
-        paren_comment=malformed (unterminated_comment t.tok_base cursor)}
-      ) cursor t
+        source=source_at cursor y;
+        paren_comment=malformed (unterminated_comment tok_base cursor)}
+      ) cursor y
 
-    let default1 state view t =
-      advance (State_paren_comment_body state) view t
+    let default1 state view y =
+      advance (State_paren_comment_body state) view y
 
     let node1_body = {
       edges1=map_of_cps_alist [
-        ("*", fun state view t -> advance (State_paren_comment_star state) view t);
-        ("(", fun state view t -> advance (State_paren_comment_lparen state) view t);
+        ("*", fun state view y -> advance (State_paren_comment_star state) view y);
+        ("(", fun state view y -> advance (State_paren_comment_lparen state) view y);
       ];
       default1;
       eoi1;
@@ -4828,11 +4815,11 @@ module Dfa = struct
 
     let node1_lparen = {
       edges1=map_of_cps_alist [
-        ("*", fun State.Paren_comment_lparen.{nesting} view t ->
+        ("*", fun State.Paren_comment_lparen.{nesting} view y ->
             advance (State_paren_comment_body (State.Paren_comment_body.init ~nesting:(succ
-                nesting))) view t
+                nesting))) view y
         );
-        ("(", fun state view t -> advance (State_paren_comment_lparen state) view t);
+        ("(", fun state view y -> advance (State_paren_comment_lparen state) view y);
       ];
       default1;
       eoi1;
@@ -4840,19 +4827,19 @@ module Dfa = struct
 
     let node1_star = {
       edges1=map_of_cps_alist [
-        ("*", fun state view t -> advance (State_paren_comment_star state) view t);
-        ("(", fun state view t -> advance (State_paren_comment_lparen state) view t);
-        (")", fun {nesting} view t ->
+        ("*", fun state view y -> advance (State_paren_comment_star state) view y);
+        ("(", fun state view y -> advance (State_paren_comment_lparen state) view y);
+        (")", fun {nesting} view y ->
             match nesting with
             | 1L -> begin
                 accept_tok_incl (Tok_paren_comment {
-                  source=source_incl view t;
+                  source=source_incl view y;
                   paren_comment=Constant ()
-                }) view t
+                }) view y
               end
             | _ ->
               advance (State_paren_comment_body (State.Paren_comment_body.init
-                  ~nesting:(pred nesting))) view t
+                  ~nesting:(pred nesting))) view y
         );
       ];
       default1;
@@ -4889,27 +4876,27 @@ module Dfa = struct
       edges0=map_of_cps_alist [
         ("\"", advance (State_src_directive_path State.Src_directive_path.empty));
         ("_", advance (State_src_directive_path_colon State.Src_directive_path_colon.empty));
-        (dec_lead_cps, fun ({pcursor; _} as view) t ->
+        (dec_lead_cps, fun ({pcursor; _} as view) y ->
             let digit = nat_of_cp (Source.Cursor.rget pcursor) in
             advance (State_src_directive_line (State.Src_directive_line.init ~mals:[] ~path:None
-              ~line_cursor:pcursor ~line:(Some digit))) view t);
-        ("]", fun view t ->
+              ~line_cursor:pcursor ~line:(Some digit))) view y);
+        ("]", fun view y ->
             let tok =
               render_source_directive ~mals:[] ~path:None ~line:None ~indent:None ~omit:None in
-            accept_source_directive tok view t
+            accept_source_directive tok view y
         );
       ];
-      default0=(fun ({pcursor; cursor; _} as view) t ->
+      default0=(fun ({pcursor; cursor; _} as view) y ->
         let mal = unexpected_codepoint_source_directive pcursor cursor in
         advance (State_src_directive_line (State.Src_directive_line.init ~mals:[mal] ~path:None
-          ~line_cursor:cursor ~line:None)) view t
+          ~line_cursor:cursor ~line:None)) view y
       );
-      eoi0=(fun ({cursor; _} as view) t ->
-        let mal = unterminated_source_directive t.tok_base cursor in
+      eoi0=(fun ({cursor; _} as view) ({tok_base; _} as y) ->
+        let mal = unterminated_source_directive tok_base cursor in
         accept_tok (Tok_source_directive {
-          source=source_incl view t;
+          source=source_incl view y;
           source_directive=Token.Rendition.of_mals [mal]
-        }) cursor t
+        }) cursor y
       );
     }
 
@@ -4918,25 +4905,25 @@ module Dfa = struct
       let open View in
       {
         edges1=map_of_cps_alist [
-          ("%", fun state ({pcursor; cursor; _} as view) t ->
+          ("%", fun state ({pcursor; cursor; _} as view) y ->
               let mal = missing_backslash pcursor cursor in
-              advance (State_src_directive_path (state |> accum_mals mal)) view t
+              advance (State_src_directive_path (state |> accum_mals mal)) view y
           );
-          ("\"", fun state view t -> advance (State_src_directive_rditto state) view t);
-          ("\\", fun {mals; path} ({pcursor; _} as view) t ->
-              advance (State_src_directive_path_bslash {mals; path; bslash_cursor=pcursor}) view t
+          ("\"", fun state view y -> advance (State_src_directive_rditto state) view y);
+          ("\\", fun {mals; path} ({pcursor; _} as view) y ->
+              advance (State_src_directive_path_bslash {mals; path; bslash_cursor=pcursor}) view y
           );
         ];
-        default1=(fun state ({pcursor; _} as view) t ->
+        default1=(fun state ({pcursor; _} as view) y ->
           advance (State_src_directive_path (state |> accum_path (Source.Cursor.rget pcursor))) view
-            t
+            y
         );
-        eoi1=(fun {mals; _} {cursor; _} t ->
-          let mal = unterminated_source_directive t.tok_base cursor in
+        eoi1=(fun {mals; _} {cursor; _} ({tok_base; _} as y) ->
+          let mal = unterminated_source_directive tok_base cursor in
           accept_tok (Tok_source_directive {
-            source=source_at cursor t;
+            source=source_at cursor y;
             source_directive=Token.Rendition.of_mals (mal :: mals)
-          }) cursor t
+          }) cursor y
         );
       }
 
@@ -4944,28 +4931,28 @@ module Dfa = struct
       let open State.Src_directive_path_bslash in
       {
         edges1=map_of_cps_alist [
-          ("u", fun state view t -> advance (State_src_directive_path_bslash_u state) view t);
-          ("t", fun state view t ->
-              advance (State_src_directive_path (state |> accum_path Codepoint.ht)) view t);
-          ("n", fun state view t ->
-              advance (State_src_directive_path (state |> accum_path Codepoint.nl)) view t);
-          ("r", fun state view t ->
-              advance (State_src_directive_path (state |> accum_path Codepoint.cr)) view t);
-          ("\"\\%", fun state ({pcursor; _} as view) t ->
+          ("u", fun state view y -> advance (State_src_directive_path_bslash_u state) view y);
+          ("t", fun state view y ->
+              advance (State_src_directive_path (state |> accum_path Codepoint.ht)) view y);
+          ("n", fun state view y ->
+              advance (State_src_directive_path (state |> accum_path Codepoint.nl)) view y);
+          ("r", fun state view y ->
+              advance (State_src_directive_path (state |> accum_path Codepoint.cr)) view y);
+          ("\"\\%", fun state ({pcursor; _} as view) y ->
               advance (State_src_directive_path (state |> accum_path (Source.Cursor.rget pcursor)))
-                view t
+                view y
           );
         ];
-        default1=(fun ({bslash_cursor; _} as state) {cursor; _} t ->
+        default1=(fun ({bslash_cursor; _} as state) {cursor; _} y ->
           let mal = illegal_backslash bslash_cursor cursor in
-          retry (State_src_directive_path (state |> accum_mals mal)) t
+          retry (State_src_directive_path (state |> accum_mals mal)) y
         );
-        eoi1=(fun {mals; _} {cursor; _} t ->
-          let mal = unterminated_source_directive t.tok_base cursor in
+        eoi1=(fun {mals; _} {cursor; _} ({tok_base; _} as y) ->
+          let mal = unterminated_source_directive tok_base cursor in
           accept_tok (Tok_source_directive {
-            source=source_at cursor t;
+            source=source_at cursor y;
             source_directive=Token.Rendition.of_mals (mal :: mals)
-          }) cursor t
+          }) cursor y
         );
       }
 
@@ -4973,32 +4960,32 @@ module Dfa = struct
       let open State.Src_directive_path_bslash_u in
       {
         edges1=map_of_cps_alist [
-          ("{", fun {mals; path; bslash_cursor} view t ->
+          ("{", fun {mals; path; bslash_cursor} view y ->
               advance (State_src_directive_path_bslash_u_lcurly
-                  (State.Src_directive_path_bslash_u_lcurly.init ~mals ~path ~bslash_cursor)) view t
+                  (State.Src_directive_path_bslash_u_lcurly.init ~mals ~path ~bslash_cursor)) view y
           );
-          ("\"", fun ({bslash_cursor; _} as state) ({cursor; _} as view) t ->
+          ("\"", fun ({bslash_cursor; _} as state) ({cursor; _} as view) y ->
               let mal = invalid_unicode_escape bslash_cursor cursor in
-              advance (State_src_directive_rditto (state |> accum_mals mal)) view t
+              advance (State_src_directive_rditto (state |> accum_mals mal)) view y
           );
-          ("]", fun {mals; _} {pcursor; cursor; _} t ->
+          ("]", fun {mals; _} {pcursor; cursor; _} y ->
               let mal = unexpected_codepoint_source_directive pcursor cursor in
               accept_tok (Tok_source_directive {
-                source=source_at cursor t;
+                source=source_at cursor y;
                 source_directive=Token.Rendition.of_mals (mal :: mals)
-              }) cursor t
+              }) cursor y
           );
         ];
-        default1=(fun ({bslash_cursor; _} as state) ({cursor; _} as view) t ->
+        default1=(fun ({bslash_cursor; _} as state) ({cursor; _} as view) y ->
           let mal = invalid_unicode_escape bslash_cursor cursor in
-          advance (State_src_directive_path (state |> accum_mals mal)) view t
+          advance (State_src_directive_path (state |> accum_mals mal)) view y
         );
-        eoi1=(fun {mals; _} {cursor; _} t ->
-          let mal = unterminated_source_directive t.tok_base cursor in
+        eoi1=(fun {mals; _} {cursor; _} ({tok_base; _} as y) ->
+          let mal = unterminated_source_directive tok_base cursor in
           accept_tok (Tok_source_directive {
-            source=source_at cursor t;
+            source=source_at cursor y;
             source_directive=Token.Rendition.of_mals (mal :: mals)
-          }) cursor t
+          }) cursor y
         );
       }
 
@@ -5006,36 +4993,36 @@ module Dfa = struct
       let open State.Src_directive_path_bslash_u_lcurly in
       {
         edges1=map_of_cps_alist [
-          ("_", fun state view t ->
-              advance (State_src_directive_path_bslash_u_lcurly state) view t);
-          (hex_cps, fun {mals; path; bslash_cursor} ({pcursor; _} as view) t ->
+          ("_", fun state view y ->
+              advance (State_src_directive_path_bslash_u_lcurly state) view y);
+          (hex_cps, fun {mals; path; bslash_cursor} ({pcursor; _} as view) y ->
               let digit = nat_of_cp (Source.Cursor.rget pcursor) in
               advance (State_src_directive_path_bslash_u_lcurly_hex
                   (State.Src_directive_path_bslash_u_lcurly_hex.init ~mals ~path ~bslash_cursor
-                      ~hex:digit)) view t
+                      ~hex:digit)) view y
           );
-          ("\"", fun ({bslash_cursor; _} as state) ({cursor; _} as view) t ->
+          ("\"", fun ({bslash_cursor; _} as state) ({cursor; _} as view) y ->
               let mal = invalid_unicode_escape bslash_cursor cursor in
-              advance (State_src_directive_rditto (state |> accum_mals mal)) view t
+              advance (State_src_directive_rditto (state |> accum_mals mal)) view y
           );
-          ("]", fun {mals; _} {pcursor; cursor; _} t ->
+          ("]", fun {mals; _} {pcursor; cursor; _} y ->
               let mal = unexpected_codepoint_source_directive pcursor cursor in
               accept_tok (Tok_source_directive {
-                source=source_at cursor t;
+                source=source_at cursor y;
                 source_directive=Token.Rendition.of_mals (mal :: mals)
-              }) cursor t
+              }) cursor y
           );
         ];
-        default1=(fun ({bslash_cursor; _} as state) ({cursor; _} as view) t ->
+        default1=(fun ({bslash_cursor; _} as state) ({cursor; _} as view) y ->
           let mal = invalid_unicode_escape bslash_cursor cursor in
-          advance (State_src_directive_path (state |> accum_mals mal)) view t
+          advance (State_src_directive_path (state |> accum_mals mal)) view y
         );
-        eoi1=(fun {mals; _} {cursor; _} t ->
-          let mal = unterminated_source_directive t.tok_base cursor in
+        eoi1=(fun {mals; _} {cursor; _} ({tok_base; _} as y) ->
+          let mal = unterminated_source_directive tok_base cursor in
           accept_tok (Tok_source_directive {
-            source=source_at cursor t;
+            source=source_at cursor y;
             source_directive=Token.Rendition.of_mals (mal :: mals)
-          }) cursor t
+          }) cursor y
         );
       }
 
@@ -5043,14 +5030,14 @@ module Dfa = struct
       let open State.Src_directive_path_bslash_u_lcurly_hex in
       {
         edges1=map_of_cps_alist [
-          ("_", fun state view t ->
-              advance (State_src_directive_path_bslash_u_lcurly_hex state) view t);
-          (hex_cps, fun state ({pcursor; _} as view) t ->
+          ("_", fun state view y ->
+              advance (State_src_directive_path_bslash_u_lcurly_hex state) view y);
+          (hex_cps, fun state ({pcursor; _} as view) y ->
               let digit = nat_of_cp (Source.Cursor.rget pcursor) in
               advance (State_src_directive_path_bslash_u_lcurly_hex (state |> accum_hex digit)) view
-                t
+                y
           );
-          ("}", fun ({bslash_cursor; hex; _} as state) ({cursor; _} as view) t ->
+          ("}", fun ({bslash_cursor; hex; _} as state) ({cursor; _} as view) y ->
               advance (State_src_directive_path (
                 Option.value_map (Nat.to_uns_opt hex)
                   ~f:(fun u -> Codepoint.narrow_of_uns_opt u)
@@ -5058,30 +5045,30 @@ module Dfa = struct
                 |> Option.value_map
                   ~f:(fun cp -> (state |> accum_path cp))
                   ~default:(state |> accum_mals (invalid_unicode_escape bslash_cursor cursor))
-              )) view t
+              )) view y
           );
-          ("\"", fun ({bslash_cursor; _} as state) ({cursor; _} as view) t ->
+          ("\"", fun ({bslash_cursor; _} as state) ({cursor; _} as view) y ->
               let mal = invalid_unicode_escape bslash_cursor cursor in
-              advance (State_src_directive_rditto (state |> accum_mals mal)) view t
+              advance (State_src_directive_rditto (state |> accum_mals mal)) view y
           );
-          ("]", fun {mals; _} {pcursor; cursor; _} t ->
+          ("]", fun {mals; _} {pcursor; cursor; _} y ->
               let mal = unexpected_codepoint_source_directive pcursor cursor in
               accept_tok (Tok_source_directive {
-                source=source_at cursor t;
+                source=source_at cursor y;
                 source_directive=Token.Rendition.of_mals (mal :: mals)
-              }) cursor t
+              }) cursor y
           );
         ];
-        default1=(fun ({bslash_cursor; _} as state) ({cursor; _} as view) t ->
+        default1=(fun ({bslash_cursor; _} as state) ({cursor; _} as view) y ->
           let mal = invalid_unicode_escape bslash_cursor cursor in
-          advance (State_src_directive_path (state |> accum_mals mal)) view t
+          advance (State_src_directive_path (state |> accum_mals mal)) view y
         );
-        eoi1=(fun {mals; _} {cursor; _} t ->
-          let mal = unterminated_source_directive t.tok_base cursor in
+        eoi1=(fun {mals; _} {cursor; _} ({tok_base; _} as y) ->
+          let mal = unterminated_source_directive tok_base cursor in
           accept_tok (Tok_source_directive {
-            source=source_at cursor t;
+            source=source_at cursor y;
             source_directive=Token.Rendition.of_mals (mal :: mals)
-          }) cursor t
+          }) cursor y
         );
       }
 
@@ -5089,22 +5076,22 @@ module Dfa = struct
       let open State.Src_directive_rditto in
       {
         edges1=map_of_cps_alist [
-          (":", fun state view t -> advance (State_src_directive_path_colon state) view t);
-          ("]", fun {mals; path} view t ->
+          (":", fun state view y -> advance (State_src_directive_path_colon state) view y);
+          ("]", fun {mals; path} view y ->
               let tok = render_source_directive ~mals ~path ~line:None ~indent:None ~omit:None in
-              accept_source_directive tok view t
+              accept_source_directive tok view y
           );
         ];
-        default1=(fun state ({pcursor; cursor; _} as view) t ->
+        default1=(fun state ({pcursor; cursor; _} as view) y ->
           let mal = unexpected_codepoint_source_directive pcursor cursor in
-          advance (State_src_directive_rditto (state |> accum_mals mal)) view t
+          advance (State_src_directive_rditto (state |> accum_mals mal)) view y
         );
-        eoi1=(fun {mals; _} {cursor; _} t ->
-          let mal = unterminated_source_directive t.tok_base cursor in
+        eoi1=(fun {mals; _} {cursor; _} ({tok_base; _} as y) ->
+          let mal = unterminated_source_directive tok_base cursor in
           accept_tok (Tok_source_directive {
-            source=source_at cursor t;
+            source=source_at cursor y;
             source_directive=Token.Rendition.of_mals (mal :: mals)
-          }) cursor t
+          }) cursor y
         );
       }
 
@@ -5113,29 +5100,29 @@ module Dfa = struct
       let open View in
       {
         edges1=map_of_cps_alist [
-          ("_", fun state view t -> advance (State_src_directive_path_colon state) view t);
-          (dec_lead_cps, fun {mals; path} ({pcursor; _} as view) t ->
+          ("_", fun state view y -> advance (State_src_directive_path_colon state) view y);
+          (dec_lead_cps, fun {mals; path} ({pcursor; _} as view) y ->
               let digit = nat_of_cp (Source.Cursor.rget pcursor) in
               advance (State_src_directive_line (State.Src_directive_line.init ~mals ~path
-                  ~line_cursor:pcursor ~line:(Some digit))) view t);
-          ("]", fun {mals; _} {pcursor; cursor; _} t ->
+                  ~line_cursor:pcursor ~line:(Some digit))) view y);
+          ("]", fun {mals; _} {pcursor; cursor; _} y ->
               let mal = unexpected_codepoint_source_directive pcursor cursor in
               accept_tok (Tok_source_directive {
-                source=source_at cursor t;
+                source=source_at cursor y;
                 source_directive=Token.Rendition.of_mals (mal :: mals)
-              }) cursor t
+              }) cursor y
           );
         ];
-        default1=(fun state ({pcursor; cursor; _} as view) t ->
+        default1=(fun state ({pcursor; cursor; _} as view) y ->
           let mal = unexpected_codepoint_source_directive pcursor cursor in
-          advance (State_src_directive_rditto (state |> accum_mals mal)) view t
+          advance (State_src_directive_rditto (state |> accum_mals mal)) view y
         );
-        eoi1=(fun {mals; _} {cursor; _} t ->
-          let mal = unterminated_source_directive t.tok_base cursor in
+        eoi1=(fun {mals; _} {cursor; _} ({tok_base; _} as y) ->
+          let mal = unterminated_source_directive tok_base cursor in
           accept_tok (Tok_source_directive {
-            source=source_at cursor t;
+            source=source_at cursor y;
             source_directive=Token.Rendition.of_mals (mal :: mals)
-          }) cursor t
+          }) cursor y
         );
       }
 
@@ -5161,33 +5148,33 @@ module Dfa = struct
       end in
       {
         edges1=map_of_cps_alist [
-          ("_", fun state view t -> advance (State_src_directive_line state) view t);
-          (dec_cps, fun state (View.{pcursor; _} as view) t ->
+          ("_", fun state view y -> advance (State_src_directive_line state) view y);
+          (dec_cps, fun state (View.{pcursor; _} as view) y ->
               let digit = nat_of_cp (Source.Cursor.rget pcursor) in
-              advance (State_src_directive_line (state |> accum_line digit)) view t
+              advance (State_src_directive_line (state |> accum_line digit)) view y
           );
-          (":", fun ({path; _} as state) view t ->
+          (":", fun ({path; _} as state) view y ->
               let mals, line = validate_line state view in
               advance (State_src_directive_line_colon (State.Src_directive_line_colon.init ~mals
-                  ~path ~line)) view t
+                  ~path ~line)) view y
           );
-          ("]", fun ({path; _} as state) view t ->
+          ("]", fun ({path; _} as state) view y ->
               let mals, line = validate_line state view in
               let tok = render_source_directive ~mals ~path ~line ~indent:None ~omit:None in
-              accept_source_directive tok view t
+              accept_source_directive tok view y
           );
         ];
-        default1=(fun {mals; path; _} ({pcursor; cursor; _} as view) t ->
+        default1=(fun {mals; path; _} ({pcursor; cursor; _} as view) y ->
           let mal = unexpected_codepoint_source_directive pcursor cursor in
           advance (State_src_directive_line (init ~mals:(mal :: mals) ~path ~line_cursor:cursor
-            ~line:None)) view t
+            ~line:None)) view y
         );
-        eoi1=(fun {mals; _} {cursor; _} t ->
-          let mal = unterminated_source_directive t.tok_base cursor in
+        eoi1=(fun {mals; _} {cursor; _} ({tok_base; _} as y) ->
+          let mal = unterminated_source_directive tok_base cursor in
           accept_tok (Tok_source_directive {
-            source=source_at cursor t;
+            source=source_at cursor y;
             source_directive=Token.Rendition.of_mals (mal :: mals)
-          }) cursor t
+          }) cursor y
         );
       }
 
@@ -5195,32 +5182,32 @@ module Dfa = struct
       let open State.Src_directive_line_colon in
       {
         edges1=map_of_cps_alist [
-          ("_", fun state view t -> advance (State_src_directive_line_colon state) view t);
-          ("0", fun {mals; path; line} view t ->
+          ("_", fun state view y -> advance (State_src_directive_line_colon state) view y);
+          ("0", fun {mals; path; line} view y ->
               advance (State_src_directive_indent_0 (State.Src_directive_indent_0.init ~mals ~path
-                  ~line)) view t);
-          (dec_lead_cps, fun {mals; path; line} (View.{pcursor; _} as view) t ->
+                  ~line)) view y);
+          (dec_lead_cps, fun {mals; path; line} (View.{pcursor; _} as view) y ->
               let digit = nat_of_cp (Source.Cursor.rget pcursor) in
               advance (State_src_directive_indent (State.Src_directive_indent.init ~mals ~path ~line
-                  ~indent_cursor:pcursor ~indent:digit)) view t);
-          ("]", fun {mals; _} {pcursor; cursor; _} t ->
+                  ~indent_cursor:pcursor ~indent:digit)) view y);
+          ("]", fun {mals; _} {pcursor; cursor; _} y ->
               let mal = unexpected_codepoint_source_directive pcursor cursor in
               accept_tok (Tok_source_directive {
-                source=source_at cursor t;
+                source=source_at cursor y;
                 source_directive=Token.Rendition.of_mals (mal :: mals)
-              }) cursor t
+              }) cursor y
           );
         ];
-        default1=(fun state ({pcursor; cursor; _} as view) t ->
+        default1=(fun state ({pcursor; cursor; _} as view) y ->
           let mal = unexpected_codepoint_source_directive pcursor cursor in
-          advance (State_src_directive_line_colon (state |> accum_mals mal)) view t
+          advance (State_src_directive_line_colon (state |> accum_mals mal)) view y
         );
-        eoi1=(fun {mals; _} {cursor; _} t ->
-          let mal = unterminated_source_directive t.tok_base cursor in
+        eoi1=(fun {mals; _} {cursor; _} ({tok_base; _} as y) ->
+          let mal = unterminated_source_directive tok_base cursor in
           accept_tok (Tok_source_directive {
-            source=source_at cursor t;
+            source=source_at cursor y;
             source_directive=Token.Rendition.of_mals (mal :: mals)
-          }) cursor t
+          }) cursor y
         );
       }
 
@@ -5228,12 +5215,12 @@ module Dfa = struct
       let open State.Src_directive_indent in
       {
         edges1=map_of_cps_alist [
-          ("_", fun state view t -> advance (State_src_directive_indent state) view t);
-          (dec_cps, fun state (View.{pcursor; _} as view) t ->
+          ("_", fun state view y -> advance (State_src_directive_indent state) view y);
+          (dec_cps, fun state (View.{pcursor; _} as view) y ->
               let digit = nat_of_cp (Source.Cursor.rget pcursor) in
-              advance (State_src_directive_indent (state |> accum_indent digit)) view t
+              advance (State_src_directive_indent (state |> accum_indent digit)) view y
           );
-          ("+", fun {mals; path; line; indent_cursor; indent} ({pcursor; _} as view) t ->
+          ("+", fun {mals; path; line; indent_cursor; indent} ({pcursor; _} as view) y ->
               let mals = match Nat.(indent % k_4 = k_0) with
                 | true -> mals
                 | false -> begin
@@ -5256,26 +5243,26 @@ module Dfa = struct
                   end
               in
               advance (State_src_directive_indent_plus (State.Src_directive_indent_plus.init ~mals
-                  ~path ~line ~indent)) view t
+                  ~path ~line ~indent)) view y
           );
-          ("]", fun {mals; _} {pcursor; cursor; _} t ->
+          ("]", fun {mals; _} {pcursor; cursor; _} y ->
               let mal = unexpected_codepoint_source_directive pcursor cursor in
               accept_tok (Tok_source_directive {
-                source=source_at cursor t;
+                source=source_at cursor y;
                 source_directive=Token.Rendition.of_mals (mal :: mals)
-              }) cursor t
+              }) cursor y
           );
         ];
-        default1=(fun state ({pcursor; cursor; _} as view) t ->
+        default1=(fun state ({pcursor; cursor; _} as view) y ->
           let mal = unexpected_codepoint_source_directive pcursor cursor in
-          advance (State_src_directive_indent (state |> accum_mals mal)) view t
+          advance (State_src_directive_indent (state |> accum_mals mal)) view y
         );
-        eoi1=(fun {mals; _} {cursor; _} t ->
-          let mal = unterminated_source_directive t.tok_base cursor in
+        eoi1=(fun {mals; _} {cursor; _} ({tok_base; _} as y) ->
+          let mal = unterminated_source_directive tok_base cursor in
           accept_tok (Tok_source_directive {
-            source=source_at cursor t;
+            source=source_at cursor y;
             source_directive=Token.Rendition.of_mals (mal :: mals)
-          }) cursor t
+          }) cursor y
         );
       }
 
@@ -5283,29 +5270,29 @@ module Dfa = struct
       let open State.Src_directive_indent_0 in
       {
         edges1=map_of_cps_alist [
-          ("_", fun state view t -> advance (State_src_directive_indent_0 state) view t);
-          ("+", fun {mals; path; line} view t ->
+          ("_", fun state view y -> advance (State_src_directive_indent_0 state) view y);
+          ("+", fun {mals; path; line} view y ->
               advance (State_src_directive_indent_plus (State.Src_directive_indent_plus.init ~mals
-                  ~path ~line ~indent:(Some Nat.k_0))) view t
+                  ~path ~line ~indent:(Some Nat.k_0))) view y
           );
-          ("]", fun {mals; _} {pcursor; cursor; _} t ->
+          ("]", fun {mals; _} {pcursor; cursor; _} y ->
               let mal = unexpected_codepoint_source_directive pcursor cursor in
               accept_tok (Tok_source_directive {
-                source=source_at cursor t;
+                source=source_at cursor y;
                 source_directive=Token.Rendition.of_mals (mal :: mals)
-              }) cursor t
+              }) cursor y
           );
         ];
-        default1=(fun state ({pcursor; cursor; _} as view) t ->
+        default1=(fun state ({pcursor; cursor; _} as view) y ->
           let mal = unexpected_codepoint_source_directive pcursor cursor in
-          advance (State_src_directive_indent_0 (state |> accum_mals mal)) view t
+          advance (State_src_directive_indent_0 (state |> accum_mals mal)) view y
         );
-        eoi1=(fun {mals; _} {cursor; _} t ->
-          let mal = unterminated_source_directive t.tok_base cursor in
+        eoi1=(fun {mals; _} {cursor; _} ({tok_base; _} as y) ->
+          let mal = unterminated_source_directive tok_base cursor in
           accept_tok (Tok_source_directive {
-            source=source_at cursor t;
+            source=source_at cursor y;
             source_directive=Token.Rendition.of_mals (mal :: mals)
-          }) cursor t
+          }) cursor y
         );
       }
 
@@ -5313,32 +5300,32 @@ module Dfa = struct
       let open State.Src_directive_indent_plus in
       {
         edges1=map_of_cps_alist [
-          ("_", fun state view t -> advance (State_src_directive_indent_plus state) view t);
-          ("0", fun {mals; path; line; indent} view t ->
+          ("_", fun state view y -> advance (State_src_directive_indent_plus state) view y);
+          ("0", fun {mals; path; line; indent} view y ->
               advance (State_src_directive_omit_0 (State.Src_directive_omit_0.init ~mals ~path
-                  ~line ~indent)) view t);
-          (dec_lead_cps, fun {mals; path; line; indent} (View.{pcursor; _} as view) t ->
+                  ~line ~indent)) view y);
+          (dec_lead_cps, fun {mals; path; line; indent} (View.{pcursor; _} as view) y ->
               let digit = nat_of_cp (Source.Cursor.rget pcursor) in
               advance (State_src_directive_omit (State.Src_directive_omit.init ~mals ~path ~line
-                  ~indent ~omit_cursor:pcursor ~omit:digit)) view t);
-          ("]", fun {mals; _} {pcursor; cursor; _} t ->
+                  ~indent ~omit_cursor:pcursor ~omit:digit)) view y);
+          ("]", fun {mals; _} {pcursor; cursor; _} y ->
               let mal = unexpected_codepoint_source_directive pcursor cursor in
               accept_tok (Tok_source_directive {
-                source=source_at cursor t;
+                source=source_at cursor y;
                 source_directive=Token.Rendition.of_mals (mal :: mals)
-              }) cursor t
+              }) cursor y
           );
         ];
-        default1=(fun state ({pcursor; cursor; _} as view) t ->
+        default1=(fun state ({pcursor; cursor; _} as view) y ->
           let mal = unexpected_codepoint_source_directive pcursor cursor in
-          advance (State_src_directive_indent_plus (state |> accum_mals mal)) view t
+          advance (State_src_directive_indent_plus (state |> accum_mals mal)) view y
         );
-        eoi1=(fun {mals; _} {cursor; _} t ->
-          let mal = unterminated_source_directive t.tok_base cursor in
+        eoi1=(fun {mals; _} {cursor; _} ({tok_base; _} as y) ->
+          let mal = unterminated_source_directive tok_base cursor in
           accept_tok (Tok_source_directive {
-            source=source_at cursor t;
+            source=source_at cursor y;
             source_directive=Token.Rendition.of_mals (mal :: mals)
-          }) cursor t
+          }) cursor y
         );
       }
 
@@ -5346,12 +5333,12 @@ module Dfa = struct
       let open State.Src_directive_omit in
       {
         edges1=map_of_cps_alist [
-          ("_", fun state view t -> advance (State_src_directive_omit state) view t);
-          (dec_cps, fun state (View.{pcursor; _} as view) t ->
+          ("_", fun state view y -> advance (State_src_directive_omit state) view y);
+          (dec_cps, fun state (View.{pcursor; _} as view) y ->
               let digit = nat_of_cp (Source.Cursor.rget pcursor) in
-              advance (State_src_directive_omit (state |> accum_omit digit)) view t
+              advance (State_src_directive_omit (state |> accum_omit digit)) view y
           );
-          ("]", fun {mals; path; line; indent; omit_cursor; omit} ({pcursor; _} as view) t ->
+          ("]", fun {mals; path; line; indent; omit_cursor; omit} ({pcursor; _} as view) y ->
               let mals, omit = match Nat.(omit > max_abs_i64) with
                 | false -> mals, Some omit
                 | true -> begin
@@ -5366,19 +5353,19 @@ module Dfa = struct
                   end
               in
               let tok = render_source_directive ~mals ~path ~line ~indent ~omit in
-              accept_source_directive tok view t
+              accept_source_directive tok view y
           );
         ];
-        default1=(fun state ({pcursor; cursor; _} as view) t ->
+        default1=(fun state ({pcursor; cursor; _} as view) y ->
           let mal = unexpected_codepoint_source_directive pcursor cursor in
-          advance (State_src_directive_omit (state |> accum_mals mal)) view t
+          advance (State_src_directive_omit (state |> accum_mals mal)) view y
         );
-        eoi1=(fun {mals; _} {cursor; _} t ->
-          let mal = unterminated_source_directive t.tok_base cursor in
+        eoi1=(fun {mals; _} {cursor; _} ({tok_base; _} as y) ->
+          let mal = unterminated_source_directive tok_base cursor in
           accept_tok (Tok_source_directive {
-            source=source_at cursor t;
+            source=source_at cursor y;
             source_directive=Token.Rendition.of_mals (mal :: mals)
-          }) cursor t
+          }) cursor y
         );
       }
 
@@ -5386,22 +5373,22 @@ module Dfa = struct
       let open State.Src_directive_omit_0 in
       {
         edges1=map_of_cps_alist [
-          ("_", fun state view t -> advance (State_src_directive_omit_0 state) view t);
-          ("]", fun {mals; path; line; indent} view t ->
+          ("_", fun state view y -> advance (State_src_directive_omit_0 state) view y);
+          ("]", fun {mals; path; line; indent} view y ->
               let tok = render_source_directive ~mals ~path ~line ~indent ~omit:(Some Nat.k_0) in
-              accept_source_directive tok view t
+              accept_source_directive tok view y
           );
         ];
-        default1=(fun state ({pcursor; cursor; _} as view) t ->
+        default1=(fun state ({pcursor; cursor; _} as view) y ->
           let mal = unexpected_codepoint_source_directive pcursor cursor in
-          advance (State_src_directive_omit_0 (state |> accum_mals mal)) view t
+          advance (State_src_directive_omit_0 (state |> accum_mals mal)) view y
         );
-        eoi1=(fun {mals; _} {cursor; _} t ->
-          let mal = unterminated_source_directive t.tok_base cursor in
+        eoi1=(fun {mals; _} {cursor; _} ({tok_base; _} as y) ->
+          let mal = unterminated_source_directive tok_base cursor in
           accept_tok (Tok_source_directive {
-            source=source_at cursor t;
+            source=source_at cursor y;
             source_directive=Token.Rendition.of_mals (mal :: mals)
-          }) cursor t
+          }) cursor y
         );
       }
   end
@@ -5418,24 +5405,24 @@ module Dfa = struct
       | Level_indent
       | Level_excess_indent
 
-    let tok_missing_indent cursor t =
+    let tok_missing_indent cursor y =
       Token.Tok_indent {
-        source=source_at cursor t;
+        source=source_at cursor y;
         indent=malformed (malformation ~base:cursor ~past:cursor "Missing indent")
       }
 
-    let tok_missing_dedent cursor t =
+    let tok_missing_dedent cursor y =
       Token.Tok_dedent {
-        source=source_at cursor t;
+        source=source_at cursor y;
         dedent=malformed (malformation ~base:cursor ~past:cursor "Missing dedent")
       }
 
-    let accept_dentation tok cursor t =
-      assert Source.Cursor.(t.tok_base = cursor);
-      accept_tok tok cursor t
+    let accept_dentation tok cursor ({tok_base; _} as y) =
+      assert Source.Cursor.(tok_base = cursor);
+      accept_tok tok cursor y
 
-    let other ~retry_state cursor t =
-      let col = match t.line_state with
+    let other ~retry_state cursor ({level; block_state; line_state; _} as y) =
+      let col = match line_state with
         | Line_begin
         | Line_whitespace -> Text.Pos.col (Source.Cursor.pos cursor)
         | Line_start_col col -> col
@@ -5443,48 +5430,48 @@ module Dfa = struct
       in
       (* Compute level and alignement such that misaligned cases are rounded to the nearest level.
       *)
-      let level, alignment = match col / 4L, col % 4L with
-        | floor_level, 0L -> Level.update floor_level t.level, Aligned
-        | floor_level, 1L -> Level.update floor_level t.level, Misaligned
-        | floor_level, 2L -> Level.update floor_level t.level, Continued
-        | floor_level, 3L -> Level.update (succ floor_level) t.level, Misaligned
+      let level', alignment = match col / 4L, col % 4L with
+        | floor_level, 0L -> Level.update floor_level level, Aligned
+        | floor_level, 1L -> Level.update floor_level level, Misaligned
+        | floor_level, 2L -> Level.update floor_level level, Continued
+        | floor_level, 3L -> Level.update (succ floor_level) level, Misaligned
         | _ -> not_reached ()
       in
-      let level_change = match Level.cmp t.level level with
+      let level_change = match Level.cmp level level' with
         | Lt -> begin
-            match Level.(=) (Level.succ t.level) level with
+            match Level.(=) (Level.succ level) level' with
             | true -> Level_indent
             | false -> Level_excess_indent
           end
         | Eq -> Level_stable
         | Gt -> Level_dedent
       in
-      let source = source_at cursor t in
+      let source = source_at cursor y in
       (* The following patterns incrementally handle all dentation/alignment cases. Malformed tokens
        * are synthesized in error cases such that the cursor does not advance, but the level is
        * incrementally adjusted to converge. The overall result is that Tok_indent/Tok_dedent
        * nesting is always well formed. *)
-      match t.block_state, t.line_state, level_change, alignment with
+      match block_state, line_state, level_change, alignment with
       (* New expression at same level. *)
       | Block_primal, (Line_begin|Line_whitespace|Line_start_col _), Level_stable, Aligned ->
-        retry retry_state {t with level; block_state=Block_nonempty; line_state=Line_body}
+        retry retry_state {y with level=level'; block_state=Block_nonempty; line_state=Line_body}
       | Block_nonempty, (Line_begin|Line_whitespace|Line_start_col _), Level_stable, Aligned ->
-        accept_dentation (Tok_line_delim {source}) cursor {t with line_state=Line_body}
+        accept_dentation (Tok_line_delim {source}) cursor {y with line_state=Line_body}
 
       (* Continued expression at current level. *)
       | Block_primal, (Line_begin|Line_whitespace|Line_start_col _), Level_stable, Continued ->
         accept_dentation (Tok_misaligned {source}) cursor
-          {t with block_state=Block_nonempty; line_state=Line_body}
+          {y with block_state=Block_nonempty; line_state=Line_body}
       | Block_nonempty, (Line_begin|Line_whitespace|Line_start_col _), Level_stable, Continued ->
-        retry retry_state {t with line_state=Line_body}
+        retry retry_state {y with line_state=Line_body}
 
       (* New expression at higher level. *)
       | Block_primal, (Line_begin|Line_whitespace|Line_start_col _), Level_indent, Aligned ->
-        accept_dentation (tok_missing_indent cursor t) cursor
-          {t with level=Level.succ t.level; block_state=Block_nonempty; line_state=Line_body}
+        accept_dentation (tok_missing_indent cursor y) cursor
+          {y with level=Level.succ level; block_state=Block_nonempty; line_state=Line_body}
       | Block_nonempty, (Line_begin|Line_whitespace|Line_start_col _), Level_indent, Aligned ->
         accept_dentation (Tok_indent {source; indent=Constant ()}) cursor
-          {t with level; line_state=Line_body}
+          {y with level=level'; line_state=Line_body}
 
       (* New/continued expression at lower level. *)
       | Block_primal, (Line_begin|Line_whitespace|Line_start_col _), Level_dedent,
@@ -5492,104 +5479,104 @@ module Dfa = struct
       | Block_nonempty, (Line_begin|Line_whitespace|Line_start_col _), Level_dedent,
         (Aligned|Continued) ->
         accept_dentation (Tok_dedent {source; dedent=Constant ()}) cursor
-          {t with level=Level.pred t.level}
+          {y with level=Level.pred level}
 
       (* Misaligned at lower level. *)
       | Block_primal, (Line_begin|Line_whitespace|Line_start_col _), Level_dedent, Misaligned ->
         not_reached ()
       | Block_nonempty, (Line_begin|Line_whitespace|Line_start_col _), Level_dedent, Misaligned ->
-        accept_dentation (tok_missing_dedent cursor t) cursor {t with level=Level.pred t.level}
+        accept_dentation (tok_missing_dedent cursor y) cursor {y with level=Level.pred level}
 
       (* Misaligned at current level. *)
       | Block_primal, (Line_begin|Line_whitespace|Line_start_col _), Level_stable, Misaligned ->
         accept_dentation (Tok_misaligned {source}) cursor
-          {t with block_state=Block_nonempty; line_state=Line_body}
+          {y with block_state=Block_nonempty; line_state=Line_body}
       | Block_nonempty, (Line_begin|Line_whitespace|Line_start_col _), Level_stable, Misaligned ->
-        accept_dentation (Tok_misaligned {source}) cursor {t with line_state=Line_body}
+        accept_dentation (Tok_misaligned {source}) cursor {y with line_state=Line_body}
 
       (* Excess indentation. *)
       | Block_primal, (Line_begin|Line_whitespace|Line_start_col _), Level_indent,
         (Continued|Misaligned)
       | Block_primal, (Line_begin|Line_whitespace|Line_start_col _), Level_excess_indent,
         (Aligned|Continued|Misaligned) ->
-        accept_dentation (tok_missing_indent cursor t) cursor
-          {t with level=Level.succ t.level; block_state=Block_nonempty}
+        accept_dentation (tok_missing_indent cursor y) cursor
+          {y with level=Level.succ level; block_state=Block_nonempty}
       | Block_nonempty, (Line_begin|Line_whitespace|Line_start_col _), Level_indent,
         (Continued|Misaligned)
       | Block_nonempty, (Line_begin|Line_whitespace|Line_start_col _),
         Level_excess_indent, (Aligned|Continued|Misaligned) ->
-        accept_dentation (tok_missing_indent cursor t) cursor {t with level=Level.succ t.level}
+        accept_dentation (tok_missing_indent cursor y) cursor {y with level=Level.succ level}
 
       | _, Line_body, _, _ -> not_reached ()
 
-    let other_excl ~retry_state View.{pcursor; _} t =
-      other ~retry_state pcursor t
+    let other_excl ~retry_state View.{pcursor; _} y =
+      other ~retry_state pcursor y
 
-    let other_pexcl ~retry_state View.{ppcursor; _} t =
-      other ~retry_state ppcursor t
+    let other_pexcl ~retry_state View.{ppcursor; _} y =
+      other ~retry_state ppcursor y
 
-    let accept_whitespace cursor t =
-      assert Source.Cursor.(t.tok_base < cursor);
-      let source = source_at cursor t in
-      match t.line_state with
+    let accept_whitespace cursor ({tok_base; line_state; _} as y) =
+      assert Source.Cursor.(tok_base < cursor);
+      let source = source_at cursor y in
+      match line_state with
       | Line_begin ->
-        accept_tok (Tok_whitespace {source}) cursor {t with line_state=Line_whitespace}
+        accept_tok (Tok_whitespace {source}) cursor {y with line_state=Line_whitespace}
       | Line_start_col _ ->
-        accept_tok (Tok_whitespace {source}) cursor t
+        accept_tok (Tok_whitespace {source}) cursor y
       | Line_whitespace (* Consecutive whitespace tokens is impossible. *)
       | Line_body -> not_reached ()
 
-    let accept_whitespace_incl View.{cursor; _} t =
-      accept_whitespace cursor t
+    let accept_whitespace_incl View.{cursor; _} y =
+      accept_whitespace cursor y
 
-    let accept_whitespace_excl View.{pcursor; _} t =
-      accept_whitespace pcursor t
+    let accept_whitespace_excl View.{pcursor; _} y =
+      accept_whitespace pcursor y
 
-    let advance ?line_state state view t =
-      let t' = match line_state with
-        | None -> t
-        | Some line_state -> {t with line_state}
+    let advance ?line_state state view y =
+      let y' = match line_state with
+        | None -> y
+        | Some line_state -> {y with line_state}
       in
-      advance state view t'
+      advance state view y'
 
     let node0_start = {
       edges0=map_of_cps_alist [
         (" ", advance State_dentation_space);
         ("#", advance ~line_state:Line_body State_hash_comment);
         ("(", advance State_dentation_lparen);
-        ("\n", fun view t ->
-            match t.line_state with
-            | Line_begin -> accept_tok_incl (Tok_whitespace {source=source_incl view t}) view t
+        ("\n", fun view ({line_state; _} as y) ->
+            match line_state with
+            | Line_begin -> accept_tok_incl (Tok_whitespace {source=source_incl view y}) view y
             | Line_whitespace
             | Line_start_col _ ->
-              accept_line_break_incl (Tok_whitespace {source=source_incl view t}) view t
+              accept_line_break_incl (Tok_whitespace {source=source_incl view y}) view y
             | Line_body -> not_reached ()
         );
       ];
       default0=other_excl ~retry_state:State_start;
-      eoi0=(fun view t ->
-        match t.line_state, Level.level t.level with
+      eoi0=(fun view ({level; line_state; _} as y) ->
+        match line_state, Level.level level with
         | (Line_begin|Line_whitespace|Line_start_col _), 0L ->
-          accept_tok_incl (Tok_end_of_input {source=source_incl view t}) view t
+          accept_tok_incl (Tok_end_of_input {source=source_incl view y}) view y
         | (Line_begin|Line_whitespace|Line_start_col _), t_level ->
-          accept_tok_incl (Tok_dedent {source=source_incl view t; dedent=Constant ()}) view
-            {t with level=Level.update (pred t_level) t.level}
+          accept_tok_incl (Tok_dedent {source=source_incl view y; dedent=Constant ()}) view
+            {y with level=Level.update (pred t_level) level}
         | _ -> not_reached ()
       );
     }
 
     let node0_lparen = {
       edges0=map_of_cps_alist [
-        ("*", fun (View.{ppcursor; _} as view) t ->
-            match t.line_state with
+        ("*", fun (View.{ppcursor; _} as view) ({line_state; _} as y) ->
+            match line_state with
             | Line_begin
             | Line_whitespace -> begin
                 let col = Text.Pos.col (Source.Cursor.pos ppcursor) in
                 advance ~line_state:(Line_start_col col) (State_paren_comment_body
-                    (State.Paren_comment_body.init ~nesting:1L)) view t
+                    (State.Paren_comment_body.init ~nesting:1L)) view y
               end
             | Line_start_col _ ->
-              advance (State_paren_comment_body (State.Paren_comment_body.init ~nesting:1L)) view t
+              advance (State_paren_comment_body (State.Paren_comment_body.init ~nesting:1L)) view y
             | Line_body -> not_reached ()
         );
       ];
@@ -5600,8 +5587,8 @@ module Dfa = struct
     let node0_space = {
       edges0=map_of_cps_alist [
         (" ", advance State_dentation_space);
-        ("\n", fun view t ->
-            accept_line_break_incl (Tok_whitespace {source=source_incl view t}) view t);
+        ("\n", fun view y ->
+            accept_line_break_incl (Tok_whitespace {source=source_incl view y}) view y);
       ];
       default0=accept_whitespace_excl;
       eoi0=accept_whitespace_incl;
@@ -5611,73 +5598,73 @@ module Dfa = struct
   let node0_whitespace = {
     edges0=map_of_cps_alist [
       (" ", advance State_whitespace);
-      ("\n", fun view t ->
-          accept_line_break_incl (Tok_whitespace {source=source_incl view t}) view t);
+      ("\n", fun view y ->
+          accept_line_break_incl (Tok_whitespace {source=source_incl view y}) view y);
     ];
-    default0=(fun view t -> accept_tok_excl (Tok_whitespace {source=source_excl view t}) view t);
-    eoi0=(fun view t -> accept_tok_incl (Tok_whitespace {source=source_incl view t}) view t);
+    default0=(fun view y -> accept_tok_excl (Tok_whitespace {source=source_excl view y}) view y);
+    eoi0=(fun view y -> accept_tok_incl (Tok_whitespace {source=source_incl view y}) view y);
   }
 
   let node0_hash_comment = {
     edges0=map_of_cps_alist [
-      ("\n", fun view t ->
-          accept_line_break_incl (Tok_hash_comment {source=source_incl view t}) view t);
+      ("\n", fun view y ->
+          accept_line_break_incl (Tok_hash_comment {source=source_incl view y}) view y);
     ];
     default0=advance State_hash_comment;
-    eoi0=(fun view t ->
-      accept_line_break_incl (Tok_hash_comment {source=source_incl view t}) view t);
+    eoi0=(fun view y ->
+      accept_line_break_incl (Tok_hash_comment {source=source_incl view y}) view y);
   }
 
   module Codepoint_ = struct
-    let accept_rendition rendition cursor t =
-      match in_fstring t with
+    let accept_rendition rendition cursor y =
+      match in_fstring y with
       | true ->
         accept_fstring_trans Fstring_spec_pad_seen
-          (Tok_fstring_pad {source=source_at cursor t; fstring_pad=rendition}) cursor t
+          (Tok_fstring_pad {source=source_at cursor y; fstring_pad=rendition}) cursor y
       | false ->
-        accept_tok (Tok_codepoint {source=source_at cursor t; codepoint=rendition}) cursor t
+        accept_tok (Tok_codepoint {source=source_at cursor y; codepoint=rendition}) cursor y
 
-    let accept_rendition_incl rendition View.{cursor; _} t =
-      accept_rendition rendition cursor t
+    let accept_rendition_incl rendition View.{cursor; _} y =
+      accept_rendition rendition cursor y
 
-    let accept_rendition_pexcl rendition View.{ppcursor; _} t =
-      accept_rendition rendition ppcursor t
+    let accept_rendition_pexcl rendition View.{ppcursor; _} y =
+      accept_rendition rendition ppcursor y
 
-    let eoi0 View.{cursor; _} t =
-      let mal = unterminated_codepoint t.tok_base cursor in
+    let eoi0 View.{cursor; _} ({tok_base; _} as y) =
+      let mal = unterminated_codepoint tok_base cursor in
       let rendition = Token.Rendition.of_mals [mal] in
-      accept_rendition rendition cursor t
+      accept_rendition rendition cursor y
 
-    let eoi1 _state view t =
-      eoi0 view t
+    let eoi1 _state view y =
+      eoi0 view y
 
     let node0_tick = {
       edges0=map_of_cps_alist [
-        ("\\", fun (View.{pcursor=bslash_cursor; _} as view) t ->
-            advance (State_codepoint_bslash (State.Codepoint_bslash.init ~bslash_cursor)) view t);
-        ("'", fun ({cursor; _} as view) t ->
-            let mal = empty_codepoint t.tok_base cursor in
-            accept_rendition_incl (Token.Rendition.of_mals [mal]) view t
+        ("\\", fun (View.{pcursor=bslash_cursor; _} as view) y ->
+            advance (State_codepoint_bslash (State.Codepoint_bslash.init ~bslash_cursor)) view y);
+        ("'", fun ({cursor; _} as view) ({tok_base; _} as y) ->
+            let mal = empty_codepoint tok_base cursor in
+            accept_rendition_incl (Token.Rendition.of_mals [mal]) view y
         );
-        ("\t\n\r", fun ({pcursor; cursor; _} as view) t ->
+        ("\t\n\r", fun ({pcursor; cursor; _} as view) y ->
             let mal = invalid_codepoint pcursor cursor in
-            advance (State.State_codepoint_mal (State.Codepoint_mal.init ~mal)) view t
+            advance (State.State_codepoint_mal (State.Codepoint_mal.init ~mal)) view y
         );
-        ("�", fun (View.{pcursor; cursor; _} as view) t ->
+        ("�", fun (View.{pcursor; cursor; _} as view) y ->
             match Source.Cursor.rvalid pcursor with
             | false -> begin
                 let mal = invalid_utf8 pcursor cursor in
-                advance (State.State_codepoint_mal (State.Codepoint_mal.init ~mal)) view t
+                advance (State.State_codepoint_mal (State.Codepoint_mal.init ~mal)) view y
               end
             | true -> begin
                 let cp = Source.Cursor.rget pcursor in
-                advance (State.State_codepoint_raw_cp (State.Codepoint_raw_cp.init ~cp)) view t
+                advance (State.State_codepoint_raw_cp (State.Codepoint_raw_cp.init ~cp)) view y
               end
         );
       ];
-      default0=(fun (View.{pcursor; _} as view) t ->
+      default0=(fun (View.{pcursor; _} as view) y ->
         let cp = Source.Cursor.rget pcursor in
-        advance (State.State_codepoint_raw_cp (State.Codepoint_raw_cp.init ~cp)) view t
+        advance (State.State_codepoint_raw_cp (State.Codepoint_raw_cp.init ~cp)) view y
       );
       eoi0;
     }
@@ -5686,52 +5673,52 @@ module Dfa = struct
       let open State.Codepoint_bslash in
       {
         edges1=map_of_cps_alist [
-          ("u", fun state view t -> advance (State_codepoint_bslash_u state) view t);
-          ("t", fun _state view t ->
+          ("u", fun state view y -> advance (State_codepoint_bslash_u state) view y);
+          ("t", fun _state view y ->
               advance (State_codepoint_interpolated_cp (State.Codepoint_interpolated_cp.init
-                  ~cp:Codepoint.ht)) view t);
-          ("n", fun _state view t ->
+                  ~cp:Codepoint.ht)) view y);
+          ("n", fun _state view y ->
               advance (State_codepoint_interpolated_cp (State.Codepoint_interpolated_cp.init
-                  ~cp:Codepoint.nl)) view t);
-          ("r", fun _state view t ->
+                  ~cp:Codepoint.nl)) view y);
+          ("r", fun _state view y ->
               advance (State_codepoint_interpolated_cp (State.Codepoint_interpolated_cp.init
-                  ~cp:Codepoint.cr)) view t);
-          ("'\\", fun _state ({pcursor; _} as view) t ->
+                  ~cp:Codepoint.cr)) view y);
+          ("'\\", fun _state ({pcursor; _} as view) y ->
               let cp = Source.Cursor.rget pcursor in
               advance (State_codepoint_interpolated_cp (State.Codepoint_interpolated_cp.init ~cp))
-                view t
+                view y
           );
         ];
-        default1=(fun {bslash_cursor} (View.{cursor; _} as view) t ->
+        default1=(fun {bslash_cursor} (View.{cursor; _} as view) y ->
           let mal = illegal_backslash bslash_cursor cursor in
-          advance (State.State_codepoint_mal (State.Codepoint_mal.init ~mal)) view t
+          advance (State.State_codepoint_mal (State.Codepoint_mal.init ~mal)) view y
         );
         eoi1;
       }
 
     let node1_bslash_u = {
       edges1=map_of_cps_alist [
-        ("{", fun state view t -> advance (State_codepoint_bslash_u_lcurly state) view t);
+        ("{", fun state view y -> advance (State_codepoint_bslash_u_lcurly state) view y);
       ];
-      default1=(fun {bslash_cursor} (View.{cursor; _} as view) t ->
+      default1=(fun {bslash_cursor} (View.{cursor; _} as view) y ->
         let mal = invalid_unicode_escape bslash_cursor cursor in
-        advance (State.State_codepoint_mal (State.Codepoint_mal.init ~mal)) view t
+        advance (State.State_codepoint_mal (State.Codepoint_mal.init ~mal)) view y
       );
       eoi1;
     }
 
     let node1_bslash_u_lcurly = {
       edges1=map_of_cps_alist [
-        ("_", fun state view t -> advance (State_codepoint_bslash_u_lcurly state) view t);
-        (hex_cps, fun {bslash_cursor} (View.{pcursor; _} as view) t ->
+        ("_", fun state view y -> advance (State_codepoint_bslash_u_lcurly state) view y);
+        (hex_cps, fun {bslash_cursor} (View.{pcursor; _} as view) y ->
             let digit = nat_of_cp (Source.Cursor.rget pcursor) in
             advance (State_codepoint_bslash_u_lcurly_hex (State.Codepoint_bslash_u_lcurly_hex.init
-                ~bslash_cursor ~hex:digit)) view t
+                ~bslash_cursor ~hex:digit)) view y
         );
       ];
-      default1=(fun {bslash_cursor} (View.{cursor; _} as view) t ->
+      default1=(fun {bslash_cursor} (View.{cursor; _} as view) y ->
         let mal = invalid_unicode_escape bslash_cursor cursor in
-        advance (State.State_codepoint_mal (State.Codepoint_mal.init ~mal)) view t
+        advance (State.State_codepoint_mal (State.Codepoint_mal.init ~mal)) view y
       );
       eoi1;
     }
@@ -5740,12 +5727,12 @@ module Dfa = struct
       let open State.Codepoint_bslash_u_lcurly_hex in
       {
         edges1=map_of_cps_alist [
-          ("_", fun state view t -> advance (State_codepoint_bslash_u_lcurly_hex state) view t);
-          (hex_cps, fun state (View.{pcursor; _} as view) t ->
+          ("_", fun state view y -> advance (State_codepoint_bslash_u_lcurly_hex state) view y);
+          (hex_cps, fun state (View.{pcursor; _} as view) y ->
               let digit = nat_of_cp (Source.Cursor.rget pcursor) in
-              advance (State_codepoint_bslash_u_lcurly_hex (state |> accum_hex digit)) view t
+              advance (State_codepoint_bslash_u_lcurly_hex (state |> accum_hex digit)) view y
           );
-          ("}", fun {bslash_cursor; hex} ({cursor; _} as view) t ->
+          ("}", fun {bslash_cursor; hex} ({cursor; _} as view) y ->
               advance (
                 Option.value_map (Nat.to_uns_opt hex)
                   ~f:(fun u -> Codepoint.narrow_of_uns_opt u)
@@ -5755,12 +5742,12 @@ module Dfa = struct
                       (State.Codepoint_interpolated_cp.init ~cp))
                   ~default:(State.State_codepoint_mal (State.Codepoint_mal.init
                       ~mal:(invalid_unicode_escape bslash_cursor cursor)))
-              ) view t
+              ) view y
           );
         ];
-        default1=(fun {bslash_cursor; _} (View.{cursor; _} as view) t ->
+        default1=(fun {bslash_cursor; _} (View.{cursor; _} as view) y ->
           let mal = invalid_unicode_escape bslash_cursor cursor in
-          advance (State.State_codepoint_mal (State.Codepoint_mal.init ~mal)) view t
+          advance (State.State_codepoint_mal (State.Codepoint_mal.init ~mal)) view y
         );
         eoi1;
       }
@@ -5769,11 +5756,11 @@ module Dfa = struct
       let open State.Codepoint_interpolated_cp in
       {
         edges1=map_of_cps_alist [
-          ("'", fun {cp} view t -> accept_rendition_incl (Constant cp) view t);
+          ("'", fun {cp} view y -> accept_rendition_incl (Constant cp) view y);
         ];
-        default1=(fun _state (View.{pcursor; cursor; _} as view) t ->
+        default1=(fun _state (View.{pcursor; cursor; _} as view) y ->
           let mal = excess_codepoint pcursor cursor in
-          advance (State.State_codepoint_mal (State.Codepoint_mal.init ~mal)) view t
+          advance (State.State_codepoint_mal (State.Codepoint_mal.init ~mal)) view y
         );
         eoi1;
       }
@@ -5782,15 +5769,15 @@ module Dfa = struct
       let open State.Codepoint_raw_cp in
       {
         edges1=map_of_cps_alist [
-          ("'", fun {cp} view t -> accept_rendition_incl (Constant cp) view t);
+          ("'", fun {cp} view y -> accept_rendition_incl (Constant cp) view y);
         ];
-        default1=(fun _state (View.{cursor; _} as view) t ->
-          match in_fstring t with
+        default1=(fun _state (View.{cursor; _} as view) ({tok_base; _} as y) ->
+          match in_fstring y with
           | true -> begin
-              let mal = unterminated_codepoint t.tok_base cursor in
-              accept_rendition_pexcl (Token.Rendition.of_mals [mal]) view t
+              let mal = unterminated_codepoint tok_base cursor in
+              accept_rendition_pexcl (Token.Rendition.of_mals [mal]) view y
             end
-          | false -> accept_tok_pexcl (Tok_tick {source=source_pexcl view t}) view t);
+          | false -> accept_tok_pexcl (Tok_tick {source=source_pexcl view y}) view y);
         eoi1;
       }
 
@@ -5798,44 +5785,44 @@ module Dfa = struct
       let open State.Codepoint_mal in
       {
         edges1=map_of_cps_alist [
-          ("'", fun {mal} view t -> accept_rendition_incl (Token.Rendition.of_mals [mal]) view t);
+          ("'", fun {mal} view y -> accept_rendition_incl (Token.Rendition.of_mals [mal]) view y);
         ];
-        default1=(fun state view t -> advance (State.State_codepoint_mal state) view t);
-        eoi1=(fun {mal} (View.{cursor; _} as view) t ->
-          let mal2 = unterminated_codepoint t.tok_base cursor in
-          accept_rendition_incl (Token.Rendition.of_mals (mal2 :: [mal])) view t
+        default1=(fun state view y-> advance (State.State_codepoint_mal state) view y);
+        eoi1=(fun {mal} (View.{cursor; _} as view) ({tok_base; _} as y) ->
+          let mal2 = unterminated_codepoint tok_base cursor in
+          accept_rendition_incl (Token.Rendition.of_mals (mal2 :: [mal])) view y
         );
       }
   end
 
   module Rstring = struct
-    let accept_mals mals cursor t =
+    let accept_mals mals cursor y =
       let open Token in
       let malformed = Rendition.of_mals mals in
-      accept_tok (Tok_rstring {source=source_at cursor t; rstring=malformed}) cursor t
+      accept_tok (Tok_rstring {source=source_at cursor y; rstring=malformed}) cursor y
 
-    let accept_mals_incl mals View.{cursor; _} t =
-      accept_mals mals cursor t
+    let accept_mals_incl mals View.{cursor; _} y =
+      accept_mals mals cursor y
 
     let node1_ltag =
       let open State.Rstring_ltag in
       {
         edges1=map_of_cpsets_alist [
-          (cpset_of_cps ident_cps, fun state view t -> advance (State_rstring_ltag state) view t);
-          (cpset_of_cps "`", fun {mals; ltag_base} (View.{pcursor; cursor; _} as view) t ->
+          (cpset_of_cps ident_cps, fun state view y -> advance (State_rstring_ltag state) view y);
+          (cpset_of_cps "`", fun {mals; ltag_base} (View.{pcursor; cursor; _} as view) y ->
               let ltag = Source.Slice.of_cursors ~base:ltag_base ~past:pcursor in
               let state' = State.Rstring_body.init ~mals ~ltag ~body_base:cursor in
-              advance (State_rstring_body state') view t
+              advance (State_rstring_body state') view y
           );
         ];
-        default1=(fun state (View.{pcursor; cursor; _} as view) t ->
+        default1=(fun state (View.{pcursor; cursor; _} as view) y ->
           let mal = invalid_tag pcursor cursor in
-          advance (State_rstring_ltag (state |> accum_mal ~mal)) view t
+          advance (State_rstring_ltag (state |> accum_mal ~mal)) view y
         );
-        eoi1=(fun state (View.{cursor; _} as view) t ->
-          let mal = unterminated_string t.tok_base cursor in
+        eoi1=(fun state (View.{cursor; _} as view) ({tok_base; _} as y) ->
+          let mal = unterminated_string tok_base cursor in
           let state' = accum_mal ~mal state in
-          accept_mals_incl state'.mals view t
+          accept_mals_incl state'.mals view y
         );
       }
 
@@ -5843,12 +5830,12 @@ module Dfa = struct
       let open State.Rstring_body in
       {
         edges1=map_of_cps_alist [
-          ("`", fun {mals; ltag; body_base} (View.{pcursor; _} as view) t ->
+          ("`", fun {mals; ltag; body_base} (View.{pcursor; _} as view) y ->
               let body = Source.Slice.of_cursors ~base:body_base ~past:pcursor in
               let state' = State.Rstring_rtag.init ~mals ~ltag ~body in
-              advance (State_rstring_rtag state') view t
+              advance (State_rstring_rtag state') view y
           );
-          ("�", fun state (View.{pcursor; cursor; _} as view) t ->
+          ("�", fun state (View.{pcursor; cursor; _} as view) y ->
               let state' = match Source.Cursor.rvalid pcursor with
                 | false -> begin
                     let mal = invalid_utf8 pcursor cursor in
@@ -5856,14 +5843,14 @@ module Dfa = struct
                   end
                 | true -> state
               in
-              advance (State_rstring_body state') view t
+              advance (State_rstring_body state') view y
           );
         ];
-        default1=(fun state view t -> advance (State_rstring_body state) view t);
-        eoi1=(fun state (View.{cursor; _} as view) t ->
-          let mal = unterminated_string t.tok_base cursor in
+        default1=(fun state view y -> advance (State_rstring_body state) view y);
+        eoi1=(fun state (View.{cursor; _} as view) ({tok_base; _} as y) ->
+          let mal = unterminated_string tok_base cursor in
           let state' = accum_mal ~mal state in
-          accept_mals_incl state'.mals view t
+          accept_mals_incl state'.mals view y
         );
       }
 
@@ -5871,78 +5858,78 @@ module Dfa = struct
       let open State.Rstring_rtag in
       {
         edges1=map_of_cps_alist [
-          ("`", fun {mals; ltag; body; ltag_cursor} (View.{pcursor; cursor; _} as view) t ->
+          ("`", fun {mals; ltag; body; ltag_cursor} (View.{pcursor; cursor; _} as view) y ->
               let ltag_past = Source.Slice.past ltag in
               match Source.Cursor.(ltag_cursor = ltag_past) with
               | false -> begin
                   let body' =
                     Source.Slice.of_cursors ~base:(Source.Slice.base body) ~past:pcursor in
                   let state' = State.Rstring_rtag.init ~mals ~ltag ~body:body' in
-                  advance (State_rstring_rtag state') view t
+                  advance (State_rstring_rtag state') view y
                 end
               | true -> begin
                   match mals with
-                  | _ :: _ -> accept_mals_incl mals view t
+                  | _ :: _ -> accept_mals_incl mals view y
                   | [] -> begin
                       let open Token in
                       accept_tok (Tok_rstring {
-                        source=source_incl view t;
+                        source=source_incl view y;
                         rstring=Constant (Source.Slice.to_string body)
-                      }) cursor t
+                      }) cursor y
                     end
                 end
           );
         ];
-        default1=(fun ({mals; ltag; body; ltag_cursor} as state) (View.{pcursor; _} as view) t ->
+        default1=(fun ({mals; ltag; body; ltag_cursor} as state) (View.{pcursor; _} as view) y ->
           let lcp = Source.Cursor.rget ltag_cursor in
           let rcp = Source.Cursor.rget pcursor in
           match Codepoint.(lcp = rcp) with
           | false -> begin
               let state' =
                 State.Rstring_body.init ~mals ~ltag ~body_base:(Source.Slice.base body) in
-              retry (State_rstring_body state') t
+              retry (State_rstring_body state') y
             end
-          | true -> advance (State_rstring_rtag (State.Rstring_rtag.next state)) view t
+          | true -> advance (State_rstring_rtag (State.Rstring_rtag.next state)) view y
         );
-        eoi1=(fun state (View.{cursor; _} as view) t ->
-          let mal = unterminated_string t.tok_base cursor in
+        eoi1=(fun state (View.{cursor; _} as view) ({tok_base; _} as y) ->
+          let mal = unterminated_string tok_base cursor in
           let state' = accum_mal ~mal state in
-          accept_mals_incl state'.mals view t
+          accept_mals_incl state'.mals view y
         );
       }
   end
 
   module Qstring = struct
-    let accept_mals mals cursor t =
+    let accept_mals mals cursor y =
       let open Token in
       let malformed = Rendition.of_mals mals in
-      accept_tok (Tok_qstring {source=source_at cursor t; qstring=malformed}) cursor t
+      accept_tok (Tok_qstring {source=source_at cursor y; qstring=malformed}) cursor y
 
-    let accept_mals_incl mals View.{cursor; _} t =
-      accept_mals mals cursor t
+    let accept_mals_incl mals View.{cursor; _} y =
+      accept_mals mals cursor y
 
     let node0_ltag =
       {
         edges0=map_of_cps_alist [
-          ("|", fun (View.{cursor; _} as view) t ->
+          ("|", fun (View.{cursor; _} as view) y ->
               let state = State.Qstring_body.init ~mals:[] ~body_base:cursor in
-              advance (State_qstring_body state) view t
+              advance (State_qstring_body state) view y
           );
         ];
-        default0=(fun view t -> accept_tok_excl (Tok_lcurly {source=source_excl view t}) view t);
-        eoi0=(fun view t -> accept_tok_incl (Tok_lcurly {source=source_incl view t}) view t);
+        default0=(fun view y -> accept_tok_excl (Tok_lcurly {source=source_excl view y}) view y);
+        eoi0=(fun view y -> accept_tok_incl (Tok_lcurly {source=source_incl view y}) view y);
       }
 
     let node1_body =
       let open State.Qstring_body in
       {
         edges1=map_of_cps_alist [
-          ("|", fun {mals; body_base} (View.{pcursor; _} as view) t ->
+          ("|", fun {mals; body_base} (View.{pcursor; _} as view) y ->
               let body = Source.Slice.of_cursors ~base:body_base ~past:pcursor in
               let state' = State.Qstring_rtag.init ~mals ~body in
-              advance (State_qstring_rtag state') view t
+              advance (State_qstring_rtag state') view y
           );
-          ("�", fun state (View.{pcursor; cursor; _} as view) t ->
+          ("�", fun state (View.{pcursor; cursor; _} as view) y ->
               let state' = match Source.Cursor.rvalid pcursor with
                 | false -> begin
                     let mal = invalid_utf8 pcursor cursor in
@@ -5950,14 +5937,14 @@ module Dfa = struct
                   end
                 | true -> state
               in
-              advance (State_qstring_body state') view t
+              advance (State_qstring_body state') view y
           );
         ];
-        default1=(fun state view t -> advance (State_qstring_body state) view t);
-        eoi1=(fun state (View.{cursor; _} as view) t ->
-          let mal = unterminated_string t.tok_base cursor in
+        default1=(fun state view y -> advance (State_qstring_body state) view y);
+        eoi1=(fun state (View.{cursor; _} as view) ({tok_base; _} as y) ->
+          let mal = unterminated_string tok_base cursor in
           let state' = accum_mal ~mal state in
-          accept_mals_incl state'.mals view t
+          accept_mals_incl state'.mals view y
         );
       }
 
@@ -5965,30 +5952,30 @@ module Dfa = struct
       let open State.Qstring_rtag in
       {
         edges1=map_of_cps_alist [
-          ("|", fun {mals; body} (View.{pcursor; _} as view) t ->
+          ("|", fun {mals; body} (View.{pcursor; _} as view) y ->
               let body = Source.Slice.of_cursors ~base:(Source.Slice.base body) ~past:pcursor in
               let state' = State.Qstring_rtag.init ~mals ~body in
-              advance (State_qstring_rtag state') view t);
-          ("}", fun {mals; body} (View.{cursor; _} as view) t ->
+              advance (State_qstring_rtag state') view y);
+          ("}", fun {mals; body} (View.{cursor; _} as view) y ->
               match mals with
-              | _ :: _ -> accept_mals_incl mals view t
+              | _ :: _ -> accept_mals_incl mals view y
               | [] -> begin
                   let open Token in
                   accept_tok (Tok_qstring {
-                    source=source_incl view t;
+                    source=source_incl view y;
                     qstring=Constant (Source.Slice.to_string body)
-                  }) cursor t
+                  }) cursor y
                 end
           );
         ];
-        default1=(fun {mals; body} _view t ->
+        default1=(fun {mals; body} _view y ->
           let state' = State.Qstring_body.init ~mals ~body_base:(Source.Slice.base body) in
-          retry (State_qstring_body state') t
+          retry (State_qstring_body state') y
         );
-        eoi1=(fun state (View.{cursor; _} as view) t ->
-          let mal = unterminated_string t.tok_base cursor in
+        eoi1=(fun state (View.{cursor; _} as view) ({tok_base; _} as y) ->
+          let mal = unterminated_string tok_base cursor in
           let state' = accum_mal ~mal state in
-          accept_mals_incl state'.mals view t
+          accept_mals_incl state'.mals view y
         );
       }
   end
@@ -5996,60 +5983,60 @@ module Dfa = struct
   (* Istring states are also used for fstrings. Source directives, on the other hand, have their own
    * istring scanning implementation. *)
   module Istring = struct
-    let accept_istring accum cursor t =
+    let accept_istring accum cursor y =
       accept_tok (Token.Tok_istring {
-        source=source_at cursor t;
+        source=source_at cursor y;
         istring=State.CodepointAccum.to_istring accum
-      }) cursor t
+      }) cursor y
 
-    let accept_istring_incl accum View.{cursor; _} t =
-      accept_istring accum cursor t
+    let accept_istring_incl accum View.{cursor; _} y =
+      accept_istring accum cursor y
 
-    let accept_mal accum cursor t =
+    let accept_mal accum cursor y =
       let open State.CodepointAccum in
       assert (match accum with Codepoints _ -> false | Malformations _ -> true);
-      match in_fstring t with
+      match in_fstring y with
       | true ->
         accept_tok (Token.Tok_fstring_interpolated {
-          source=source_at cursor t;
+          source=source_at cursor y;
           fstring_interpolated=to_fstring_interpolated accum
-        }) cursor t
-      | false -> accept_istring accum cursor t
+        }) cursor y
+      | false -> accept_istring accum cursor y
 
-    let accept_mal_incl accum View.{cursor; _} t =
-      accept_mal accum cursor t
+    let accept_mal_incl accum View.{cursor; _} y =
+      accept_mal accum cursor y
 
-    let accept_eoi accum cursor t =
+    let accept_eoi accum cursor y =
       let open State.CodepointAccum in
-      match in_fstring t with
+      match in_fstring y with
       | true -> begin
           match accum with
-          | Codepoints [] -> retry_fstring_eoi t
+          | Codepoints [] -> retry_fstring_eoi y
           | _ ->
             accept_fstring_pop_tok (Token.Tok_fstring_interpolated {
-              source=source_at cursor t;
+              source=source_at cursor y;
               fstring_interpolated=to_fstring_interpolated accum
-            }) cursor t
+            }) cursor y
         end
       | false -> begin
           let mal = unterminated_string cursor cursor in
           let accum' = accum |> accum_mal mal in
-          accept_istring accum' cursor t
+          accept_istring accum' cursor y
         end
 
-    let accept_eoi_incl accum View.{cursor; _} t =
-      accept_eoi accum cursor t
+    let accept_eoi_incl accum View.{cursor; _} y =
+      accept_eoi accum cursor y
 
     let node1_start =
       let open State.Istring_body in
       {
         edges1=map_of_cps_alist [
-          ("%", fun {accum} (View.{pcursor; cursor; _} as view) t ->
-              match in_fstring t with
+          ("%", fun {accum} (View.{pcursor; cursor; _} as view) ({tok_base; _} as y) ->
+              match in_fstring y with
               | false -> begin
-                  let interpolated_base = Source.Cursor.succ t.tok_base in
+                  let interpolated_base = Source.Cursor.succ tok_base in
                   let lditto_tok =
-                    Token.Tok_fstring_lditto {source=source_at interpolated_base t} in
+                    Token.Tok_fstring_lditto {source=source_at interpolated_base y} in
                   let pct_tok = Token.Tok_fstring_pct {source=Source.Slice.of_cursors
                                                            ~base:pcursor ~past:cursor} in
                   let fstring_state = match Source.Cursor.(interpolated_base = pcursor) with
@@ -6062,221 +6049,222 @@ module Dfa = struct
                         Fstring_spec_pct_seen [interpolated_tok; pct_tok]
                       end
                   in
-                  accept_fstring_push_tok_incl fstring_state lditto_tok view t
+                  accept_fstring_push_tok_incl fstring_state lditto_tok view y
                 end
               | true -> begin
                   let pct_tok = Token.Tok_fstring_pct {source=Source.Slice.of_cursors ~base:pcursor
                                                            ~past:cursor} in
-                  let fstring_state, tok = match Source.Cursor.(t.tok_base = pcursor) with
+                  let fstring_state, tok = match Source.Cursor.(tok_base = pcursor) with
                     | true -> Fstring_spec_pct_seen [], pct_tok
                     | false -> begin
                         let interpolated_tok = Token.Tok_fstring_interpolated {
-                          source=source_excl view t;
+                          source=source_excl view y;
                           fstring_interpolated=State.CodepointAccum.to_fstring_interpolated accum
                         } in
                         Fstring_spec_pct_seen [pct_tok], interpolated_tok
                       end
                   in
-                  accept_fstring_trans_tok_incl fstring_state tok view t
+                  accept_fstring_trans_tok_incl fstring_state tok view y
                 end
           );
-          ("\"", fun {accum} (View.{pcursor; cursor; _} as view) t ->
-              match in_fstring t with
+          ("\"", fun {accum} (View.{pcursor; cursor; _} as view)
+              ({tok_base; fstring_states; _} as y) ->
+              match in_fstring y with
               | true -> begin
                   let rditto_tok = Token.Tok_fstring_rditto {
                     source=Source.Slice.of_cursors ~base:pcursor ~past:cursor} in
-                  let fstring_states' = List.tl t.fstring_states in
-                  match Source.Cursor.(t.tok_base = pcursor) with
+                  let fstring_states' = List.tl fstring_states in
+                  match Source.Cursor.(tok_base = pcursor) with
                   | true ->
-                    {t with tok_base=cursor; fstring_states=fstring_states'}, Accept rditto_tok
+                    {y with tok_base=cursor; fstring_states=fstring_states'}, Accept rditto_tok
                   | false -> begin
                       let interpolated_tok = Token.Tok_fstring_interpolated {
-                        source=source_excl view t;
+                        source=source_excl view y;
                         fstring_interpolated=State.CodepointAccum.to_fstring_interpolated accum
                       } in
                       accept_fstring_trans_tok_incl (Fstring_rditto_seen rditto_tok)
-                        interpolated_tok view t
+                        interpolated_tok view y
                     end
                 end
-              | false -> accept_istring_incl accum view t
+              | false -> accept_istring_incl accum view y
           );
-          ("\\", fun {accum} ({pcursor; _} as view) t ->
+          ("\\", fun {accum} ({pcursor; _} as view) y ->
               advance (State_istring_bslash (State.Istring_bslash.init ~accum
-                  ~bslash_cursor:pcursor)) view t
+                  ~bslash_cursor:pcursor)) view y
           );
-          ("\t\r", fun state (View.{pcursor; cursor; _} as view) t ->
+          ("\t\r", fun state (View.{pcursor; cursor; _} as view) y ->
               let mal = invalid_codepoint pcursor cursor in
-              advance (State_istring_body (state |> accum_mal mal)) view t
+              advance (State_istring_body (state |> accum_mal mal)) view y
           );
         ];
-        default1=(fun state (View.{pcursor; _} as view) t ->
+        default1=(fun state (View.{pcursor; _} as view) y ->
           let cp = Source.Cursor.rget pcursor in
-          advance (State_istring_body (state |> accum_cp cp)) view t
+          advance (State_istring_body (state |> accum_cp cp)) view y
         );
-        eoi1=(fun {accum} view t -> accept_eoi_incl accum view t);
+        eoi1=(fun {accum} view y -> accept_eoi_incl accum view y);
       }
 
     let node1_bslash =
       let open State.Istring_bslash in
-      let accum_interpolated cp state view t = begin
+      let accum_interpolated cp state view y = begin
         let state' = state |> accum_cp cp in
-        advance (State_istring_body (State.Istring_body.init ~accum:state'.accum)) view t
+        advance (State_istring_body (State.Istring_body.init ~accum:state'.accum)) view y
       end in
-      let accum_raw state (View.{pcursor; _} as view) t = begin
+      let accum_raw state (View.{pcursor; _} as view) y = begin
         let cp = Source.Cursor.rget pcursor in
-        accum_interpolated cp state view t
+        accum_interpolated cp state view y
       end in
       {
         edges1=map_of_cps_alist [
-          ("u", fun {accum; bslash_cursor} view t ->
+          ("u", fun {accum; bslash_cursor} view y ->
               advance (State_istring_bslash_u (State.Istring_bslash.init ~accum ~bslash_cursor))
-                view t
+                view y
           );
           ("t", accum_interpolated Codepoint.ht);
           ("n", accum_interpolated Codepoint.nl);
           ("r", accum_interpolated Codepoint.cr);
           ("\"\\%", accum_raw);
-          ("\n", fun {accum; _} view t ->
-              advance (State_istring_body (State.Istring_body.init ~accum)) view t);
+          ("\n", fun {accum; _} view y ->
+              advance (State_istring_body (State.Istring_body.init ~accum)) view y);
         ];
-        default1=(fun {accum; bslash_cursor} {cursor; _} t ->
+        default1=(fun {accum; bslash_cursor} {cursor; _} y ->
           let mal = illegal_backslash bslash_cursor cursor in
           let accum' = State.CodepointAccum.accum_mal mal accum in
-          t, Retry (State_istring_body (State.Istring_body.init ~accum:accum'))
+          y, Retry (State_istring_body (State.Istring_body.init ~accum:accum'))
         );
-        eoi1=(fun {accum; _} view t -> accept_eoi_incl accum view t);
+        eoi1=(fun {accum; _} view y -> accept_eoi_incl accum view y);
       }
 
     let node1_bslash_u =
       let open State.Istring_bslash_u in
       {
         edges1=map_of_cps_alist [
-          ("{", fun {accum; bslash_cursor} view t ->
-              advance (State_istring_bslash_u_lcurly {accum; bslash_cursor; u=Nat.k_0}) view t
+          ("{", fun {accum; bslash_cursor} view y ->
+              advance (State_istring_bslash_u_lcurly {accum; bslash_cursor; u=Nat.k_0}) view y
           );
-          ("\"", fun {accum; bslash_cursor} ({cursor; _} as view) t ->
+          ("\"", fun {accum; bslash_cursor} ({cursor; _} as view) y ->
               let mal = illegal_backslash bslash_cursor cursor in
-              accept_mal_incl (State.CodepointAccum.accum_mal mal accum) view t
+              accept_mal_incl (State.CodepointAccum.accum_mal mal accum) view y
           );
         ];
-        default1=(fun ({bslash_cursor; _} as state) View.{pcursor; _} t ->
+        default1=(fun ({bslash_cursor; _} as state) View.{pcursor; _} y ->
           let mal = illegal_backslash bslash_cursor pcursor in
           let state' = state |> accum_mal mal in
-          t, Retry (State_istring_body (State.Istring_body.init ~accum:state'.accum))
+          y, Retry (State_istring_body (State.Istring_body.init ~accum:state'.accum))
         );
-        eoi1=(fun {accum; _} view t -> accept_eoi_incl accum view t);
+        eoi1=(fun {accum; _} view y -> accept_eoi_incl accum view y);
       }
 
     let node1_bslash_u_lcurly =
       let open State.Istring_bslash_u_lcurly in
       {
         edges1=map_of_cps_alist [
-          ("_", fun state view t -> advance (State_istring_bslash_u_lcurly state) view t);
-          (hex_cps, fun state ({pcursor; _} as view) t ->
+          ("_", fun state view y -> advance (State_istring_bslash_u_lcurly state) view y);
+          (hex_cps, fun state ({pcursor; _} as view) y ->
               let cp = Source.Cursor.rget pcursor in
-              advance (State_istring_bslash_u_lcurly (state |> accum_hex cp)) view t
+              advance (State_istring_bslash_u_lcurly (state |> accum_hex cp)) view y
           );
-          ("}", fun ({bslash_cursor; u; _} as state) ({cursor; _} as view) t ->
+          ("}", fun ({bslash_cursor; u; _} as state) ({cursor; _} as view) y ->
               Option.value_map (Nat.to_uns_opt u)
                 ~f:(fun u -> Codepoint.narrow_of_uns_opt u)
                 ~default:None
               |> Option.value_map
                 ~f:(fun cp ->
                   let state' = state |> accum_cp cp in
-                  advance (State_istring_body (State.Istring_body.init ~accum:state'.accum)) view t
+                  advance (State_istring_body (State.Istring_body.init ~accum:state'.accum)) view y
                 )
                 ~default:(
                   let mal = invalid_unicode bslash_cursor cursor in
                   let state' = state |> accum_mal mal in
-                  t, Retry (State_istring_body (State.Istring_body.init ~accum:state'.accum))
+                  y, Retry (State_istring_body (State.Istring_body.init ~accum:state'.accum))
                 )
           );
-          ("\"", fun ({bslash_cursor; _} as state) ({cursor; _} as view) t ->
+          ("\"", fun ({bslash_cursor; _} as state) ({cursor; _} as view) y ->
               let mal = invalid_unicode_escape bslash_cursor cursor in
               let state' = state |> accum_mal mal in
-              accept_mal_incl state'.accum view t
+              accept_mal_incl state'.accum view y
           );
         ];
-        default1=(fun {accum; bslash_cursor; _} View.{pcursor; _} t ->
+        default1=(fun {accum; bslash_cursor; _} View.{pcursor; _} y ->
           let mal = invalid_unicode_escape bslash_cursor pcursor in
-          t, Retry (State_istring_body {accum=State.CodepointAccum.accum_mal mal accum})
+          y, Retry (State_istring_body {accum=State.CodepointAccum.accum_mal mal accum})
         );
-        eoi1=(fun {accum; _} view t -> accept_eoi_incl accum view t);
+        eoi1=(fun {accum; _} view y -> accept_eoi_incl accum view y);
       }
   end
 
   module Fstring = struct
-    let accept_mal fstring_state description tok_of_mal cursor t =
-      let mal = malformation ~base:t.tok_base ~past:cursor description in
-      accept_fstring_trans fstring_state (tok_of_mal mal) cursor t
+    let accept_mal fstring_state description tok_of_mal cursor ({tok_base; _} as y) =
+      let mal = malformation ~base:tok_base ~past:cursor description in
+      accept_fstring_trans fstring_state (tok_of_mal mal) cursor y
 
-    let accept_mal_incl fstring_state description tok_of_mal View.{cursor; _} t =
-      accept_mal fstring_state description tok_of_mal cursor t
+    let accept_mal_incl fstring_state description tok_of_mal View.{cursor; _} y =
+      accept_mal fstring_state description tok_of_mal cursor y
 
-    let accept_mal_excl fstring_state description tok_of_mal View.{pcursor; _} t =
-      accept_mal fstring_state description tok_of_mal pcursor t
+    let accept_mal_excl fstring_state description tok_of_mal View.{pcursor; _} y =
+      accept_mal fstring_state description tok_of_mal pcursor y
 
-    let eoi0 _view t =
-      retry_fstring_eoi t
+    let eoi0 _view y =
+      retry_fstring_eoi y
 
     let edges0_pad = map_of_cps_alist [
       ("'", advance State_codepoint_tick);
     ]
 
     let edges0_just = map_of_cps_alist [
-      ("<", fun view t ->
+      ("<", fun view y ->
           accept_fstring_trans_tok_incl Fstring_spec_just_seen (Tok_fstring_just {
-            source=source_incl view t;
+            source=source_incl view y;
             fstring_just=Fmt.Left
-          }) view t);
-      ("^", fun view t ->
+          }) view y);
+      ("^", fun view y ->
           accept_fstring_trans_incl Fstring_spec_just_seen (Tok_fstring_just {
-            source=source_incl view t;
+            source=source_incl view y;
             fstring_just=Fmt.Center
-          }) view t);
-      (">", fun view t ->
+          }) view y);
+      (">", fun view y ->
           accept_fstring_trans_incl Fstring_spec_just_seen (Tok_fstring_just {
-            source=source_incl view t;
+            source=source_incl view y;
             fstring_just=Fmt.Right
-          }) view t);
+          }) view y);
     ]
 
     let edges0_sign = map_of_cps_alist [
-      ("+", fun view t ->
+      ("+", fun view y ->
           accept_fstring_trans_incl Fstring_spec_sign_seen (Tok_fstring_sign {
-            source=source_incl view t;
+            source=source_incl view y;
             fstring_sign=Fmt.Explicit
-          }) view t);
-      ("_", fun view t ->
+          }) view y);
+      ("_", fun view y ->
           accept_fstring_trans_incl Fstring_spec_sign_seen (Tok_fstring_sign {
-            source=source_incl view t;
+            source=source_incl view y;
             fstring_sign=Fmt.Space
-          }) view t);
+          }) view y);
     ]
 
     let edges0_alt = map_of_cps_alist [
-      ("#", fun view t ->
+      ("#", fun view y ->
           accept_fstring_trans_incl Fstring_spec_alt_seen (Tok_fstring_alt {
-            source=source_incl view t
-          }) view t);
+            source=source_incl view y
+          }) view y);
     ]
 
     let edges0_zpad = map_of_cps_alist [
-      ("0", fun view t ->
+      ("0", fun view y ->
           accept_fstring_trans_incl Fstring_spec_zpad_seen (Tok_fstring_zpad {
-            source=source_incl view t
-          }) view t);
+            source=source_incl view y
+          }) view y);
     ]
 
     let edges0_width = map_of_cps_alist [
-      (dec_lead_cps, fun (View.{pcursor; _} as view) t ->
+      (dec_lead_cps, fun (View.{pcursor; _} as view) y ->
           let digit = nat_of_cp (Source.Cursor.rget pcursor) in
-          advance (State_fstring_width (State.Fstring_width.init ~n:digit)) view t
+          advance (State_fstring_width (State.Fstring_width.init ~n:digit)) view y
       );
-      ("*", fun view t ->
+      ("*", fun view y ->
           accept_fstring_trans_incl Fstring_spec_width_star_seen (Tok_fstring_width_star {
-            source=source_incl view t
-          }) view t);
+            source=source_incl view y
+          }) view y);
     ]
 
     let edges0_precision = map_of_cps_alist [
@@ -6285,88 +6273,88 @@ module Dfa = struct
 
     let edges0_radix = map_of_cps_alist [
       ("b", advance State_fstring_b);
-      ("o", fun view t ->
+      ("o", fun view y ->
           accept_fstring_trans_incl Fstring_spec_radix_seen (Tok_fstring_radix {
-            source=source_incl view t;
+            source=source_incl view y;
             fstring_radix=Radix.Oct
-          }) view t);
-      ("d", fun view t ->
+          }) view y);
+      ("d", fun view y ->
           accept_fstring_trans_incl Fstring_spec_radix_seen (Tok_fstring_radix {
-            source=source_incl view t;
+            source=source_incl view y;
             fstring_radix=Radix.Dec
-          }) view t);
-      ("x", fun view t ->
+          }) view y);
+      ("x", fun view y ->
           accept_fstring_trans_incl Fstring_spec_radix_seen (Tok_fstring_radix {
-            source=source_incl view t;
+            source=source_incl view y;
             fstring_radix=Radix.Hex
-          }) view t);
+          }) view y);
     ]
 
     let edges0_notation = map_of_cps_alist [
-      ("m", fun view t ->
+      ("m", fun view y ->
           accept_fstring_trans_incl Fstring_spec_notation_seen (Tok_fstring_notation {
-            source=source_incl view t;
+            source=source_incl view y;
             fstring_notation=Fmt.Normalized
-          }) view t);
-      ("a", fun view t ->
+          }) view y);
+      ("a", fun view y ->
           accept_fstring_trans_incl Fstring_spec_notation_seen (Tok_fstring_notation {
-            source=source_incl view t;
+            source=source_incl view y;
             fstring_notation=Fmt.RadixPoint
-          }) view t);
+          }) view y);
       ("c", advance State_fstring_c);
     ]
 
     let edges0_pretty = map_of_cps_alist [
-      ("p", fun view t ->
+      ("p", fun view y ->
           accept_fstring_trans_incl Fstring_spec_pretty_seen (Tok_fstring_pretty {
-            source=source_incl view t
-          }) view t);
+            source=source_incl view y
+          }) view y);
     ]
 
     (* Sans [bc], which require lookahead. *)
     let edges0_fmt = map_of_cps_alist [
       ("u", advance State_fstring_fmt_u);
       ("i", advance State_fstring_fmt_i);
-      ("n", fun view t ->
+      ("n", fun view y ->
           accept_fstring_trans_incl Fstring_spec_fmt_seen (Tok_fstring_fmt {
-            source=source_incl view t;
+            source=source_incl view y;
             fstring_fmt=Constant Fmt_n
-          }) view t);
-      ("z", fun view t ->
+          }) view y);
+      ("z", fun view y ->
           accept_fstring_trans_incl Fstring_spec_fmt_seen (Tok_fstring_fmt {
-            source=source_incl view t;
+            source=source_incl view y;
             fstring_fmt=Constant Fmt_z
-          }) view t);
+          }) view y);
       ("r", advance State_fstring_fmt_r);
-      ("s", fun view t ->
+      ("s", fun view y ->
           accept_fstring_trans_incl Fstring_spec_fmt_seen (Tok_fstring_fmt {
-            source=source_incl view t;
+            source=source_incl view y;
             fstring_fmt=Constant Fmt_s
-          }) view t);
-      ("f", fun view t ->
+          }) view y);
+      ("f", fun view y ->
           accept_fstring_trans_incl Fstring_spec_fmt_f_seen (Tok_fstring_fmt {
-            source=source_incl view t;
+            source=source_incl view y;
             fstring_fmt=Constant Fmt_f
-          }) view t);
+          }) view y);
     ]
 
     (* Sans c, which requires lookahead. *)
     let edges0_fmt_b = Map.insert edges0_fmt
         ~k:(Codepoint.of_char 'b')
-        ~v:(fun view t ->
+        ~v:(fun view y ->
           accept_fstring_trans_incl Fstring_spec_fmt_seen (Tok_fstring_fmt {
-            source=source_incl view t;
+            source=source_incl view y;
             fstring_fmt=Constant Fmt_b
-          }) view t)
+          }) view y)
 
     (* No lookahead required. *)
     let edges0_fmt_bc = Map.insert edges0_fmt
         ~k:(Codepoint.of_char 'c')
-        ~v:(fun view t ->
+        ~v:(fun view y ->
           accept_fstring_trans_incl Fstring_spec_fmt_seen (Tok_fstring_fmt {
-            source=source_incl view t;
+            source=source_incl view y;
             fstring_fmt=Constant Fmt_c
-          }) view t)
+          }) view y)
 
     let edges0_of_maps maps =
       List.fold maps ~init:(Map.empty (module Codepoint))
@@ -6378,14 +6366,14 @@ module Dfa = struct
         ("Percent must be followed by pad/just/sign/alt/zpad/width/precision/radix/notation/pretty/"
           ^ "fmt parameter")
       in
-      let tok_of_mal_excl view t mal = begin
-        Token.Tok_fstring_fmt {source=source_excl view t; fstring_fmt=Malformed [mal]}
+      let tok_of_mal_excl view y mal = begin
+        Token.Tok_fstring_fmt {source=source_excl view y; fstring_fmt=Malformed [mal]}
       end in
       {
         edges0=edges0_of_maps [edges0_pad; edges0_just; edges0_sign; edges0_alt; edges0_zpad;
           edges0_width; edges0_precision; edges0_radix; edges0_notation; edges0_pretty; edges0_fmt];
-        default0=(fun view t ->
-          accept_mal_excl fstring_state description (tok_of_mal_excl view t) view t);
+        default0=(fun view y ->
+          accept_mal_excl fstring_state description (tok_of_mal_excl view y) view y);
         eoi0;
       }
 
@@ -6395,14 +6383,14 @@ module Dfa = struct
         "Pad parameter must be followed by just/sign/alt/zpad/width/precision/radix/notation/"
         ^ "pretty/fmt parameter"
       in
-      let tok_of_mal_excl view t mal = begin
-        Token.Tok_fstring_fmt {source=source_excl view t; fstring_fmt=Malformed [mal]}
+      let tok_of_mal_excl view y mal = begin
+        Token.Tok_fstring_fmt {source=source_excl view y; fstring_fmt=Malformed [mal]}
       end in
       {
         edges0=edges0_of_maps [edges0_just; edges0_sign; edges0_alt; edges0_zpad; edges0_width;
           edges0_precision; edges0_radix; edges0_notation; edges0_pretty; edges0_fmt];
-        default0=(fun view t ->
-          accept_mal_excl fstring_state description (tok_of_mal_excl view t) view t);
+        default0=(fun view y ->
+          accept_mal_excl fstring_state description (tok_of_mal_excl view y) view y);
         eoi0;
       }
 
@@ -6412,14 +6400,14 @@ module Dfa = struct
         "Justification parameter must be followed by sign/alt/zpad/width/precision/radix/notation/"
         ^ "pretty/fmt parameter"
       in
-      let tok_of_mal_excl view t mal = begin
-        Token.Tok_fstring_fmt {source=source_excl view t; fstring_fmt=Malformed [mal]}
+      let tok_of_mal_excl view y mal = begin
+        Token.Tok_fstring_fmt {source=source_excl view y; fstring_fmt=Malformed [mal]}
       end in
       {
         edges0=edges0_of_maps [edges0_sign; edges0_alt; edges0_zpad; edges0_width; edges0_precision;
           edges0_radix; edges0_notation; edges0_pretty; edges0_fmt];
-        default0=(fun view t ->
-          accept_mal_excl fstring_state description (tok_of_mal_excl view t) view t);
+        default0=(fun view y ->
+          accept_mal_excl fstring_state description (tok_of_mal_excl view y) view y);
         eoi0;
       }
 
@@ -6429,14 +6417,14 @@ module Dfa = struct
         "Sign parameter must be followed by alt/zpad/width/precision/radix/notation/pretty/fmt"
         ^ " parameter"
       in
-      let tok_of_mal_excl view t mal = begin
-        Token.Tok_fstring_fmt {source=source_excl view t; fstring_fmt=Malformed [mal]}
+      let tok_of_mal_excl view y mal = begin
+        Token.Tok_fstring_fmt {source=source_excl view y; fstring_fmt=Malformed [mal]}
       end in
       {
         edges0=edges0_of_maps [edges0_alt; edges0_zpad; edges0_width; edges0_precision;
           edges0_radix; edges0_notation; edges0_pretty; edges0_fmt];
-        default0=(fun view t ->
-          accept_mal_excl fstring_state description (tok_of_mal_excl view t) view t);
+        default0=(fun view y ->
+          accept_mal_excl fstring_state description (tok_of_mal_excl view y) view y);
         eoi0;
       }
 
@@ -6445,14 +6433,14 @@ module Dfa = struct
       let description =
         "Alt parameter must be followed by zpad/width/precision/radix/notation/pretty/fmt parameter"
       in
-      let tok_of_mal_excl view t mal = begin
-        Token.Tok_fstring_fmt {source=source_excl view t; fstring_fmt=Malformed [mal]}
+      let tok_of_mal_excl view y mal = begin
+        Token.Tok_fstring_fmt {source=source_excl view y; fstring_fmt=Malformed [mal]}
       end in
       {
         edges0=edges0_of_maps [edges0_zpad; edges0_width; edges0_precision; edges0_radix;
           edges0_notation; edges0_pretty; edges0_fmt];
-        default0=(fun view t ->
-          accept_mal_excl fstring_state description (tok_of_mal_excl view t) view t);
+        default0=(fun view y ->
+          accept_mal_excl fstring_state description (tok_of_mal_excl view y) view y);
         eoi0;
       }
 
@@ -6460,43 +6448,43 @@ module Dfa = struct
       let fstring_state = Fstring_spec_fmt_seen in
       let description =
         "Zpad parameter must be followed by width/precision/radix/notation/pretty/fmt parameter" in
-      let tok_of_mal_excl view t mal = begin
-        Token.Tok_fstring_fmt {source=source_excl view t; fstring_fmt=Malformed [mal]}
+      let tok_of_mal_excl view y mal = begin
+        Token.Tok_fstring_fmt {source=source_excl view y; fstring_fmt=Malformed [mal]}
       end in
       {
         edges0=edges0_of_maps [edges0_width; edges0_precision; edges0_radix; edges0_notation;
           edges0_pretty; edges0_fmt];
-        default0=(fun view t ->
-          accept_mal_excl fstring_state description (tok_of_mal_excl view t) view t);
+        default0=(fun view y ->
+          accept_mal_excl fstring_state description (tok_of_mal_excl view y) view y);
         eoi0;
       }
 
     let node1_width =
       let open State.Fstring_width in
-      let accept_width {n} cursor t = begin
+      let accept_width {n} cursor ({tok_base; _} as y) = begin
         let open Token in
-        let source = source_at cursor t in
+        let source = source_at cursor y in
         let tok = match Nat.to_uns_opt n with
           | None -> begin
-              let mal = out_of_range_int Radix.Dec Uns.(extend_to_nat max_value) t.tok_base
+              let mal = out_of_range_int Radix.Dec Uns.(extend_to_nat max_value) tok_base
                 cursor in
               Tok_fstring_width {source; fstring_width=Rendition.of_mals [mal]}
             end
           | Some width -> Tok_fstring_width {source; fstring_width=Constant width}
         in
-        accept_fstring_trans Fstring_spec_width_seen tok cursor t
+        accept_fstring_trans Fstring_spec_width_seen tok cursor y
       end in
-      let accept_width_incl state View.{cursor; _} t = begin
-        accept_width state cursor t
+      let accept_width_incl state View.{cursor; _} y = begin
+        accept_width state cursor y
       end in
-      let accept_width_excl state View.{pcursor; _} t = begin
-        accept_width state pcursor t
+      let accept_width_excl state View.{pcursor; _} y = begin
+        accept_width state pcursor y
       end in
       {
         edges1=map_of_cps_alist [
-          (dec_cps, fun state (View.{pcursor; _} as view) t ->
+          (dec_cps, fun state (View.{pcursor; _} as view) y ->
               let digit = nat_of_cp (Source.Cursor.rget pcursor) in
-              advance (State_fstring_width (state |> accum_digit digit)) view t
+              advance (State_fstring_width (state |> accum_digit digit)) view y
           );
         ];
         default1=accept_width_excl;
@@ -6506,118 +6494,117 @@ module Dfa = struct
     let node0_width_star_seen_start =
       let fstring_state = Fstring_spec_width_seen in
       let description = "Parametric width must be of the form `*(^ ... ^)`" in
-      let tok_of_mal cursor t mal = begin
-        Token.Tok_fstring_width {source=source_at cursor t; fstring_width=Malformed [mal]}
+      let tok_of_mal cursor y mal = begin
+        Token.Tok_fstring_width {source=source_at cursor y; fstring_width=Malformed [mal]}
       end in
-      let tok_of_mal_incl View.{cursor; _} t mal = begin
-        tok_of_mal cursor t mal
+      let tok_of_mal_incl View.{cursor; _} y mal = begin
+        tok_of_mal cursor y mal
       end in
-      let tok_of_mal_excl View.{pcursor; _} t mal = begin
-        tok_of_mal pcursor t mal
+      let tok_of_mal_excl View.{pcursor; _} y mal = begin
+        tok_of_mal pcursor y mal
       end in
       {
         edges0=map_of_cps_alist [
           ("(", advance State_fstring_lparen);
         ];
-        default0=(fun view t ->
-          accept_mal_excl fstring_state description (tok_of_mal_excl view t) view t);
-        eoi0=(fun view t ->
-          accept_mal_incl fstring_state description (tok_of_mal_incl view t) view t);
+        default0=(fun view y ->
+          accept_mal_excl fstring_state description (tok_of_mal_excl view y) view y);
+        eoi0=(fun view y ->
+          accept_mal_incl fstring_state description (tok_of_mal_incl view y) view y);
       }
 
     let node0_width_seen_start =
       let fstring_state = Fstring_spec_fmt_seen in
       let description =
         "Width parameter must be followed by precision/radix/notation/pretty/fmt parameter" in
-      let tok_of_mal_excl view t mal = begin
-        Token.Tok_fstring_fmt {source=source_excl view t; fstring_fmt=Malformed [mal]}
+      let tok_of_mal_excl view y mal = begin
+        Token.Tok_fstring_fmt {source=source_excl view y; fstring_fmt=Malformed [mal]}
       end in
       {
         edges0=edges0_of_maps [edges0_precision; edges0_radix; edges0_notation;
           edges0_pretty; edges0_fmt];
-        default0=(fun view t ->
-          accept_mal_excl fstring_state description (tok_of_mal_excl view t) view t);
+        default0=(fun view y ->
+          accept_mal_excl fstring_state description (tok_of_mal_excl view y) view y);
         eoi0;
       }
 
     let node0_dot =
       let fstring_state = Fstring_spec_precision_seen in
       let description = "Dot must be followed by precision mode or precision" in
-      let tok_of_mal cursor t mal = begin
-        Token.Tok_fstring_precision {source=source_at cursor t; fstring_precision=Malformed [mal]}
+      let tok_of_mal cursor y mal = begin
+        Token.Tok_fstring_precision {source=source_at cursor y; fstring_precision=Malformed [mal]}
       end in
-      let tok_of_mal_incl View.{cursor; _} t mal = begin
-        tok_of_mal cursor t mal
+      let tok_of_mal_incl View.{cursor; _} y mal = begin
+        tok_of_mal cursor y mal
       end in
-      let tok_of_mal_excl View.{pcursor; _} t mal = begin
-        tok_of_mal pcursor t mal
+      let tok_of_mal_excl View.{pcursor; _} y mal = begin
+        tok_of_mal pcursor y mal
       end in
       {
         edges0=map_of_cpsets_alist [
-          (cpset_of_cps "=", fun view t ->
+          (cpset_of_cps "=", fun view y ->
               accept_fstring_trans_incl Fstring_spec_pmode_seen (Tok_fstring_pmode {
-                source=source_incl view t;
+                source=source_incl view y;
                 fstring_pmode=Fmt.Fixed
-              }) view t);
-          (Set.union (cpset_of_cps dec_cps) (cpset_of_cps "*"), fun view t ->
+              }) view y);
+          (Set.union (cpset_of_cps dec_cps) (cpset_of_cps "*"), fun view y ->
               accept_fstring_trans_excl Fstring_spec_pmode_seen (Tok_fstring_pmode {
-                source=source_excl view t;
+                source=source_excl view y;
                 fstring_pmode=Fmt.Limited
-              }) view t);
+              }) view y);
         ];
-        default0=(fun view t ->
-          accept_mal_excl fstring_state description (tok_of_mal_excl view t) view t);
-        eoi0=(fun view t ->
-          accept_mal_incl fstring_state description (tok_of_mal_incl view t) view t);
+        default0=(fun view y ->
+          accept_mal_excl fstring_state description (tok_of_mal_excl view y) view y);
+        eoi0=(fun view y ->
+          accept_mal_incl fstring_state description (tok_of_mal_incl view y) view y);
       }
 
     let node0_pmode_seen_start =
       let fstring_state = Fstring_spec_precision_seen in
       let description = "Precision mode parameter must be followed by precision parameter" in
-      let tok_of_mal_excl view t mal = begin
-        Token.Tok_fstring_precision {source=source_excl view t; fstring_precision=Malformed [mal]}
+      let tok_of_mal_excl view y mal = begin
+        Token.Tok_fstring_precision {source=source_excl view y; fstring_precision=Malformed [mal]}
       end in
       {
         edges0=map_of_cps_alist [
-          (dec_lead_cps, fun (View.{pcursor; _} as view) t ->
+          (dec_lead_cps, fun (View.{pcursor; _} as view) y ->
               let digit = nat_of_cp (Source.Cursor.rget pcursor) in
-              advance (State_fstring_precision (State.Fstring_precision.init ~n:digit)) view t
+              advance (State_fstring_precision (State.Fstring_precision.init ~n:digit)) view y
           );
-          ("*", fun view t ->
-              accept_fstring_trans_incl Fstring_spec_precision_star_seen (Tok_fstring_precision_star {
-                source=source_incl view t
-              }) view t);
+          ("*", fun view y ->
+              accept_fstring_trans_incl Fstring_spec_precision_star_seen
+                (Tok_fstring_precision_star {source=source_incl view y}) view y);
         ];
-        default0=(fun view t ->
-          accept_mal_excl fstring_state description (tok_of_mal_excl view t) view t);
+        default0=(fun view y ->
+          accept_mal_excl fstring_state description (tok_of_mal_excl view y) view y);
         eoi0;
       }
 
     let node1_precision =
       let open State.Fstring_precision in
-      let accept_precision {n} cursor t = begin
-        let source = source_at cursor t in
+      let accept_precision {n} cursor ({tok_base; _} as y) = begin
+        let source = source_at cursor y in
         let tok = match Nat.to_uns_opt n with
           | None -> begin
-              let mal = out_of_range_int Radix.Dec Uns.(extend_to_nat max_value) t.tok_base
+              let mal = out_of_range_int Radix.Dec Uns.(extend_to_nat max_value) tok_base
                 cursor in
               Token.Tok_fstring_precision {source; fstring_precision=Token.Rendition.of_mals [mal]}
             end
           | Some precision -> Tok_fstring_precision {source; fstring_precision=Constant precision}
         in
-        accept_fstring_trans Fstring_spec_precision_seen tok cursor t
+        accept_fstring_trans Fstring_spec_precision_seen tok cursor y
       end in
-      let accept_precision_incl state View.{cursor; _} t = begin
-        accept_precision state cursor t
+      let accept_precision_incl state View.{cursor; _} y = begin
+        accept_precision state cursor y
       end in
-      let accept_precision_excl state View.{pcursor; _} t = begin
-        accept_precision state pcursor t
+      let accept_precision_excl state View.{pcursor; _} y = begin
+        accept_precision state pcursor y
       end in
       {
         edges1=map_of_cps_alist [
-          (dec_cps, fun state (View.{pcursor; _} as view) t ->
+          (dec_cps, fun state (View.{pcursor; _} as view) y ->
               let digit = nat_of_cp (Source.Cursor.rget pcursor) in
-              advance (State_fstring_precision (state |> accum_digit digit)) view t
+              advance (State_fstring_precision (state |> accum_digit digit)) view y
           );
         ];
         default1=accept_precision_excl;
@@ -6627,143 +6614,143 @@ module Dfa = struct
     let node0_precision_star_seen_start =
       let fstring_state = Fstring_spec_precision_seen in
       let description = "Parametric precision must be of the form `*(^ ... ^)`" in
-      let tok_of_mal cursor t mal = begin
-        Token.Tok_fstring_precision {source=source_at cursor t; fstring_precision=Malformed [mal]}
+      let tok_of_mal cursor y mal = begin
+        Token.Tok_fstring_precision {source=source_at cursor y; fstring_precision=Malformed [mal]}
       end in
-      let tok_of_mal_incl View.{cursor; _} t mal = begin
-        tok_of_mal cursor t mal
+      let tok_of_mal_incl View.{cursor; _} y mal = begin
+        tok_of_mal cursor y mal
       end in
-      let tok_of_mal_excl View.{pcursor; _} t mal = begin
-        tok_of_mal pcursor t mal
+      let tok_of_mal_excl View.{pcursor; _} y mal = begin
+        tok_of_mal pcursor y mal
       end in
       {
         edges0=map_of_cps_alist [
           ("(", advance State_fstring_lparen);
         ];
-        default0=(fun view t ->
-          accept_mal_excl fstring_state description (tok_of_mal_excl view t) view t);
-        eoi0=(fun view t ->
-          accept_mal_incl fstring_state description (tok_of_mal_incl view t) view t);
+        default0=(fun view y ->
+          accept_mal_excl fstring_state description (tok_of_mal_excl view y) view y);
+        eoi0=(fun view y ->
+          accept_mal_incl fstring_state description (tok_of_mal_incl view y) view y);
       }
 
     let node0_precision_seen_start =
       let fstring_state = Fstring_spec_fmt_seen in
       let description =
         "Precision parameter must be followed by radix/notation/pretty/fmt parameter" in
-      let tok_of_mal_excl view t mal = begin
-        Token.Tok_fstring_fmt {source=source_excl view t; fstring_fmt=Malformed [mal]}
+      let tok_of_mal_excl view y mal = begin
+        Token.Tok_fstring_fmt {source=source_excl view y; fstring_fmt=Malformed [mal]}
       end in
       {
         edges0=edges0_of_maps [edges0_radix; edges0_notation; edges0_pretty; edges0_fmt];
-        default0=(fun view t ->
-          accept_mal_excl fstring_state description (tok_of_mal_excl view t) view t);
+        default0=(fun view y ->
+          accept_mal_excl fstring_state description (tok_of_mal_excl view y) view y);
         eoi0;
       }
 
     let node0_b = {
       edges0=map_of_cpsets_alist [
-        (cpset_of_cps "macpbuinzrcsf", fun view t ->
+        (cpset_of_cps "macpbuinzrcsf", fun view y ->
             accept_fstring_trans_excl Fstring_spec_radix_seen (Tok_fstring_radix {
-              source=source_excl view t;
+              source=source_excl view y;
               fstring_radix=Radix.Bin
-            }) view t);
+            }) view y);
       ];
-      default0=(fun view t ->
+      default0=(fun view y ->
         accept_fstring_trans_excl Fstring_spec_fmt_seen (Tok_fstring_fmt {
-          source=source_excl view t;
+          source=source_excl view y;
           fstring_fmt=Constant Fmt_b
-        }) view t);
-      eoi0=(fun view t ->
+        }) view y);
+      eoi0=(fun view y ->
         accept_fstring_trans_incl Fstring_spec_fmt_seen (Tok_fstring_fmt {
-          source=source_incl view t;
+          source=source_incl view y;
           fstring_fmt=Constant Fmt_b
-        }) view t);
+        }) view y);
     }
 
     let node0_radix_seen_start =
       let fstring_state = Fstring_spec_fmt_seen in
       let description = "Radix parameter must be followed by notation/pretty/fmt parameter" in
-      let tok_of_mal_excl view t mal = begin
-        Token.Tok_fstring_fmt {source=source_excl view t; fstring_fmt=Malformed [mal]}
+      let tok_of_mal_excl view y mal = begin
+        Token.Tok_fstring_fmt {source=source_excl view y; fstring_fmt=Malformed [mal]}
       end in
       {
         edges0=edges0_of_maps [edges0_notation; edges0_pretty; edges0_fmt_b];
-        default0=(fun view t ->
-          accept_mal_excl fstring_state description (tok_of_mal_excl view t) view t);
+        default0=(fun view y ->
+          accept_mal_excl fstring_state description (tok_of_mal_excl view y) view y);
         eoi0;
       }
 
     let node0_c = {
       edges0=map_of_cpsets_alist [
-        (cpset_of_cps "pbuinzrcsf", fun view t ->
+        (cpset_of_cps "pbuinzrcsf", fun view y ->
             accept_fstring_trans_excl Fstring_spec_notation_seen (Tok_fstring_notation {
-              source=source_excl view t;
+              source=source_excl view y;
               fstring_notation=Fmt.Compact
             })
-              view t
+              view y
         );
       ];
-      default0=(fun view t ->
+      default0=(fun view y ->
         accept_fstring_trans_excl Fstring_spec_fmt_seen (Tok_fstring_fmt {
-          source=source_excl view t;
+          source=source_excl view y;
           fstring_fmt=Constant Fmt_c
-        }) view t);
-      eoi0=(fun view t ->
+        }) view y);
+      eoi0=(fun view y ->
         accept_fstring_trans_incl Fstring_spec_fmt_seen (Tok_fstring_fmt {
-          source=source_incl view t;
+          source=source_incl view y;
           fstring_fmt=Constant Fmt_c
-        }) view t);
+        }) view y);
     }
 
     let node0_notation_seen_start =
       let fstring_state = Fstring_spec_fmt_seen in
       let description = "Notation parameter must be followed by pretty/fmt parameter" in
-      let tok_of_mal_excl view t mal = begin
-        Token.Tok_fstring_fmt {source=source_excl view t; fstring_fmt=Malformed [mal]}
+      let tok_of_mal_excl view y mal = begin
+        Token.Tok_fstring_fmt {source=source_excl view y; fstring_fmt=Malformed [mal]}
       end in
       {
         edges0=edges0_of_maps [edges0_pretty; edges0_fmt_bc];
-        default0=(fun view t ->
-          accept_mal_excl fstring_state description (tok_of_mal_excl view t) view t);
+        default0=(fun view y ->
+          accept_mal_excl fstring_state description (tok_of_mal_excl view y) view y);
         eoi0;
       }
 
     let node0_pretty_seen_start =
       let fstring_state = Fstring_spec_fmt_seen in
       let description = "Pretty parameter must be followed by fmt parameter" in
-      let tok_of_mal_excl view t mal = begin
-        Token.Tok_fstring_fmt {source=source_excl view t; fstring_fmt=Malformed [mal]}
+      let tok_of_mal_excl view y mal = begin
+        Token.Tok_fstring_fmt {source=source_excl view y; fstring_fmt=Malformed [mal]}
       end in
       {
         edges0=edges0_fmt_bc;
-        default0=(fun view t ->
-          accept_mal_excl fstring_state description (tok_of_mal_excl view t) view t);
+        default0=(fun view y ->
+          accept_mal_excl fstring_state description (tok_of_mal_excl view y) view y);
         eoi0;
       }
 
     let node0_fmt_u = {
       edges0=map_of_cps_alist [
-        (dec_lead_cps, fun (View.{ppcursor; pcursor; _} as view) t ->
+        (dec_lead_cps, fun (View.{ppcursor; pcursor; _} as view) y ->
             let digit = nat_of_cp (Source.Cursor.rget pcursor) in
             advance (State_fstring_fmt_u_bitwidth
                 State.Fstring_fmt_u_bitwidth.(init ~fmt_cursor:ppcursor |> accum_bitwidth digit))
-              view t
+              view y
         );
-        ("0", fun (View.{ppcursor; _} as view) t ->
+        ("0", fun (View.{ppcursor; _} as view) y ->
             advance (State_fstring_fmt_u_bitwidth
-                State.Fstring_fmt_u_bitwidth.(init ~fmt_cursor:ppcursor |> accum_invalid)) view t
+                State.Fstring_fmt_u_bitwidth.(init ~fmt_cursor:ppcursor |> accum_invalid)) view y
         );
       ];
-      default0=(fun view t ->
+      default0=(fun view y ->
         accept_fstring_trans_excl Fstring_spec_fmt_seen (Tok_fstring_fmt {
-          source=source_excl view t;
+          source=source_excl view y;
           fstring_fmt=Constant Fmt_u
-        }) view t);
-      eoi0=(fun view t ->
+        }) view y);
+      eoi0=(fun view y ->
         accept_fstring_trans_incl Fstring_spec_fmt_seen (Tok_fstring_fmt {
-          source=source_incl view t;
+          source=source_incl view y;
           fstring_fmt=Constant Fmt_u
-        }) view t);
+        }) view y);
     }
 
     let node1_fmt_u_bitwidth =
@@ -6782,50 +6769,50 @@ module Dfa = struct
       end in
       {
         edges1=map_of_cps_alist [
-          (dec_cps, fun state (View.{pcursor; _} as view) t ->
+          (dec_cps, fun state (View.{pcursor; _} as view) y ->
               let digit = nat_of_cp (Source.Cursor.rget pcursor) in
-              advance (State_fstring_fmt_u_bitwidth (state |> accum_bitwidth digit)) view t
+              advance (State_fstring_fmt_u_bitwidth (state |> accum_bitwidth digit)) view y
           );
         ];
-        default1=(fun state view t ->
+        default1=(fun state view y ->
           let subtype = subtype_of_state state view in
           accept_fstring_trans_excl Fstring_spec_fmt_seen (Tok_fstring_fmt {
-            source=source_excl view t;
+            source=source_excl view y;
             fstring_fmt=subtype
-          }) view t
+          }) view y
         );
-        eoi1=(fun state view t ->
+        eoi1=(fun state view y ->
           let subtype = subtype_of_state state view in
           accept_fstring_trans_excl Fstring_spec_fmt_seen (Tok_fstring_fmt {
-            source=source_excl view t;
+            source=source_excl view y;
             fstring_fmt=subtype
-          }) view t
+          }) view y
         );
       }
 
     let node0_fmt_i = {
       edges0=map_of_cps_alist [
-        (dec_lead_cps, fun (View.{ppcursor; pcursor; _} as view) t ->
+        (dec_lead_cps, fun (View.{ppcursor; pcursor; _} as view) y ->
             let digit = nat_of_cp (Source.Cursor.rget pcursor) in
             advance (State_fstring_fmt_i_bitwidth
                 State.Fstring_fmt_i_bitwidth.(init ~fmt_cursor:ppcursor |> accum_bitwidth digit))
-              view t
+              view y
         );
-        ("0", fun (View.{ppcursor; _} as view) t ->
+        ("0", fun (View.{ppcursor; _} as view) y ->
             advance (State_fstring_fmt_i_bitwidth
-                State.Fstring_fmt_i_bitwidth.(init ~fmt_cursor:ppcursor |> accum_invalid)) view t
+                State.Fstring_fmt_i_bitwidth.(init ~fmt_cursor:ppcursor |> accum_invalid)) view y
         );
       ];
-      default0=(fun view t ->
+      default0=(fun view y ->
         accept_fstring_trans_excl Fstring_spec_fmt_seen (Tok_fstring_fmt {
-          source=source_excl view t;
+          source=source_excl view y;
           fstring_fmt=Constant Fmt_i
-        }) view t);
-      eoi0=(fun view t ->
+        }) view y);
+      eoi0=(fun view y ->
         accept_fstring_trans_incl Fstring_spec_fmt_seen (Tok_fstring_fmt {
-          source=source_incl view t;
+          source=source_incl view y;
           fstring_fmt=Constant Fmt_i
-        }) view t);
+        }) view y);
     }
 
     let node1_fmt_i_bitwidth =
@@ -6844,50 +6831,50 @@ module Dfa = struct
       end in
       {
         edges1=map_of_cps_alist [
-          (dec_cps, fun state (View.{pcursor; _} as view) t ->
+          (dec_cps, fun state (View.{pcursor; _} as view) y ->
               let digit = nat_of_cp (Source.Cursor.rget pcursor) in
-              advance (State_fstring_fmt_i_bitwidth (state |> accum_bitwidth digit)) view t
+              advance (State_fstring_fmt_i_bitwidth (state |> accum_bitwidth digit)) view y
           );
         ];
-        default1=(fun state view t ->
+        default1=(fun state view y ->
           let subtype = subtype_of_state state view in
           accept_fstring_trans_excl Fstring_spec_fmt_seen (Tok_fstring_fmt {
-            source=source_excl view t;
+            source=source_excl view y;
             fstring_fmt=subtype
-          }) view t
+          }) view y
         );
-        eoi1=(fun state view t ->
+        eoi1=(fun state view y ->
           let subtype = subtype_of_state state view in
           accept_fstring_trans_excl Fstring_spec_fmt_seen (Tok_fstring_fmt {
-            source=source_excl view t;
+            source=source_excl view y;
             fstring_fmt=subtype
-          }) view t
+          }) view y
         );
       }
 
     let node0_fmt_r = {
       edges0=map_of_cps_alist [
-        (dec_lead_cps, fun (View.{ppcursor; pcursor; _} as view) t ->
+        (dec_lead_cps, fun (View.{ppcursor; pcursor; _} as view) y ->
             let digit = nat_of_cp (Source.Cursor.rget pcursor) in
             advance (State_fstring_fmt_r_bitwidth
                 State.Fstring_fmt_r_bitwidth.(init ~fmt_cursor:ppcursor |> accum_bitwidth digit))
-              view t
+              view y
         );
-        ("0", fun (View.{ppcursor; _} as view) t ->
+        ("0", fun (View.{ppcursor; _} as view) y ->
             advance (State_fstring_fmt_r_bitwidth
-                State.Fstring_fmt_r_bitwidth.(init ~fmt_cursor:ppcursor |> accum_invalid)) view t
+                State.Fstring_fmt_r_bitwidth.(init ~fmt_cursor:ppcursor |> accum_invalid)) view y
         );
       ];
-      default0=(fun view t ->
+      default0=(fun view y ->
         accept_fstring_trans_excl Fstring_spec_fmt_seen (Tok_fstring_fmt {
-          source=source_excl view t;
+          source=source_excl view y;
           fstring_fmt=Constant Fmt_r
-        }) view t);
-      eoi0=(fun view t ->
+        }) view y);
+      eoi0=(fun view y ->
         accept_fstring_trans_incl Fstring_spec_fmt_seen (Tok_fstring_fmt {
-          source=source_incl view t;
+          source=source_incl view y;
           fstring_fmt=Constant Fmt_r
-        }) view t);
+        }) view y);
     }
 
     let node1_fmt_r_bitwidth =
@@ -6901,54 +6888,54 @@ module Dfa = struct
       end in
       {
         edges1=map_of_cps_alist [
-          (dec_cps, fun state (View.{pcursor; _} as view) t ->
+          (dec_cps, fun state (View.{pcursor; _} as view) y ->
               let digit = nat_of_cp (Source.Cursor.rget pcursor) in
-              advance (State_fstring_fmt_r_bitwidth (state |> accum_bitwidth digit)) view t
+              advance (State_fstring_fmt_r_bitwidth (state |> accum_bitwidth digit)) view y
           );
         ];
-        default1=(fun state view t ->
+        default1=(fun state view y ->
           let subtype = subtype_of_state state view in
           accept_fstring_trans_excl Fstring_spec_fmt_seen (Tok_fstring_fmt {
-            source=source_excl view t;
+            source=source_excl view y;
             fstring_fmt=subtype
-          }) view t
+          }) view y
         );
-        eoi1=(fun state view t ->
+        eoi1=(fun state view y ->
           let subtype = subtype_of_state state view in
           accept_fstring_trans_excl Fstring_spec_fmt_seen (Tok_fstring_fmt {
-            source=source_excl view t;
+            source=source_excl view y;
             fstring_fmt=subtype
-          }) view t
+          }) view y
         );
       }
 
     let node0_fmt_f_seen_start =
       let fstring_state = Fstring_spec_fmt_seen in
       let description = "`f` fmt parameter must be of the form `f(^ ... ^)`" in
-      let tok_of_mal cursor t mal = begin
-        Token.Tok_error {source=source_at cursor t; error=[mal]}
+      let tok_of_mal cursor y mal = begin
+        Token.Tok_error {source=source_at cursor y; error=[mal]}
       end in
-      let tok_of_mal_incl View.{cursor; _} t mal = begin
-        tok_of_mal cursor t mal
+      let tok_of_mal_incl View.{cursor; _} y mal = begin
+        tok_of_mal cursor y mal
       end in
-      let tok_of_mal_excl View.{pcursor; _} t mal = begin
-        tok_of_mal pcursor t mal
+      let tok_of_mal_excl View.{pcursor; _} y mal = begin
+        tok_of_mal pcursor y mal
       end in
       {
         edges0=map_of_cps_alist [
           ("(", advance State_fstring_lparen);
         ];
-        default0=(fun view t ->
-          accept_mal_excl fstring_state description (tok_of_mal_excl view t) view t);
-        eoi0=(fun view t ->
-          accept_mal_incl fstring_state description (tok_of_mal_incl view t) view t);
+        default0=(fun view y ->
+          accept_mal_excl fstring_state description (tok_of_mal_excl view y) view y);
+        eoi0=(fun view y ->
+          accept_mal_incl fstring_state description (tok_of_mal_incl view y) view y);
       }
 
     let node0_fmt_seen_start =
       let fstring_state = Fstring_spec_sep_seen in
       let description = "Fmt parameter must be followed by separator/value parameter" in
-      let tok_of_mal_incl view t mal = begin
-        Token.Tok_fstring_sep {source=source_incl view t; fstring_sep=Malformed [mal]}
+      let tok_of_mal_incl view y mal = begin
+        Token.Tok_fstring_sep {source=source_incl view y; fstring_sep=Malformed [mal]}
       end in
       {
         edges0=map_of_cps_alist [
@@ -6956,32 +6943,32 @@ module Dfa = struct
           (operator_infix_lead_cps, advance State_fstring_sep_op);
           ("(", advance State_fstring_lparen);
         ];
-        default0=(fun view t ->
-          accept_mal_incl fstring_state description (tok_of_mal_incl view t) view t);
+        default0=(fun view y ->
+          accept_mal_incl fstring_state description (tok_of_mal_incl view y) view y);
         eoi0;
       }
 
     let node0_sep_space =
       let fstring_state = Fstring_spec_sep_seen in
       let description = "Separator parameter must contain an infix operator" in
-      let tok_of_mal cursor t mal = begin
-        Token.Tok_fstring_sep {source=source_at cursor t; fstring_sep=Malformed [mal]}
+      let tok_of_mal cursor y mal = begin
+        Token.Tok_fstring_sep {source=source_at cursor y; fstring_sep=Malformed [mal]}
       end in
-      let tok_of_mal_incl View.{cursor; _} t mal = begin
-        tok_of_mal cursor t mal
+      let tok_of_mal_incl View.{cursor; _} y mal = begin
+        tok_of_mal cursor y mal
       end in
-      let tok_of_mal_excl View.{pcursor; _} t mal = begin
-        tok_of_mal pcursor t mal
+      let tok_of_mal_excl View.{pcursor; _} y mal = begin
+        tok_of_mal pcursor y mal
       end in
       {
         edges0=map_of_cps_alist [
           (" ", advance State_fstring_sep_space);
           (operator_infix_lead_cps, advance State_fstring_sep_op);
         ];
-        default0=(fun view t ->
-          accept_mal_excl fstring_state description (tok_of_mal_excl view t) view t);
-        eoi0=(fun view t ->
-          accept_mal_incl fstring_state description (tok_of_mal_incl view t) view t);
+        default0=(fun view y ->
+          accept_mal_excl fstring_state description (tok_of_mal_excl view y) view y);
+        eoi0=(fun view y ->
+          accept_mal_incl fstring_state description (tok_of_mal_incl view y) view y);
       }
 
     let node0_sep_op = {
@@ -6989,19 +6976,19 @@ module Dfa = struct
         (operator_cps, advance State_fstring_sep_op);
         (" ", advance State_fstring_sep_op_space);
       ];
-      default0=(fun (View.{pcursor; _} as view) t ->
-        let sep = str_of_cursor pcursor t in
+      default0=(fun (View.{pcursor; _} as view) y ->
+        let sep = str_of_cursor pcursor y in
         accept_fstring_trans_excl Fstring_spec_sep_seen (Tok_fstring_sep {
-          source=source_excl view t;
+          source=source_excl view y;
           fstring_sep=Constant sep
-        }) view t
+        }) view y
       );
-      eoi0=(fun (View.{cursor; _} as view) t ->
-        let sep = str_of_cursor cursor t in
+      eoi0=(fun (View.{cursor; _} as view) y ->
+        let sep = str_of_cursor cursor y in
         accept_fstring_trans_incl Fstring_spec_sep_seen (Tok_fstring_sep {
-          source=source_incl view t;
+          source=source_incl view y;
           fstring_sep=Constant sep
-        }) view t
+        }) view y
       );
     }
 
@@ -7010,88 +6997,88 @@ module Dfa = struct
         (operator_cps, advance State_fstring_sep_op);
         (" ", advance State_fstring_sep_op_space);
       ];
-      default0=(fun (View.{pcursor; _} as view) t ->
-        let sep = str_of_cursor pcursor t in
+      default0=(fun (View.{pcursor; _} as view) y ->
+        let sep = str_of_cursor pcursor y in
         accept_fstring_trans_excl Fstring_spec_sep_seen (Tok_fstring_sep {
-          source=source_excl view t;
+          source=source_excl view y;
           fstring_sep=Constant sep
-        }) view t
+        }) view y
       );
-      eoi0=(fun (View.{cursor; _} as view) t ->
-        let sep = str_of_cursor cursor t in
+      eoi0=(fun (View.{cursor; _} as view) y ->
+        let sep = str_of_cursor cursor y in
         accept_fstring_trans_incl Fstring_spec_sep_seen (Tok_fstring_sep {
-          source=source_incl view t;
+          source=source_incl view y;
           fstring_sep=Constant sep
-        }) view t
+        }) view y
       );
     }
 
     let node0_sep_seen_start =
       let fstring_state = Fstring_body in
       let description = "Separator parameter must be followed by value parameter" in
-      let tok_of_mal_excl view t mal = begin
-        Token.Tok_error {source=source_excl view t; error=[mal]}
+      let tok_of_mal_excl view y mal = begin
+        Token.Tok_error {source=source_excl view y; error=[mal]}
       end in
       {
         edges0=map_of_cps_alist [
           ("(", advance State_fstring_lparen);
         ];
-        default0=(fun view t ->
-          accept_mal_excl fstring_state description (tok_of_mal_excl view t) view t);
+        default0=(fun view y ->
+          accept_mal_excl fstring_state description (tok_of_mal_excl view y) view y);
         eoi0;
       }
 
     let node0_spec_lparen =
       let fstring_state = Fstring_body in
       let description = "Value parameter must be of the form `(^ ... ^)`" in
-      let tok_of_mal_incl view t mal = begin
-        Token.Tok_error {source=source_incl view t; error=[mal]}
+      let tok_of_mal_incl view y mal = begin
+        Token.Tok_error {source=source_incl view y; error=[mal]}
       end in
       {
         edges0=map_of_cps_alist [
-          ("^", fun (View.{cursor; _} as view) t ->
-              let source = source_incl view t in
-              match t.fstring_states with
+          ("^", fun (View.{cursor; _} as view) ({fstring_states; _} as y) ->
+              let source = source_incl view y in
+              match fstring_states with
               | Fstring_spec_width_star_seen :: _ ->
                 accept_fstring_trans_incl Fstring_expr_width (Tok_fstring_lparen_caret {source})
-                  view t
+                  view y
               | Fstring_spec_precision_star_seen :: _ ->
                 accept_fstring_trans_incl Fstring_expr_precision (Tok_fstring_lparen_caret {source})
-                  view t
+                  view y
               | Fstring_spec_fmt_f_seen :: _ ->
                 accept_fstring_trans_incl Fstring_expr_fmt (Tok_fstring_lparen_caret {source})
-                  view t
+                  view y
               | Fstring_spec_fmt_seen :: _ ->
                 accept_fstring_trans_incl (Fstring_expr_value None)
-                  (Tok_fstring_lparen_caret {source}) view t
+                  (Tok_fstring_lparen_caret {source}) view y
               | Fstring_spec_sep_seen :: _ ->
                 accept_fstring_trans_incl (Fstring_expr_value (Some cursor))
-                  (Tok_fstring_lparen_caret {source}) view t
+                  (Tok_fstring_lparen_caret {source}) view y
               | _ :: _
               | [] -> not_reached ()
           );
         ];
-        default0=(fun view t ->
-          accept_mal_incl fstring_state description (tok_of_mal_incl view t) view t);
-        eoi0=(fun view t ->
-          accept_mal_incl fstring_state description (tok_of_mal_incl view t) view t);
+        default0=(fun view y ->
+          accept_mal_incl fstring_state description (tok_of_mal_incl view y) view y);
+        eoi0=(fun view y ->
+          accept_mal_incl fstring_state description (tok_of_mal_incl view y) view y);
       }
 
     let node0_caret = {
       edges0=map_of_cps_alist [
-        (")", fun (View.{ppcursor; _} as view) t ->
-            let source = source_incl view t in
-            match t.fstring_states with
-            | [] -> accept_tok_excl (Tok_caret {source}) view t
+        (")", fun (View.{ppcursor; _} as view) ({fstring_states; _} as y) ->
+            let source = source_incl view y in
+            match fstring_states with
+            | [] -> accept_tok_excl (Tok_caret {source}) view y
             | Fstring_expr_width :: _ ->
               accept_fstring_trans_incl Fstring_spec_width_seen (Tok_fstring_caret_rparen {source})
-                view t
+                view y
             | Fstring_expr_precision :: _ ->
               accept_fstring_trans_incl Fstring_spec_precision_seen
-                (Tok_fstring_caret_rparen {source}) view t
+                (Tok_fstring_caret_rparen {source}) view y
             | Fstring_expr_fmt :: _ ->
               accept_fstring_trans_incl Fstring_spec_fmt_seen (Tok_fstring_caret_rparen {source})
-                view t
+                view y
             | (Fstring_expr_value (Some label_base)) :: _ -> begin
                 let source = Source.Slice.of_cursors ~base:label_base ~past:ppcursor in
                 let label_tok = Token.Tok_fstring_label {
@@ -7099,208 +7086,242 @@ module Dfa = struct
                   fstring_label=Source.Slice.to_string source
                 } in
                 accept_fstring_trans_incl (Fstring_value_seen label_tok)
-                  (Tok_fstring_caret_rparen {source}) view t
+                  (Tok_fstring_caret_rparen {source}) view y
               end
             | (Fstring_expr_value None) :: _ ->
-              accept_fstring_trans_incl Fstring_body (Tok_fstring_caret_rparen {source}) view t
+              accept_fstring_trans_incl Fstring_body (Tok_fstring_caret_rparen {source}) view y
             | _ :: _ -> not_reached ()
         );
         (operator_cps, advance State_operator_caret);
       ];
-      default0=(fun view t -> accept_tok_excl (Tok_caret {source=source_excl view t}) view t);
-      eoi0=(fun view t -> accept_tok_incl (Tok_caret {source=source_incl view t}) view t);
+      default0=(fun view y -> accept_tok_excl (Tok_caret {source=source_excl view y}) view y);
+      eoi0=(fun view y -> accept_tok_incl (Tok_caret {source=source_incl view y}) view y);
     }
   end
 
-  let transition_of_state trace state view t =
+  let transition_of_state trace state view y =
     match state with
-    | State.State_start -> act0 trace node0_start view t
-    | State_lparen -> act0 trace node0_lparen view t
-    | State_lbrack -> act0 trace node0_lbrack view t
-    | State_amp -> act0 trace node0_amp view t
-    | State_tilde -> act0 trace node0_tilde view t
-    | State_qmark -> act0 trace node0_qmark view t
-    | State_star -> act0 trace node0_star view t
-    | State_caret -> act0 trace Fstring.node0_caret view t
-    | State_bar -> act0 trace node0_bar view t
-    | State_uscore -> act0 trace node0_uscore view t
-    | State_tick -> act0 trace node0_tick view t
-    | State_tick_lookahead -> act0 trace node0_tick_lookahead view t
-    | State_real_bin_dot v -> act1 trace Real.node1_bin_dot v view t
-    | State_real_oct_dot v -> act1 trace Real.node1_oct_dot v view t
-    | State_real_hex_dot v -> act1 trace Real.node1_hex_dot v view t
-    | State_real_dec_dot v -> act1 trace Real.node1_dec_dot v view t
-    | State_real_p v -> act1 trace Real.node1_p v view t
-    | State_real_e v -> act1 trace Real.node1_e v view t
-    | State_real_p_sign v -> act1 trace Real.node1_p_sign v view t
-    | State_real_e_sign v -> act1 trace Real.node1_e_sign v view t
-    | State_real_p_exp v -> act1 trace Real.node1_p_exp v view t
-    | State_real_e_exp v -> act1 trace Real.node1_e_exp v view t
-    | State_real_precise_r v -> act1 trace Real.node1_precise_r v view t
-    | State_real_approx_r v -> act1 trace Real.node1_approx_r v view t
-    | State_real_precise_r_bitwidth v -> act1 trace Real.node1_precise_r_bitwidth v view t
-    | State_real_approx_r_bitwidth v -> act1 trace Real.node1_approx_r_bitwidth v view t
-    | State_integer_0 -> act0 trace Integer.node0_0 view t
-    | State_integer_0_dot -> act0 trace Integer.node0_0_dot view t
-    | State_integer_0b -> act0 trace Integer.node0_0b view t
-    | State_integer_0o -> act0 trace Integer.node0_0o view t
-    | State_integer_0x -> act0 trace Integer.node0_0x view t
-    | State_integer_bin v -> act1 trace Integer.node1_bin v view t
-    | State_integer_oct v -> act1 trace Integer.node1_oct v view t
-    | State_integer_dec v -> act1 trace Integer.node1_dec v view t
-    | State_integer_hex v -> act1 trace Integer.node1_hex v view t
-    | State_integer_bin_dot v -> act1 trace Integer.node1_bin_dot v view t
-    | State_integer_oct_dot v -> act1 trace Integer.node1_oct_dot v view t
-    | State_integer_dec_dot v -> act1 trace Integer.node1_dec_dot v view t
-    | State_integer_hex_dot v -> act1 trace Integer.node1_hex_dot v view t
-    | State_integer_l v -> act1 trace Integer.node1_l v view t
-    | State_integer_u v -> act1 trace Integer.node1_u v view t
-    | State_integer_i v -> act1 trace Integer.node1_i v view t
-    | State_integer_n v -> act1 trace Integer.node1_n v view t
-    | State_integer_z v -> act1 trace Integer.node1_z v view t
-    | State_integer_u_bitwidth v -> act1 trace Integer.node1_u_bitwidth v view t
-    | State_integer_i_bitwidth v -> act1 trace Integer.node1_i_bitwidth v view t
-    | State_integer_mal_ident -> act0 trace Integer.node0_mal_ident view t
-    | State_ident_uscore -> act0 trace Ident.node0_uscore view t
-    | State_ident_uident -> act0 trace Ident.node0_uident view t
-    | State_ident_cident -> act0 trace Ident.node0_cident view t
-    | State_ident_mal -> act0 trace Ident.node0_mal view t
-    | State_operator_tilde -> act0 trace Operator.node0_tilde view t
-    | State_operator_qmark -> act0 trace Operator.node0_qmark view t
-    | State_operator_star_star -> act0 trace Operator.node0_star_star view t
-    | State_operator_star -> act0 trace Operator.node0_star view t
-    | State_operator_slash -> act0 trace Operator.node0_slash view t
-    | State_operator_pct -> act0 trace Operator.node0_pct view t
-    | State_operator_plus -> act0 trace Operator.node0_plus view t
-    | State_operator_minus -> act0 trace Operator.node0_minus view t
-    | State_operator_at -> act0 trace Operator.node0_at view t
-    | State_operator_caret -> act0 trace Operator.node0_caret view t
-    | State_operator_dollar -> act0 trace Operator.node0_dollar view t
-    | State_operator_lt -> act0 trace Operator.node0_lt view t
-    | State_operator_eq -> act0 trace Operator.node0_eq view t
-    | State_operator_gt -> act0 trace Operator.node0_gt view t
-    | State_operator_bar -> act0 trace Operator.node0_bar view t
-    | State_operator_colon -> act0 trace Operator.node0_colon view t
-    | State_operator_dot -> act0 trace Operator.node0_dot view t
-    | State_paren_comment_body v -> act1 trace ParenComment.node1_body v view t
-    | State_paren_comment_lparen v -> act1 trace ParenComment.node1_lparen v view t
-    | State_paren_comment_star v -> act1 trace ParenComment.node1_star v view t
-    | State_src_directive_colon -> act0 trace SrcDirective.node0_colon view t
-    | State_src_directive_path v -> act1 trace SrcDirective.node1_path v view t
-    | State_src_directive_path_bslash v -> act1 trace SrcDirective.node1_path_bslash v view t
-    | State_src_directive_path_bslash_u v -> act1 trace SrcDirective.node1_path_bslash_u v view t
+    | State.State_start -> act0 trace node0_start view y
+    | State_lparen -> act0 trace node0_lparen view y
+    | State_lbrack -> act0 trace node0_lbrack view y
+    | State_amp -> act0 trace node0_amp view y
+    | State_tilde -> act0 trace node0_tilde view y
+    | State_qmark -> act0 trace node0_qmark view y
+    | State_star -> act0 trace node0_star view y
+    | State_caret -> act0 trace Fstring.node0_caret view y
+    | State_bar -> act0 trace node0_bar view y
+    | State_uscore -> act0 trace node0_uscore view y
+    | State_tick -> act0 trace node0_tick view y
+    | State_tick_lookahead -> act0 trace node0_tick_lookahead view y
+    | State_real_bin_dot v -> act1 trace Real.node1_bin_dot v view y
+    | State_real_oct_dot v -> act1 trace Real.node1_oct_dot v view y
+    | State_real_hex_dot v -> act1 trace Real.node1_hex_dot v view y
+    | State_real_dec_dot v -> act1 trace Real.node1_dec_dot v view y
+    | State_real_p v -> act1 trace Real.node1_p v view y
+    | State_real_e v -> act1 trace Real.node1_e v view y
+    | State_real_p_sign v -> act1 trace Real.node1_p_sign v view y
+    | State_real_e_sign v -> act1 trace Real.node1_e_sign v view y
+    | State_real_p_exp v -> act1 trace Real.node1_p_exp v view y
+    | State_real_e_exp v -> act1 trace Real.node1_e_exp v view y
+    | State_real_precise_r v -> act1 trace Real.node1_precise_r v view y
+    | State_real_approx_r v -> act1 trace Real.node1_approx_r v view y
+    | State_real_precise_r_bitwidth v -> act1 trace Real.node1_precise_r_bitwidth v view y
+    | State_real_approx_r_bitwidth v -> act1 trace Real.node1_approx_r_bitwidth v view y
+    | State_integer_0 -> act0 trace Integer.node0_0 view y
+    | State_integer_0_dot -> act0 trace Integer.node0_0_dot view y
+    | State_integer_0b -> act0 trace Integer.node0_0b view y
+    | State_integer_0o -> act0 trace Integer.node0_0o view y
+    | State_integer_0x -> act0 trace Integer.node0_0x view y
+    | State_integer_bin v -> act1 trace Integer.node1_bin v view y
+    | State_integer_oct v -> act1 trace Integer.node1_oct v view y
+    | State_integer_dec v -> act1 trace Integer.node1_dec v view y
+    | State_integer_hex v -> act1 trace Integer.node1_hex v view y
+    | State_integer_bin_dot v -> act1 trace Integer.node1_bin_dot v view y
+    | State_integer_oct_dot v -> act1 trace Integer.node1_oct_dot v view y
+    | State_integer_dec_dot v -> act1 trace Integer.node1_dec_dot v view y
+    | State_integer_hex_dot v -> act1 trace Integer.node1_hex_dot v view y
+    | State_integer_l v -> act1 trace Integer.node1_l v view y
+    | State_integer_u v -> act1 trace Integer.node1_u v view y
+    | State_integer_i v -> act1 trace Integer.node1_i v view y
+    | State_integer_n v -> act1 trace Integer.node1_n v view y
+    | State_integer_z v -> act1 trace Integer.node1_z v view y
+    | State_integer_u_bitwidth v -> act1 trace Integer.node1_u_bitwidth v view y
+    | State_integer_i_bitwidth v -> act1 trace Integer.node1_i_bitwidth v view y
+    | State_integer_mal_ident -> act0 trace Integer.node0_mal_ident view y
+    | State_ident_uscore -> act0 trace Ident.node0_uscore view y
+    | State_ident_uident -> act0 trace Ident.node0_uident view y
+    | State_ident_cident -> act0 trace Ident.node0_cident view y
+    | State_ident_mal -> act0 trace Ident.node0_mal view y
+    | State_operator_tilde -> act0 trace Operator.node0_tilde view y
+    | State_operator_qmark -> act0 trace Operator.node0_qmark view y
+    | State_operator_star_star -> act0 trace Operator.node0_star_star view y
+    | State_operator_star -> act0 trace Operator.node0_star view y
+    | State_operator_slash -> act0 trace Operator.node0_slash view y
+    | State_operator_pct -> act0 trace Operator.node0_pct view y
+    | State_operator_plus -> act0 trace Operator.node0_plus view y
+    | State_operator_minus -> act0 trace Operator.node0_minus view y
+    | State_operator_at -> act0 trace Operator.node0_at view y
+    | State_operator_caret -> act0 trace Operator.node0_caret view y
+    | State_operator_dollar -> act0 trace Operator.node0_dollar view y
+    | State_operator_lt -> act0 trace Operator.node0_lt view y
+    | State_operator_eq -> act0 trace Operator.node0_eq view y
+    | State_operator_gt -> act0 trace Operator.node0_gt view y
+    | State_operator_bar -> act0 trace Operator.node0_bar view y
+    | State_operator_colon -> act0 trace Operator.node0_colon view y
+    | State_operator_dot -> act0 trace Operator.node0_dot view y
+    | State_paren_comment_body v -> act1 trace ParenComment.node1_body v view y
+    | State_paren_comment_lparen v -> act1 trace ParenComment.node1_lparen v view y
+    | State_paren_comment_star v -> act1 trace ParenComment.node1_star v view y
+    | State_src_directive_colon -> act0 trace SrcDirective.node0_colon view y
+    | State_src_directive_path v -> act1 trace SrcDirective.node1_path v view y
+    | State_src_directive_path_bslash v -> act1 trace SrcDirective.node1_path_bslash v view y
+    | State_src_directive_path_bslash_u v -> act1 trace SrcDirective.node1_path_bslash_u v view y
     | State_src_directive_path_bslash_u_lcurly v ->
-      act1 trace SrcDirective.node1_path_bslash_u_lcurly v view t
+      act1 trace SrcDirective.node1_path_bslash_u_lcurly v view y
     | State_src_directive_path_bslash_u_lcurly_hex v ->
-      act1 trace SrcDirective.node1_path_bslash_u_lcurly_hex v view t
-    | State_src_directive_rditto v -> act1 trace SrcDirective.node1_rditto v view t
-    | State_src_directive_path_colon v -> act1 trace SrcDirective.node1_path_colon v view t
-    | State_src_directive_line v -> act1 trace SrcDirective.node1_line v view t
-    | State_src_directive_line_colon v -> act1 trace SrcDirective.node1_line_colon v view t
-    | State_src_directive_indent v -> act1 trace SrcDirective.node1_indent v view t
-    | State_src_directive_indent_0 v -> act1 trace SrcDirective.node1_indent_0 v view t
-    | State_src_directive_indent_plus v -> act1 trace SrcDirective.node1_indent_plus v view t
-    | State_src_directive_omit v -> act1 trace SrcDirective.node1_omit v view t
-    | State_src_directive_omit_0 v -> act1 trace SrcDirective.node1_omit_0 v view t
-    | State_dentation_start -> act0 trace Dentation.node0_start view t
-    | State_dentation_lparen -> act0 trace Dentation.node0_lparen view t
-    | State_dentation_space -> act0 trace Dentation.node0_space view t
-    | State_whitespace -> act0 trace node0_whitespace view t
-    | State_hash_comment -> act0 trace node0_hash_comment view t
-    | State_codepoint_tick -> act0 trace Codepoint_.node0_tick view t
-    | State_codepoint_bslash v -> act1 trace Codepoint_.node1_bslash v view t
-    | State_codepoint_bslash_u v -> act1 trace Codepoint_.node1_bslash_u v view t
-    | State_codepoint_bslash_u_lcurly v -> act1 trace Codepoint_.node1_bslash_u_lcurly v view t
+      act1 trace SrcDirective.node1_path_bslash_u_lcurly_hex v view y
+    | State_src_directive_rditto v -> act1 trace SrcDirective.node1_rditto v view y
+    | State_src_directive_path_colon v -> act1 trace SrcDirective.node1_path_colon v view y
+    | State_src_directive_line v -> act1 trace SrcDirective.node1_line v view y
+    | State_src_directive_line_colon v -> act1 trace SrcDirective.node1_line_colon v view y
+    | State_src_directive_indent v -> act1 trace SrcDirective.node1_indent v view y
+    | State_src_directive_indent_0 v -> act1 trace SrcDirective.node1_indent_0 v view y
+    | State_src_directive_indent_plus v -> act1 trace SrcDirective.node1_indent_plus v view y
+    | State_src_directive_omit v -> act1 trace SrcDirective.node1_omit v view y
+    | State_src_directive_omit_0 v -> act1 trace SrcDirective.node1_omit_0 v view y
+    | State_dentation_start -> act0 trace Dentation.node0_start view y
+    | State_dentation_lparen -> act0 trace Dentation.node0_lparen view y
+    | State_dentation_space -> act0 trace Dentation.node0_space view y
+    | State_whitespace -> act0 trace node0_whitespace view y
+    | State_hash_comment -> act0 trace node0_hash_comment view y
+    | State_codepoint_tick -> act0 trace Codepoint_.node0_tick view y
+    | State_codepoint_bslash v -> act1 trace Codepoint_.node1_bslash v view y
+    | State_codepoint_bslash_u v -> act1 trace Codepoint_.node1_bslash_u v view y
+    | State_codepoint_bslash_u_lcurly v -> act1 trace Codepoint_.node1_bslash_u_lcurly v view y
     | State_codepoint_bslash_u_lcurly_hex v ->
-      act1 trace Codepoint_.node1_bslash_u_lcurly_hex v view t
-    | State_codepoint_interpolated_cp v -> act1 trace Codepoint_.node1_interpolated_cp v view t
-    | State_codepoint_raw_cp v -> act1 trace Codepoint_.node1_raw_cp v view t
-    | State_codepoint_mal v -> act1 trace Codepoint_.node1_mal v view t
-    | State_rstring_ltag v -> act1 trace Rstring.node1_ltag v view t
-    | State_rstring_body v -> act1 trace Rstring.node1_body v view t
-    | State_rstring_rtag v -> act1 trace Rstring.node1_rtag v view t
-    | State_qstring_ltag -> act0 trace Qstring.node0_ltag view t
-    | State_qstring_body v -> act1 trace Qstring.node1_body v view t
-    | State_qstring_rtag v -> act1 trace Qstring.node1_rtag v view t
-    | State_istring_body v -> act1 trace Istring.node1_start v view t
-    | State_istring_bslash v -> act1 trace Istring.node1_bslash v view t
-    | State_istring_bslash_u v -> act1 trace Istring.node1_bslash_u v view t
-    | State_istring_bslash_u_lcurly v -> act1 trace Istring.node1_bslash_u_lcurly v view t
-    | State_fstring_pct_seen_start -> act0 trace Fstring.node0_pct_seen_start view t
-    | State_fstring_pad_seen_start -> act0 trace Fstring.node0_pad_seen_start view t
-    | State_fstring_just_seen_start -> act0 trace Fstring.node0_just_seen_start view t
-    | State_fstring_sign_seen_start -> act0 trace Fstring.node0_sign_seen_start view t
-    | State_fstring_alt_seen_start -> act0 trace Fstring.node0_alt_seen_start view t
-    | State_fstring_zpad_seen_start -> act0 trace Fstring.node0_zpad_seen_start view t
-    | State_fstring_width_star_seen_start -> act0 trace Fstring.node0_width_star_seen_start view t
-    | State_fstring_width v -> act1 trace Fstring.node1_width v view t
-    | State_fstring_width_seen_start -> act0 trace Fstring.node0_width_seen_start view t
-    | State_fstring_dot -> act0 trace Fstring.node0_dot view t
-    | State_fstring_pmode_seen_start -> act0 trace Fstring.node0_pmode_seen_start view t
+      act1 trace Codepoint_.node1_bslash_u_lcurly_hex v view y
+    | State_codepoint_interpolated_cp v -> act1 trace Codepoint_.node1_interpolated_cp v view y
+    | State_codepoint_raw_cp v -> act1 trace Codepoint_.node1_raw_cp v view y
+    | State_codepoint_mal v -> act1 trace Codepoint_.node1_mal v view y
+    | State_rstring_ltag v -> act1 trace Rstring.node1_ltag v view y
+    | State_rstring_body v -> act1 trace Rstring.node1_body v view y
+    | State_rstring_rtag v -> act1 trace Rstring.node1_rtag v view y
+    | State_qstring_ltag -> act0 trace Qstring.node0_ltag view y
+    | State_qstring_body v -> act1 trace Qstring.node1_body v view y
+    | State_qstring_rtag v -> act1 trace Qstring.node1_rtag v view y
+    | State_istring_body v -> act1 trace Istring.node1_start v view y
+    | State_istring_bslash v -> act1 trace Istring.node1_bslash v view y
+    | State_istring_bslash_u v -> act1 trace Istring.node1_bslash_u v view y
+    | State_istring_bslash_u_lcurly v -> act1 trace Istring.node1_bslash_u_lcurly v view y
+    | State_fstring_pct_seen_start -> act0 trace Fstring.node0_pct_seen_start view y
+    | State_fstring_pad_seen_start -> act0 trace Fstring.node0_pad_seen_start view y
+    | State_fstring_just_seen_start -> act0 trace Fstring.node0_just_seen_start view y
+    | State_fstring_sign_seen_start -> act0 trace Fstring.node0_sign_seen_start view y
+    | State_fstring_alt_seen_start -> act0 trace Fstring.node0_alt_seen_start view y
+    | State_fstring_zpad_seen_start -> act0 trace Fstring.node0_zpad_seen_start view y
+    | State_fstring_width_star_seen_start -> act0 trace Fstring.node0_width_star_seen_start view y
+    | State_fstring_width v -> act1 trace Fstring.node1_width v view y
+    | State_fstring_width_seen_start -> act0 trace Fstring.node0_width_seen_start view y
+    | State_fstring_dot -> act0 trace Fstring.node0_dot view y
+    | State_fstring_pmode_seen_start -> act0 trace Fstring.node0_pmode_seen_start view y
     | State_fstring_precision_star_seen_start ->
-      act0 trace Fstring.node0_precision_star_seen_start view t
-    | State_fstring_precision v -> act1 trace Fstring.node1_precision v view t
-    | State_fstring_precision_seen_start -> act0 trace Fstring.node0_precision_seen_start view t
-    | State_fstring_b -> act0 trace Fstring.node0_b view t
-    | State_fstring_radix_seen_start -> act0 trace Fstring.node0_radix_seen_start view t
-    | State_fstring_notation_seen_start -> act0 trace Fstring.node0_notation_seen_start view t
-    | State_fstring_pretty_seen_start -> act0 trace Fstring.node0_pretty_seen_start view t
-    | State_fstring_c -> act0 trace Fstring.node0_c view t
-    | State_fstring_fmt_u -> act0 trace Fstring.node0_fmt_u view t
-    | State_fstring_fmt_u_bitwidth v -> act1 trace Fstring.node1_fmt_u_bitwidth v view t
-    | State_fstring_fmt_i -> act0 trace Fstring.node0_fmt_i view t
-    | State_fstring_fmt_i_bitwidth v -> act1 trace Fstring.node1_fmt_i_bitwidth v view t
-    | State_fstring_fmt_r -> act0 trace Fstring.node0_fmt_r view t
-    | State_fstring_fmt_r_bitwidth v -> act1 trace Fstring.node1_fmt_r_bitwidth v view t
-    | State_fstring_fmt_f_seen_start -> act0 trace Fstring.node0_fmt_f_seen_start view t
-    | State_fstring_fmt_seen_start -> act0 trace Fstring.node0_fmt_seen_start view t
-    | State_fstring_sep_space -> act0 trace Fstring.node0_sep_space view t
-    | State_fstring_sep_op -> act0 trace Fstring.node0_sep_op view t
-    | State_fstring_sep_op_space -> act0 trace Fstring.node0_sep_op_space view t
-    | State_fstring_sep_seen_start -> act0 trace Fstring.node0_sep_seen_start view t
-    | State_fstring_lparen -> act0 trace Fstring.node0_spec_lparen view t
+      act0 trace Fstring.node0_precision_star_seen_start view y
+    | State_fstring_precision v -> act1 trace Fstring.node1_precision v view y
+    | State_fstring_precision_seen_start -> act0 trace Fstring.node0_precision_seen_start view y
+    | State_fstring_b -> act0 trace Fstring.node0_b view y
+    | State_fstring_radix_seen_start -> act0 trace Fstring.node0_radix_seen_start view y
+    | State_fstring_notation_seen_start -> act0 trace Fstring.node0_notation_seen_start view y
+    | State_fstring_pretty_seen_start -> act0 trace Fstring.node0_pretty_seen_start view y
+    | State_fstring_c -> act0 trace Fstring.node0_c view y
+    | State_fstring_fmt_u -> act0 trace Fstring.node0_fmt_u view y
+    | State_fstring_fmt_u_bitwidth v -> act1 trace Fstring.node1_fmt_u_bitwidth v view y
+    | State_fstring_fmt_i -> act0 trace Fstring.node0_fmt_i view y
+    | State_fstring_fmt_i_bitwidth v -> act1 trace Fstring.node1_fmt_i_bitwidth v view y
+    | State_fstring_fmt_r -> act0 trace Fstring.node0_fmt_r view y
+    | State_fstring_fmt_r_bitwidth v -> act1 trace Fstring.node1_fmt_r_bitwidth v view y
+    | State_fstring_fmt_f_seen_start -> act0 trace Fstring.node0_fmt_f_seen_start view y
+    | State_fstring_fmt_seen_start -> act0 trace Fstring.node0_fmt_seen_start view y
+    | State_fstring_sep_space -> act0 trace Fstring.node0_sep_space view y
+    | State_fstring_sep_op -> act0 trace Fstring.node0_sep_op view y
+    | State_fstring_sep_op_space -> act0 trace Fstring.node0_sep_op_space view y
+    | State_fstring_sep_seen_start -> act0 trace Fstring.node0_sep_seen_start view y
+    | State_fstring_lparen -> act0 trace Fstring.node0_spec_lparen view y
 
-  let rec transition trace state view t =
-    match transition_of_state trace state view t with
-    | t', Advance (view', state') -> begin
+  let rec transition trace state view y =
+    match transition_of_state trace state view y with
+    | y', Advance (view', state') -> begin
         if trace then
           File.Fmt.stdout |> Fmt.fmt " -> Advance (" |> View.pp view' |> Fmt.fmt ", "
-          |> State.pp state' |> Fmt.fmt "), " |> pp t' |> Fmt.fmt "\n" |> ignore;
-        transition trace state' view' t'
+          |> State.pp state' |> Fmt.fmt "), " |> pp_y y' |> Fmt.fmt "\n" |> ignore;
+        transition trace state' view' y'
       end
-    | t', Retry state' -> begin
+    | y', Retry state' -> begin
         if trace then
-          File.Fmt.stdout |> Fmt.fmt " -> Retry (" |> State.pp state' |> Fmt.fmt "), " |> pp t'
+          File.Fmt.stdout |> Fmt.fmt " -> Retry (" |> State.pp state' |> Fmt.fmt "), " |> pp_y y'
           |> Fmt.fmt "\n" |> ignore;
-        transition trace state' view t'
+        transition trace state' view y'
       end
-    | t', Accept tok -> begin
+    | y', Accept tok -> begin
         if trace then
           File.Fmt.stdout |> Fmt.fmt " -> Accept (" |> Token.pp tok |> Fmt.fmt "), "
-          |> pp t' |> Fmt.fmt "\n" |> ignore;
-        t', Accept tok
+          |> pp_y y' |> Fmt.fmt "\n" |> ignore;
+        y', Accept tok
       end
 
-  let next ?(trace=false) state t =
+  let next ?(trace=false) state y =
     if trace then
-      File.Fmt.stdout |> Fmt.fmt "Scan: start " |> State.pp state |> Fmt.fmt ", " |> pp t
+      File.Fmt.stdout |> Fmt.fmt "Scan: start " |> State.pp state |> Fmt.fmt ", " |> pp_y y
       |> Fmt.fmt "\n" |> ignore;
-    match transition trace state (view_of_t t) t with
+    match transition trace state (view_of_y y) y with
     | _, Advance _ -> not_reached ()
     | _, Retry _ -> not_reached ()
-    | t', Accept tok -> t', tok
+    | y', Accept tok -> y', tok
 end
 
-let next t =
+(***************************************************************************************************
+ * External API for type `t`. *)
+
+type t = {
+  y: y;
+  next: (t * Token.t) lazy_t;
+}
+
+let pp {y; _} formatter =
+  formatter
+  |> Fmt.fmt "{y=" |> pp_y y
+  |> Fmt.fmt "; next=...}"
+
+let rec next_impl y =
   let trace = None in
   let _trace = Some true in
-  match State.start_of_t t with
-  | Some start -> Dfa.next ?trace start t
-  | None -> begin
-      match List.hd t.fstring_states with
-      | Fstring_spec_pct_seen (tok :: toks') ->
-        Dfa.fstring_trans (Fstring_spec_pct_seen toks') t, tok
-      | Fstring_value_seen tok -> Dfa.fstring_trans Fstring_body t, tok
-      | Fstring_rditto_seen tok -> Dfa.fstring_pop t, tok
-      | _ -> not_reached ()
-    end
+  let y, token = match State.start_of_t y with
+    | Some start -> Dfa.next ?trace start y
+    | None -> begin
+        match List.hd y.fstring_states with
+        | Fstring_spec_pct_seen (tok :: toks') ->
+          Dfa.fstring_trans (Fstring_spec_pct_seen toks') y, tok
+        | Fstring_value_seen tok -> Dfa.fstring_trans Fstring_body y, tok
+        | Fstring_rditto_seen tok -> Dfa.fstring_pop y, tok
+        | _ -> not_reached ()
+      end
+  in
+  {y; next=lazy (next_impl y)}, token
+
+let init text =
+  let y = {
+    tok_base=Source.Cursor.hd (Source.init text);
+    level=Level.init 0L;
+    block_state=Block_primal;
+    line_state=Line_begin;
+    fstring_states=[];
+  } in
+  {y; next=lazy (next_impl y)}
+
+let text {y; _} =
+  Source.(text (Cursor.container y.tok_base))
+
+let cursor {y={tok_base; _}; _} =
+  tok_base
+
+let next {next; _} =
+  Lazy.force next
