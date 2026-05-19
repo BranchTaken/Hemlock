@@ -1306,7 +1306,7 @@ module Token = struct
 end
 
 (* Upon entry into a node's handler function, the codepoint just acted upon is bracketed by
- * `pcursor` and `curusor`. NB: `eoi[01]` handlers are called when no more input exists, which means
+ * `pcursor` and `cursor`. NB: `eoi[01]` handlers are called when no more input exists, which means
  * that `cursor` is at the end of input. *)
 module View = struct
   type t = {
