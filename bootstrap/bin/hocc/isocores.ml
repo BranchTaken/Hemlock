@@ -178,7 +178,22 @@ let fold ~init ~f {statenubs_map; _} =
     f accum statenub
   ) statenubs_map
 
-let fold_isocore_sets ~init ~f {isocores; _} =
-  Map.fold ~init:[] ~f:(fun accum (_k, v) -> v :: accum ) isocores
-  |> List.sort ~cmp:(fun {isocores_sn=isn0; _} {isocores_sn=isn1; _} -> Uns.cmp isn0 isn1)
+let fold_non_singleton_isocore_sets ~init ~f {isocores; _} =
+  let vs, nvs =
+    isocores
+    |> Map.fold ~init:([], 0L) ~f:(fun (vs, nvs) (_k, ({isocore_set; _} as v)) ->
+      match Ordset.length isocore_set with
+      | 0L -> not_reached ()
+      | 1L -> vs, nvs
+      | _ -> v :: vs, succ nvs
+    )
+  in
+  vs
+  |> List.sort ~length:nvs
+    ~cmp:(fun {isocore_set=set0; isocores_sn=sn0} {isocore_set=set1; isocores_sn=sn1} ->
+      match Uns.cmp (Ordset.length set0) (Ordset.length set1) with
+      | Lt -> Lt
+      | Eq -> Uns.cmp sn0 sn1
+      | Gt -> Gt
+    )
   |> List.fold ~init ~f:(fun accum {isocore_set; _} -> f accum isocore_set)

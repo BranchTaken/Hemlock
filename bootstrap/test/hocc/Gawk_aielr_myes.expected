@@ -13,7 +13,7 @@ hocc: Generating 616 LR(1) states
 hocc: Tracing automaton (.+=actions[+gotos])+.+....+..+.....+.....+.+.....+.....+.++.+.++++++
 hocc: 4 unreachable states
 hocc: Reindexing 612 LR(1) states
-hocc: Searching for remergeable state subgraphs (mergeable/max[worklst]) 0/292[423] 245/292[0]
+hocc: Searching for remergeable states: 245/292
 hocc: Remerging 245 LR(1) states
 hocc: Reindexing 367 LR(1) states
 hocc: 104 unresolvable conflicts in 66 states (38 ⊥, 66 shift-reduce, 0 reduce-reduce)

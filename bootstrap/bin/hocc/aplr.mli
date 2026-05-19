@@ -1,9 +1,9 @@
-(** APLR(1) state subgraph remerging functionality. This functionality can also be used as a final
-    compaction step for IELR(1) and PGM LR(1), with the caveat that merged IELR(1) conflict
-    contributions can be difficult to interpret.
+(** APLR(1) state subgraph remerging functionality. Remerging can also be used as a final compaction
+    step for IELR(1) and PGM LR(1), with the caveat that merged IELR(1) conflict contributions can
+    be difficult to interpret.
 
-    Although this module drives LR(1) -> APLR(1) transformation the implementation relies on
-    facilities distributed across other modules, especially:
+    This module drives LR(1) -> APLR(1) transformation using facilities distributed across other
+    modules, especially:
 
     - {!module:Remeargeables} maintains state nub remergeability metadata, fed by paired subgraph
       searches.

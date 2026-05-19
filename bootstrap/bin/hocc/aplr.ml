@@ -1,13 +1,8 @@
 open Basis
 open! Basis.Rudiments
 
-(* Pairwise state nubs comprising the (reversed) path from frontiers to roots. Spines are tracked in
- * case a `Distinct` pair is discovered, in which case the spines are passed to
- * `Remergeables.distinct`. *)
-type spines = (StateNub.t * StateNub.t) list
-
 type remergeable =
-  | NotRemergeable of spines (* Spines' state nubs are pairwise distinct. *)
+  | NotRemergeable of Remergeables.spines (* Spines' state nubs are pairwise distinct. *)
   | Remergeable
 
 let bool_of_remergeable remergeable =
@@ -219,101 +214,65 @@ let remergeable_statenubs states remergeables statenub0 statenub1 =
   inner states remergeables ~frontiers_next:[] ~frontiers_current
 
 let remergeable_search io isocores states =
-  let remergeables = Remergeables.empty in
-  (* Initialize the work list with indices of all states in non-singleton isocore sets. *)
-  let worklst, worklst_length, max_mergeable =
-    Isocores.fold_isocore_sets ~init:([], 0L, 0L)
-      ~f:(fun (worklst, worklst_length, max_mergeable) isocore_set ->
-        match Ordset.length isocore_set with
-        | 0L -> not_reached ()
-        | 1L -> worklst, worklst_length, max_mergeable
-        | _ -> begin
-            let worklst =
-              Ordset.fold ~init:worklst ~f:(fun worklst index -> index :: worklst) isocore_set in
-            let isocore_set_length = Ordset.length isocore_set in
-            let worklst_length = worklst_length + isocore_set_length in
-            let max_mergeable = max_mergeable + (pred isocore_set_length) in
-            worklst, worklst_length, max_mergeable
-          end
-      ) isocores
-  in
   let io =
     io.log
-    |> Fmt.fmt "hocc: Searching for remergeable state subgraphs (mergeable/max[worklst]) 0/"
-    |> Uns.pp max_mergeable
-    |> Fmt.fmt "[" |> Uns.pp worklst_length |> Fmt.fmt "]"
+    |> Fmt.fmt "hocc: Searching for remergeable states"
     |> Io.with_log io
   in
-  let io, nmergeable, remergeables =
-    worklst
-    (* Reverse the work list so that remerging tends to follow the same order as splits occurred. *)
-    |> List.rev
-    |> List.foldi_until ~init:(io, 0L, remergeables)
-      ~f:(fun i (io, nmergeable, remergeables) statenub0 ->
-        let io = match i <> 0L && (worklst_length - i) % 1000L = 0L with
-          | false -> io
-          | true -> begin
-              let io =
-                io.log
-                |> Fmt.fmt " "
-                |> Uns.pp nmergeable |> Fmt.fmt "/" |> Uns.pp max_mergeable
-                |> Fmt.fmt "[" |> Uns.pp (worklst_length - i) |> Fmt.fmt "]"
-                |> Io.with_log io
-              in
-              io
-            end
-        in
-        let StateNub.{isocore_set_sn=issn0; _} = statenub0 in
-        let core = Lr1Itemset.core StateNub.(statenub0.lr1itemsetclosure).kernel in
-        let isocore_set = Isocores.get_isocore_set_hlt core isocores in
-        let nmergeable, remergeables = Ordset.fold_until ~init:(nmergeable, remergeables)
-          ~f:(fun (nmergeable, remergeables) statenub1 ->
-            let StateNub.{isocore_set_sn=issn1; _} = statenub1 in
-            (* Eliminate redundant/self pairs via `>`. Furthermore, use issn for comparison rather
-             * than state index so that the order of merge attempts follows the same order as splits
-             * occurred. For example, given a set {0,1,2,3,4}, the order of compatibility tests
-             * during splitting was:
-             *
-             *   (1,0)
-             *   (2,0), (2,1)
-             *   (3,0), (3,1), (3,2)
-             *   (4,0), (4,1), (4,2), (4,3) *)
-            match issn0 > issn1 with
-            | false -> (nmergeable, remergeables), true
-            | true -> begin
-                let nmergeable, remergeables =
-                  match Remergeables.rel statenub0 statenub1 remergeables with
-                  | Distinct
-                  | Mergeable -> nmergeable, remergeables
-                  | Unknown -> begin
-                      let remergeables, remergeable =
-                        remergeable_statenubs states remergeables statenub0 statenub1 in
-                      let subgraph_size = Remergeables.subgraph_size remergeables in
-                      match remergeable with
-                      | NotRemergeable spines ->
-                        nmergeable, Remergeables.distinct spines remergeables
-                      | Remergeable ->
-                        nmergeable + subgraph_size, Remergeables.mergeable remergeables
-                    end
-                in
-                (nmergeable, remergeables), false
-              end
-          ) isocore_set in
-        (io, nmergeable, remergeables), nmergeable = max_mergeable
-      )
-  in
+  (* Fold over all non-singleton isocoric state nub sets in `isocores` to search for remergeable
+   * pairs within each set. Process sets in order of increasing cardinality based on the heuristic
+   * that smaller sets will be involved in less complex splits. Determining the remergeability of
+   * small subgraphs early on reduces the search complexity for large adjacent/containing subgraphs
+   * later on, whereas the converse — searching large subgraphs first — is of negligible benefit
+   * to later searches of small subgraphs. *)
+  let nmergeable, max_mergeable, remergeables =
+    Isocores.fold_non_singleton_isocore_sets ~init:(0L, 0L, Remergeables.empty)
+      ~f:(fun (nmergeable, max_mergeable, remergeables) isocore_set0 ->
+        let isocore_set_length = Ordset.length isocore_set0 in
+        match isocore_set_length with
+        | 0L -> not_reached ()
+        | 1L -> nmergeable, max_mergeable, remergeables
+        | _ -> begin
+            let max_mergeable = max_mergeable + (pred isocore_set_length) in
+            (* Test all n-choose-2 pairings for remergeability. *)
+            let nmergeable, remergeables, _isocore_set1 =
+              Ordset.fold ~init:(nmergeable, remergeables, isocore_set0)
+                ~f:(fun (nmergeable, remergeables, isocore_set1) statenub0 ->
+                  let isocore_set1 = Ordset.remove statenub0 isocore_set1 in
+                  let nmergeable, remergeables =
+                    Ordset.fold ~init:(nmergeable, remergeables)
+                      ~f:(fun (nmergeable, remergeables) statenub1 ->
+                        let nmergeable, remergeables =
+                          (* `Distinct`/`Mergeable` indicates that an earlier search starting at
+                           * predecessors transitively determined this pair's relationship. *)
+                          match Remergeables.rel statenub0 statenub1 remergeables with
+                          | Distinct
+                          | Mergeable -> nmergeable, remergeables
+                          | Unknown -> begin
+                              let remergeables, remergeable =
+                                remergeable_statenubs states remergeables statenub0 statenub1 in
+                              match remergeable with
+                              | NotRemergeable spines ->
+                                nmergeable, Remergeables.distinct spines remergeables
+                              | Remergeable -> begin
+                                  let subgraph_size = Remergeables.subgraph_size remergeables in
+                                  nmergeable + subgraph_size, Remergeables.mergeable remergeables
+                                end
+                            end
+                        in
+                        nmergeable, remergeables
+                      ) isocore_set1
+                  in
+                  nmergeable, remergeables, isocore_set1
+                ) isocore_set0
+            in
+            nmergeable, max_mergeable, remergeables
+          end
+      ) isocores in
   let io =
     io.log
-    |> (fun formatter ->
-      match worklst_length = 0L with
-      | true -> formatter
-      | false -> begin
-          formatter
-          |> Fmt.fmt " "
-          |> Uns.pp nmergeable |> Fmt.fmt "/" |> Uns.pp max_mergeable
-          |> Fmt.fmt "[0]"
-        end
-    )
+    |> Fmt.fmt ": "
+    |> Uns.pp nmergeable |> Fmt.fmt "/" |> Uns.pp max_mergeable
     |> Fmt.fmt "\n"
     |> Io.with_log io
   in

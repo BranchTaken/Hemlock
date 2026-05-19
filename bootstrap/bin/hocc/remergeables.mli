@@ -10,6 +10,11 @@ type rel =
   | Distinct (* Distinct subgraph features prevent remerging. *)
   | Mergeable (* Remergeable. *)
 
+(** Pairwise state nubs comprising the (reversed) path from [frontiers..roots]. Spines are tracked
+    in case a `Distinct` pair is discovered, in which case the spines are passed to `distinct` to
+    be recorded as pairwise distinct. *)
+type spines = (StateNub.t * StateNub.t) list
+
 type t
 
 val fmt: ?alt:bool -> ?width:uns -> t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
@@ -33,7 +38,7 @@ val expand: StateNub.t -> StateNub.t -> t -> t
 (** [expand statenub0 statenub1] expands the subgraphs being explored by tentatively recording a
     [Remergeable] relationship between [statenub0] and [statenub1]. *)
 
-val distinct: (StateNub.t * StateNub.t) list -> t -> t
+val distinct: spines -> t -> t
 (** [distinct spines t] concludes subgraph exploration with a determination that the subgraphs are
     distinct, and therefore the spines (i.e. paths from exploration roots to distinct state pair)
     are distinct. The spines' relationships transition to [Distinct] and all other tentative

@@ -6,6 +6,8 @@ type rel =
   | Distinct
   | Mergeable
 
+type spines = (StateNub.t * StateNub.t) list
+
 type core_rels = {
   (* Sets of `Mergeable` states, where each bitset index is an isocore set serial number (issn).
    * Mergeability is transitive, so each issn is a member of at most one set. *)
