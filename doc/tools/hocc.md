@@ -23,8 +23,6 @@ integrating with [Hemlock](https://github.com/BranchTaken/Hemlock) rather than
 - Hocc precisely traces automata to garbage-collect unreachable states, actions, and gotos. Aside
   from reducing generated parser size, this enables more thorough reporting about unused grammar
   constructs.
-- Hocc supports an automated error recovery algorithm [^diekmann2020] based on minimum-cost repair
-  sequences. [XXX Not implemented.]
 
 ## Command usage
 
@@ -1467,11 +1465,6 @@ hocc
     David Pager,
     “A Practical General Method for Constructing LR(k) Parsers”,
     Acta Informatica 7:249-268, 1977.
-
-[^diekmann2020]:
-    Lukas Diekmann and Laurence Tratt,
-    “Don't Panic! Better, Fewer, Syntax Errors for LR Parsers,”
-    34th European Conference on Object-Oriented Programming (ECOOP 2020), Article No. 6, pages 6:1–6:32.
 
 [^fpottier]:
     François Pottier and Yann Régis-Gianas,
