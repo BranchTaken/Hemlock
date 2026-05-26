@@ -17,6 +17,6 @@ hocc: 0 unresolvable conflicts
 hocc: 1 unused production:
 hocc:    S ::= Tb C Ta
 hocc: Generating text report
-hocc: Generating hocc report
+hocc: Generating Hocc report
 hocc: Writing "./hocc/IelrFig2.txt"
 hocc: Writing "./hocc/IelrFig2.hmh"

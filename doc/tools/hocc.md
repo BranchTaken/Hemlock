@@ -38,6 +38,10 @@ Parameters:
   `<dstdir>/hocc/<module>.txt`.
 - `-hmh` | `-hocc`: Write a complete grammar specification in Hocc format to
   `<dstdir>/hocc/<module>.hmh`, but with all non-terminal types and reduction code omitted.
+- `-y[acc]` : Write a complete grammar specification in Yacc format to `<dstdir>/hocc/<module>.y`,
+  but with all non-terminal types and reduction code omitted. Precedence/associativity
+  specifications are linearized per Yacc semantics, which may introduce implicit precedence
+  relations not present in the Hocc specification.
 - `-a[lgorithm] <alg>`: Use the specified `<alg>`orithm for generating an automaton. Defaults to
   `aplr`.
   + `aplr`: Adequacy Preservation LR(1) compact automaton that recognizes valid inputs identically

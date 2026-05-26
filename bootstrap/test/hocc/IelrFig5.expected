@@ -14,6 +14,6 @@ hocc: Tracing automaton (.+=actions[+gotos])+...+++.++.+.+.+
 hocc: 0 unreachable states
 hocc: 0 unresolvable conflicts
 hocc: Generating text report
-hocc: Generating hocc report
+hocc: Generating Hocc report
 hocc: Writing "./hocc/IelrFig5.txt"
 hocc: Writing "./hocc/IelrFig5.hmh"

@@ -1178,8 +1178,9 @@ and warn_unused io precs symbols prods states =
               match Set.mem name precs_used with
               | true -> formatter
               | false -> begin
-                  let prec = Prec.init ~name ~prec_set in
-                  formatter |> Fmt.fmt "hocc:" |> Precs.src_fmt prec precs
+                  let Prec.{prec_set_index; _} = Prec.init ~name ~prec_set in
+                  let prec_set = Precs.prec_set_of_prec_index prec_set_index precs in
+                  formatter |> Fmt.fmt "hocc:" |> PrecSet.hocc_fmt prec_set
                 end
             ) names
           ) precs
@@ -1211,7 +1212,7 @@ and warn_unused io precs symbols prods states =
         |> (fun formatter ->
           Ordset.fold ~init:formatter
             ~f:(fun formatter prec_set ->
-              formatter |> Fmt.fmt "hocc:" |> PrecSet.src_fmt prec_set
+              formatter |> Fmt.fmt "hocc:" |> PrecSet.hocc_fmt prec_set
             ) prec_sets_assoc_unused
         )
         |> Io.with_err io
@@ -1230,7 +1231,7 @@ and warn_unused io precs symbols prods states =
           Symbols.tokens_fold ~init:formatter ~f:(fun formatter token ->
             match Set.mem Symbol.(token.index) tokens_used with
             | true -> formatter
-            | false -> formatter |> Fmt.fmt "hocc:" |> Symbols.src_fmt precs token symbols
+            | false -> formatter |> Fmt.fmt "hocc:" |> Symbols.hocc_fmt precs token symbols
           ) symbols
         )
         |> Io.with_err io
@@ -1257,7 +1258,7 @@ and warn_unused io precs symbols prods states =
         |> (fun formatter ->
           Ordset.fold ~init:formatter
             ~f:(fun formatter token ->
-              formatter |> Fmt.fmt "hocc:" |> Symbols.src_fmt precs token symbols
+              formatter |> Fmt.fmt "hocc:" |> Symbols.hocc_fmt precs token symbols
             ) tokens_prec_unused
         )
         |> Io.with_err io
@@ -1310,7 +1311,7 @@ and warn_unused io precs symbols prods states =
               | false -> begin
                   formatter
                   |> Fmt.fmt "hocc:"
-                  |> Prods.src_fmt precs symbols prod
+                  |> Prods.hocc_fmt precs symbols prod
                 end
             ) prods
         )
@@ -1338,7 +1339,7 @@ and warn_unused io precs symbols prods states =
         |> (fun formatter ->
           Ordset.fold ~init:formatter
             ~f:(fun formatter prod ->
-              formatter |> Fmt.fmt "hocc:" |> Prods.src_fmt precs symbols prod
+              formatter |> Fmt.fmt "hocc:" |> Prods.hocc_fmt precs symbols prod
             ) prods_prec_unused
         )
         |> Io.with_err io

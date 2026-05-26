@@ -18,6 +18,6 @@ hocc:    A ::= Ta Ta prec p1
 hocc:    B ::= Ta Ta prec p2
 hocc:    C ::= Ta Ta prec p3
 hocc: Generating text report
-hocc: Generating hocc report
+hocc: Generating Hocc report
 hocc: Writing "./hocc/IelrFig3_rno.txt"
 hocc: Writing "./hocc/IelrFig3_rno.hmh"

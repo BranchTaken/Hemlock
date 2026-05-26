@@ -36,7 +36,7 @@ let pp_hr {names; _} formatter =
   |> Fmt.fmt "prec "
   |> Fmt.fmt (String.join ~sep:", " (Array.to_list names))
 
-let src_fmt {names; assoc; stmt; _} formatter =
+let hocc_fmt {names; assoc; stmt; _} formatter =
   let string_of_token token = begin
     Hmc.Source.Slice.to_string (Scan.Token.source token)
   end in

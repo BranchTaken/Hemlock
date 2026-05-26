@@ -44,39 +44,8 @@ let prec_set_of_prec_index prec_index {prec_sets; _} =
 let fold_prec_sets ~init ~f {prec_sets; _} =
   Ordmap.fold ~init ~f:(fun accum (_, prec) -> f accum prec) prec_sets
 
-let src_fmt Prec.{name_index; prec_set_index} t formatter =
-  let PrecSet.{assoc; stmt; _} as prec_set = prec_set_of_prec_index prec_set_index t in
-  let name = PrecSet.name_of_name_index name_index prec_set in
-  let string_of_token token = begin
-    Hmc.Source.Slice.to_string (Scan.Token.source token)
-  end in
-  formatter
-  |> Fmt.fmt (match assoc with
-    | None -> "    neutral "
-    | Some Left -> "    left "
-    | Some Right -> "    right "
-    | Some Nonassoc -> "    nonassoc "
-  )
-  |> Fmt.fmt name
-  |> (fun formatter ->
-    match stmt with
-    | PrecSet {prec_rels=PrecRelsPrecs {precs=Precs {uident; precs_tl}}; _} -> begin
-        let rec fmt_precs_tl precs_tl formatter = begin
-          match precs_tl with
-          | Parse.PrecsTlUident {uident; precs_tl} -> begin
-              formatter
-              |> Fmt.fmt ", " |> Fmt.fmt (string_of_token uident)
-              |> fmt_precs_tl precs_tl
-            end
-          | PrecsTlEpsilon -> formatter
-        end in
-        formatter
-        |> Fmt.fmt " < " |> Fmt.fmt (string_of_token uident)
-        |> fmt_precs_tl precs_tl
-      end
-    | PrecSet {prec_rels=PrecRelsEpsilon; _} -> formatter
-  )
-  |> Fmt.fmt "\n"
+let fold_prec_sets_right ~init ~f {prec_sets; _} =
+  Ordmap.fold_right ~init ~f:(fun accum (_, prec) -> f accum prec) prec_sets
 
 let pp_prec_hr Prec.{name_index; prec_set_index} t formatter =
   let prec_set = prec_set_of_prec_index prec_set_index t in

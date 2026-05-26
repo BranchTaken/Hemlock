@@ -28,7 +28,7 @@ include IdentifiableIntf.S with type t := t
 val pp_hr: t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
 (** Formatter which outputs precedence set in human-readable form. *)
 
-val src_fmt: t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
+val hocc_fmt: t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
 (** Formatter which outputs precedence set in hocc syntax. *)
 
 val init: index:Index.t -> names:string array -> assoc:(Assoc.t option) -> doms:Bitset.t

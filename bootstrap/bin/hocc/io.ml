@@ -8,6 +8,7 @@ type t = {
   log: (module Fmt.Formatter);
   txt: (module Fmt.Formatter);
   hocc: (module Fmt.Formatter);
+  yacc: (module Fmt.Formatter);
   hmi: (module Fmt.Formatter);
   hm: (module Fmt.Formatter);
   mli: (module Fmt.Formatter);
@@ -74,6 +75,11 @@ let init_hocc conf =
   | false -> File.Fmt.sink
   | true -> String.Fmt.empty
 
+let init_yacc conf =
+  match Conf.yacc conf with
+  | false -> File.Fmt.sink
+  | true -> String.Fmt.empty
+
 let init_hmi conf hmhi =
   match Conf.hemlock conf, hmhi with
   | false, _
@@ -103,12 +109,13 @@ let init conf =
   let log = init_log conf in
   let txt = init_txt conf in
   let hocc = init_hocc conf in
+  let yacc = init_yacc conf in
   let hmi = init_hmi conf hmhi in
   let hm = init_hm conf in
   let mli = init_mli conf hmhi in
   let ml = init_ml conf in
 
-  {err; hmhi; hmh; log; txt; hocc; hmi; hm; mli; ml}
+  {err; hmhi; hmh; log; txt; hocc; yacc; hmi; hm; mli; ml}
 
 let open_outfile_as_formatter ~is_report ~err path =
   let _ = match is_report with
@@ -134,16 +141,17 @@ let fini_formatter ?(is_report=false) conf conflicts ~err ~log formatter suffix 
     end
   | false -> log, formatter
 
-let fini conf conflicts ({err; log; txt; hocc; hmi; hm; mli; ml; _} as t) =
+let fini conf conflicts ({err; log; txt; hocc; yacc; hmi; hm; mli; ml; _} as t) =
   let log, txt = fini_formatter ~is_report:true conf conflicts ~err ~log txt ".txt" in
   let log, hocc = fini_formatter ~is_report:true conf conflicts ~err ~log hocc ".hmh" in
+  let log, yacc = fini_formatter ~is_report:true conf conflicts ~err ~log yacc ".y" in
 
   let log, hmi = fini_formatter conf conflicts ~err ~log hmi ".hmi" in
   let log, hm = fini_formatter conf conflicts ~err ~log hm ".hm" in
   let log, mli = fini_formatter conf conflicts ~err ~log mli ".mli" in
   let log, ml = fini_formatter conf conflicts ~err ~log ml ".ml" in
   let log = Fmt.flush log in
-  {t with log; txt; hocc; hmi; hm; mli; ml}
+  {t with log; txt; hocc; yacc; hmi; hm; mli; ml}
 
 let fatal {err; _} =
   let _err = Fmt.flush err in
@@ -161,6 +169,9 @@ let with_txt t txt =
 
 let with_hocc t hocc =
   {t with hocc}
+
+let with_yacc t yacc =
+  {t with yacc}
 
 let with_hmi t hmi =
   {t with hmi}

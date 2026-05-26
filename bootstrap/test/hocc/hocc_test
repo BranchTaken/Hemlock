@@ -95,5 +95,6 @@ mv_report() {
 }
 mv_report txt
 mv_report hmh
+mv_report y
 
 exit ${exit_code}

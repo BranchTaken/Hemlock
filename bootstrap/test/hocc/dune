@@ -208,7 +208,7 @@
   %{bin:hocc})
  (action
   (with-accepted-exit-codes 0
-   (with-outputs-to help_a.out (run %{bin:hocc} -v -verbose -w -warn -txt -text -hmh -hocc -a aplr -algorithm aplr -hm -hemlock -ml -ocaml -s Foo -src Foo -d bar -dstdir bar -h)))))
+   (with-outputs-to help_a.out (run %{bin:hocc} -v -verbose -w -warn -txt -text -hmh -hocc -y -yacc -a aplr -algorithm aplr -hm -hemlock -ml -ocaml -s Foo -src Foo -d bar -dstdir bar -h)))))
 (rule
  (alias runtest)
  (action (diff help_a.expected help_a.out)))
@@ -218,7 +218,7 @@
   %{bin:hocc})
  (action
   (with-accepted-exit-codes 1
-   (with-outputs-to help_b.out (run %{bin:hocc} -v -verbose -w -warn -txt -text -hmh -hocc -a aplr -algorithm aplr -hm -hemlock -ml -ocaml -s Foo -src Foo -d bar -dstdir bar -no-such-option)))))
+   (with-outputs-to help_b.out (run %{bin:hocc} -v -verbose -w -warn -txt -text -hmh -hocc -y -yacc -a aplr -algorithm aplr -hm -hemlock -ml -ocaml -s Foo -src Foo -d bar -dstdir bar -no-such-option)))))
 (rule
  (alias runtest)
  (action (diff help_b.expected help_b.out)))
@@ -227,17 +227,18 @@
  (deps
   (glob_files Hocc.hmh*)
   %{bin:hocc})
- (targets Hocc.out.txt Hocc.out.hmh)
+ (targets Hocc.out.txt Hocc.out.hmh Hocc.out.y)
  (action
   (with-accepted-exit-codes 0
-   (with-outputs-to Hocc.out (run ./hocc_test %{bin:hocc} Hocc -v -w -txt -hmh)))))
+   (with-outputs-to Hocc.out (run ./hocc_test %{bin:hocc} Hocc -v -w -txt -hmh -yacc)))))
 (rule
  (alias runtest)
  (action
   (progn
    (diff Hocc.expected Hocc.out)
    (diff Hocc.expected.txt Hocc.out.txt)
-   (diff Hocc.expected.hmh Hocc.out.hmh))))
+   (diff Hocc.expected.hmh Hocc.out.hmh)
+   (diff Hocc.expected.y Hocc.out.y))))
 
 (rule
  (deps

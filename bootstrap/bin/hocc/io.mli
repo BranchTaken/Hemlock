@@ -15,6 +15,7 @@ type t = {
   log: (module Fmt.Formatter);
   txt: (module Fmt.Formatter);
   hocc: (module Fmt.Formatter);
+  yacc: (module Fmt.Formatter);
   hmi: (module Fmt.Formatter);
   hm: (module Fmt.Formatter);
   mli: (module Fmt.Formatter);
@@ -42,6 +43,9 @@ val with_txt: t -> (module Fmt.Formatter) -> t
 
 val with_hocc: t -> (module Fmt.Formatter) -> t
 (** [with_hocc t hocc] is equivalent to [{t with hocc}]. *)
+
+val with_yacc: t -> (module Fmt.Formatter) -> t
+(** [with_yacc t yacc] is equivalent to [{t with yacc}]. *)
 
 val with_hmi: t -> (module Fmt.Formatter) -> t
 (** [with_hmi t hmi] is equivalent to [{t with hmi}]. *)
