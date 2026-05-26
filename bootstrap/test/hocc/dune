@@ -497,16 +497,16 @@
  (deps
   (glob_files IelrRemergeable.hmh*)
   %{bin:hocc})
- (targets IelrRemergeable_aielr_myes.out.txt)
+ (targets IelrRemergeable_aielr_mno.out.txt)
  (action
   (with-accepted-exit-codes 0
-   (with-outputs-to IelrRemergeable_aielr_myes.out (run ./hocc_test %{bin:hocc} IelrRemergeable -algorithm ielr -remerge yes -v -w -txt)))))
+   (with-outputs-to IelrRemergeable_aielr_mno.out (run ./hocc_test %{bin:hocc} IelrRemergeable -algorithm ielr -remerge no -v -w -txt)))))
 (rule
  (alias runtest)
  (action
   (progn
-   (diff IelrRemergeable_aielr_myes.expected IelrRemergeable_aielr_myes.out)
-   (diff IelrRemergeable_aielr_myes.expected.txt IelrRemergeable_aielr_myes.out.txt))))
+   (diff IelrRemergeable_aielr_mno.expected IelrRemergeable_aielr_mno.out)
+   (diff IelrRemergeable_aielr_mno.expected.txt IelrRemergeable_aielr_mno.out.txt))))
 
 (rule
  (deps

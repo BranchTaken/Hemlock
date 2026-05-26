@@ -14,10 +14,6 @@ type gc =
   | PostRemerge (** Perform unreachable state garbage collection after potentially remerging. *)
   | No (** Do not perform unreachable state garbage collection. *)
 
-type remerge =
-  | Default of bool (** Default; no remerge parameter specified. *)
-  | Explicit of bool (** Explicit remerge parameter specified. *)
-
 val pp_algorithm: algorithm -> (module Fmt.Formatter) -> (module Fmt.Formatter)
 (** [pp_algorithm algorithm] formats [algorithm]. *)
 
@@ -53,9 +49,8 @@ val resolve: t -> bool
 val gc: t -> gc
 (** [gc t] returns whether/when to perform unreachable state garbage collection. *)
 
-val remerge: t -> remerge
-(** [remerge t] returns a [Default]/[Explicit] remerging parameter, true if remerging of equivalent
-    split states is enabled. *)
+val remerge: t -> bool
+(** [remerge t] returns true if remerging of equivalent split states is enabled. *)
 
 val hemlock: t -> bool
 (** [hemlock t] returns true if a Hemlock-based parser is to be generated. *)

@@ -1,4 +1,4 @@
-hocc: Parsing "./IelrRemergeable_aielr_myes.hmh"
+hocc: Parsing "./IelrRemergeable_aielr_mno.hmh"
 hocc: Generating IELR(1) specification
 hocc: 5 precedences, 13 tokens, 5 non-terminals (1 start), 15 productions
 hocc: Generating LALR(1) specification as IELR(1) prerequisite
@@ -12,9 +12,6 @@ hocc: Generating LR(1) item set closures (workq/total) 0/58
 hocc: Generating 58 LR(1) states
 hocc: Tracing automaton (.+=actions[+gotos])+.+..+.+.+..+.+.+.++
 hocc: 0 unreachable states
-hocc: Searching for remergeable states: 13/13
-hocc: Remerging 13 LR(1) states
-hocc: Reindexing 45 LR(1) states
 hocc: 0 unresolvable conflicts
 hocc: Generating text report
-hocc: Writing "./hocc/IelrRemergeable_aielr_myes.txt"
+hocc: Writing "./hocc/IelrRemergeable_aielr_mno.txt"

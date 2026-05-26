@@ -12,6 +12,8 @@ hocc: Generating LR(1) item set closures (workq/total) 0/12
 hocc: Generating 12 LR(1) states
 hocc: Tracing automaton (.+=actions[+gotos])+...+.+.+
 hocc: 0 unreachable states
+hocc: Searching for remergeable states: 0/1
+hocc: 0 remergeable states
 hocc: 1 conflict in 1 state (0 ⊥, 1 shift-reduce, 0 reduce-reduce) (conflict resolution disabled)
 hocc: 1 unused precedence set associativity:
 hocc:    left p

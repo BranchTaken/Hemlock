@@ -29,10 +29,6 @@ let pp_gc gc formatter =
     | No -> "No"
   )
 
-type remerge =
-  | Default of bool
-  | Explicit of bool
-
 type t = {
   verbose: bool;
   warn: bool;
@@ -94,14 +90,15 @@ let resolve algorithm resolve_opt =
 
 let remerge algorithm remerge_opt =
   match algorithm, remerge_opt with
-  | _, Some remerge -> Explicit remerge
+  | _, Some remerge
+    -> remerge
   | Aplr, None
-    -> Default true
   | Ielr, None
-  | Lr, None
   | Pgm, None
+    -> true
+  | Lr, None
   | Lalr, None
-    -> Default false
+    -> false
 
 let usage error =
   let exit_code, formatter = match error with
@@ -132,7 +129,8 @@ Parameters:
   -r[esolve] (yes|no) : Control conflict resolution enablement. Defaults to yes
                         for aplr/ielr/lr algorithms, no for pgm/lalr algorithms.
 -[re]m[erge] (yes|no) : Control compatible state subgraph remerging enablement.
-                        Defaults to yes for aplr algorithm, no otherwise.
+                        Defaults to yes for aplr/ielr/pgm algorithms, no for
+                        lr/lalr algorithms.
   -g[c] (pre|post|no) : Control unreachable state garbage collection enablement
                         and ordering relative to remerging. Defaults to
                         post-remerging.

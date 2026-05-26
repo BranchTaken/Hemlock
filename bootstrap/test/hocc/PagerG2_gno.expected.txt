@@ -108,7 +108,7 @@ PGM LR(1) States
             [Tn ::= · Ut Xn At, {At, Dt, Et, EOI}]
         Actions
             Tt : ShiftPrefix 5
-            Ut : ShiftPrefix 19
+            Ut : ShiftPrefix 6
         Gotos
             Yn : 7
             Zn : 8
@@ -125,7 +125,7 @@ PGM LR(1) States
             [Tn ::= · Ut Xn At, {At, Dt, Et, EOI}]
         Actions
             Tt : ShiftPrefix 10
-            Ut : ShiftPrefix 19
+            Ut : ShiftPrefix 6
         Gotos
             Yn : 11
             Zn : 12
@@ -153,7 +153,7 @@ PGM LR(1) States
     State 6 [6.0]
         Kernel
             [Yn ::= Ut · Xn, {Dt, Et}]
-            [Tn ::= Ut · Xn At, {EOI}]
+            [Tn ::= Ut · Xn At, {At, Dt, Et, EOI}]
         Added
             [Xn ::= · At Yn Dt, {At, Dt, Et}]
             [Xn ::= · At Zn Ct, {At, Dt, Et}]
@@ -170,12 +170,12 @@ PGM LR(1) States
         Kernel
             [Xn ::= At Yn · Dt, {At, Dt, Et, EOI}]
         Actions
-            Dt : ShiftPrefix 20
+            Dt : ShiftPrefix 19
     State 8 [8.0]
         Kernel
             [Xn ::= At Zn · Ct, {At, Dt, Et, EOI}]
         Actions
-            Ct : ShiftPrefix 21
+            Ct : ShiftPrefix 20
     State 9 [9.0]
         Kernel
             [Xn ::= At Tn ·, {At, Dt, Et, EOI}]
@@ -191,19 +191,19 @@ PGM LR(1) States
         Added
             [Wn ::= · Ut Vn, {Et}]
         Actions
-            Ut : ShiftPrefix 22
+            Ut : ShiftPrefix 21
         Gotos
             Wn : 17
     State 11 [10.0]
         Kernel
             [Xn ::= Bt Yn · Et, {At, Dt, Et, EOI}]
         Actions
-            Et : ShiftPrefix 23
+            Et : ShiftPrefix 22
     State 12 [11.0]
         Kernel
             [Xn ::= Bt Zn · Dt, {At, Dt, Et, EOI}]
         Actions
-            Dt : ShiftPrefix 24
+            Dt : ShiftPrefix 23
     State 13 [12.0]
         Kernel
             [Xn ::= Bt Tn ·, {At, Dt, Et, EOI}]
@@ -232,7 +232,7 @@ PGM LR(1) States
             Ct : Reduce Zn ::= Tt Ut
             Dt : Reduce Vn ::= epsilon
         Gotos
-            Vn : 25
+            Vn : 24
     State 17 [16.0]
         Kernel
             [Yn ::= Tt Wn ·, {Dt, Et}]
@@ -244,26 +244,10 @@ PGM LR(1) States
             [Yn ::= Ut Xn ·, {Dt, Et}]
             [Tn ::= Ut Xn · At, {At, Dt, Et, EOI}]
         Actions
-            At : ShiftPrefix 26
+            At : ShiftPrefix 25
             Dt : Reduce Yn ::= Ut Xn
             Et : Reduce Yn ::= Ut Xn
-    State 19 [6.1]
-        Kernel
-            [Yn ::= Ut · Xn, {Dt, Et}]
-            [Tn ::= Ut · Xn At, {At, Dt, Et, EOI}]
-        Added
-            [Xn ::= · At Yn Dt, {At, Dt, Et}]
-            [Xn ::= · At Zn Ct, {At, Dt, Et}]
-            [Xn ::= · At Tn, {At, Dt, Et}]
-            [Xn ::= · Bt Yn Et, {At, Dt, Et}]
-            [Xn ::= · Bt Zn Dt, {At, Dt, Et}]
-            [Xn ::= · Bt Tn, {At, Dt, Et}]
-        Actions
-            At : ShiftPrefix 1
-            Bt : ShiftPrefix 2
-        Gotos
-            Xn : 18
-    State 20 [18.0]
+    State 19 [18.0]
         Kernel
             [Xn ::= At Yn Dt ·, {At, Dt, Et, EOI}]
         Actions
@@ -271,7 +255,7 @@ PGM LR(1) States
             Dt : Reduce Xn ::= At Yn Dt
             Et : Reduce Xn ::= At Yn Dt
             EOI : Reduce Xn ::= At Yn Dt
-    State 21 [19.0]
+    State 20 [19.0]
         Kernel
             [Xn ::= At Zn Ct ·, {At, Dt, Et, EOI}]
         Actions
@@ -279,7 +263,7 @@ PGM LR(1) States
             Dt : Reduce Xn ::= At Zn Ct
             Et : Reduce Xn ::= At Zn Ct
             EOI : Reduce Xn ::= At Zn Ct
-    State 22 [15.1]
+    State 21 [15.1]
         Kernel
             [Zn ::= Tt Ut ·, {Dt}]
             [Wn ::= Ut · Vn, {Et}]
@@ -289,8 +273,8 @@ PGM LR(1) States
             Dt : Reduce Zn ::= Tt Ut
             Et : Reduce Vn ::= epsilon
         Gotos
-            Vn : 25
-    State 23 [20.0]
+            Vn : 24
+    State 22 [20.0]
         Kernel
             [Xn ::= Bt Yn Et ·, {At, Dt, Et, EOI}]
         Actions
@@ -298,7 +282,7 @@ PGM LR(1) States
             Dt : Reduce Xn ::= Bt Yn Et
             Et : Reduce Xn ::= Bt Yn Et
             EOI : Reduce Xn ::= Bt Yn Et
-    State 24 [21.0]
+    State 23 [21.0]
         Kernel
             [Xn ::= Bt Zn Dt ·, {At, Dt, Et, EOI}]
         Actions
@@ -306,13 +290,13 @@ PGM LR(1) States
             Dt : Reduce Xn ::= Bt Zn Dt
             Et : Reduce Xn ::= Bt Zn Dt
             EOI : Reduce Xn ::= Bt Zn Dt
-    State 25 [22.0]
+    State 24 [22.0]
         Kernel
             [Wn ::= Ut Vn ·, {Dt, Et}]
         Actions
             Dt : Reduce Wn ::= Ut Vn
             Et : Reduce Wn ::= Ut Vn
-    State 26 [23.0]
+    State 25 [23.0]
         Kernel
             [Tn ::= Ut Xn At ·, {At, Dt, Et, EOI}]
         Actions
