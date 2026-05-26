@@ -60,7 +60,7 @@ Parameters:
 - `-r[esolve] (yes|no)`: Control conflict resolution enablement. Defaults to `yes` for
   `aplr`/`ielr`/`lr` algorithms, `no` for `pgm`/`lalr` algorithms.
 - `-[re]m[erge] (yes|no)`: Control compatible state subgraph remerging enablement. Defaults to `yes`
-  for `aplr` algorithm, `no` otherwise.
+  for `aplr`/`ielr`/`pgm` algorithm, `no` for `lr`/`lalr` algorithms.
 - `-g[c] (pre|post|no)`: Control unreachable state garbage collection enablement and ordering
   relative to remerging. Defaults to `post`-remerging, which is less thorough than `pre`-remerging
   but faster due to operating on a smaller automaton.
@@ -1004,10 +1004,10 @@ Of note:
     contributions that inform isocore (in)compatibility (NB: conflict state is an LALR(1) state
     index)
 - Conflict contributions are best interpreted for an IELR(1) automaton generated with remerging
-  disabled (e.g. `hocc -txt -algorithm ielr -src Example`) in combination with a corresponding
-  LALR(1) automaton report generated with conflict resolution disabled (e.g. `hocc -txt -algorithm
-  lalr -resolve no -src Example`). This enables inspection of the conflicts which compel IELR(1)
-  state splitting.
+  disabled (e.g. `hocc -txt -algorithm ielr -remerge no -src Example`) in combination with a
+  corresponding LALR(1) automaton report generated with conflict resolution disabled (e.g. `hocc
+  -txt -algorithm lalr -resolve no -src Example`). This enables inspection of the conflicts which
+  compel IELR(1) state splitting.
 
 ## Algorithms
 

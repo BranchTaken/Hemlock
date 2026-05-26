@@ -1375,30 +1375,8 @@ and init algorithm ~resolve ~gc ~remerge ~warn io hmh =
     | No -> io, isocores, states
   in
   let io, isocores, states = match remerge with
-    | Conf.Default true
-    | Explicit true -> begin
-        let conflicts =
-          states
-          |> Array.map ~f:(fun state -> State.conflicts ~filter_pseudo_end:true state)
-          |> Array.reduce ~f:Uns.( + )
-          |> Option.value ~default:0L
-        in
-        match remerge, conflicts with
-        | Default true, 0L
-        | Explicit true, _
-          -> Aplr.remerge_states io symbols isocores states
-        | _, _ -> begin
-            let io =
-              io.log
-              |> Fmt.fmt "hocc: State subgraph remerging disabled due to unresolvable conflicts\n"
-              |> Fmt.fmt "hocc: Explicitly enable remerging (-remerge yes) to override\n"
-              |> Io.with_log io
-            in
-            io, isocores, states
-          end
-      end
-    | Default false
-    | Explicit false -> io, isocores, states
+    | true -> Aplr.remerge_states io symbols isocores states
+    | false -> io, isocores, states
   in
   let io, _isocores, states = match gc with
     | PostRemerge -> Trace.gc_states io prods isocores states

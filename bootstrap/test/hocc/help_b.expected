@@ -22,7 +22,8 @@ Parameters:
   -r[esolve] (yes|no) : Control conflict resolution enablement. Defaults to yes
                         for aplr/ielr/lr algorithms, no for pgm/lalr algorithms.
 -[re]m[erge] (yes|no) : Control compatible state subgraph remerging enablement.
-                        Defaults to yes for aplr algorithm, no otherwise.
+                        Defaults to yes for aplr/ielr/pgm algorithms, no for
+                        lr/lalr algorithms.
   -g[c] (pre|post|no) : Control unreachable state garbage collection enablement
                         and ordering relative to remerging. Defaults to
                         post-remerging.
