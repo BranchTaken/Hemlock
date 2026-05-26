@@ -24,7 +24,7 @@ let prod_of_prod_index = Array.get
 
 let fold = Array.fold
 
-let src_fmt precs symbols Prod.{lhs_index; rhs_indexes; prec; _} formatter =
+let hocc_fmt precs symbols Prod.{lhs_index; rhs_indexes; prec; _} formatter =
   let lhs_symbol = Symbols.symbol_of_symbol_index lhs_index symbols in
   formatter
   |> Fmt.fmt "    "

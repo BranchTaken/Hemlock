@@ -38,6 +38,7 @@ type t = {
   warn: bool;
   text: bool;
   hocc: bool;
+  yacc: bool;
   algorithm: algorithm;
   resolve_opt: bool option;
   remerge_opt: bool option;
@@ -49,13 +50,14 @@ type t = {
   dstdir_opt: Path.t option;
 }
 
-let pp {verbose; warn; text; hocc; algorithm; resolve_opt; remerge_opt; gc; hemlock; ocaml;
+let pp {verbose; warn; text; hocc; yacc; algorithm; resolve_opt; remerge_opt; gc; hemlock; ocaml;
   srcdir_opt; module_opt; dstdir_opt} formatter =
   formatter
   |> Fmt.fmt "{verbose=" |> Bool.pp verbose
   |> Fmt.fmt "; warn=" |> Bool.pp warn
   |> Fmt.fmt "; text=" |> Bool.pp text
   |> Fmt.fmt "; hocc=" |> Bool.pp hocc
+  |> Fmt.fmt "; yacc=" |> Bool.pp yacc
   |> Fmt.fmt "; algorithm=" |> pp_algorithm algorithm
   |> Fmt.fmt "; resolve_opt=" |> Option.pp Bool.pp resolve_opt
   |> Fmt.fmt "; remerge_opt=" |> Option.pp Bool.pp remerge_opt
@@ -72,6 +74,7 @@ let default = {
   warn=false;
   text=false;
   hocc=false;
+  yacc=false;
   algorithm=Aplr;
   resolve_opt=None;
   remerge_opt=None;
@@ -115,8 +118,10 @@ Parameters:
               -w[arn] : Warn about unused grammar constructs.
          -txt | -text : Write a detailed automaton description in plain text
                         format to "<dstdir>/hocc/<module>.txt".
-         -hmh | -hocc : Write a complete grammar specification in hocc format to
+         -hmh | -hocc : Write a complete grammar specification in Hocc format to
                         "<dstdir>/hocc/<module>.hmh".
+              -y[acc] : Write a complete grammar specification in Yacc format to
+                        "<dstdir>/hocc/<module>.y".
    -a[lgorithm] <alg> : Use the specified <alg>orithm for generating an
                         automaton. Defaults to aplr.
                         - aplr: Adequacy Preservation LR(1)
@@ -213,6 +218,7 @@ let of_argv argv =
         | "-w" | "-warn" -> f {t with warn=true} argv (succ i)
         | "-txt" | "-text" -> f {t with text=true} argv (succ i)
         | "-hmh" | "-hocc" -> f {t with hocc=true} argv (succ i)
+        | "-y" | "-yacc" -> f {t with yacc=true} argv (succ i)
         | "-a" | "-algorithm" -> begin
             let algorithm = match Bytes.to_string_replace (arg_arg argv i) with
               | "aplr" -> Aplr
@@ -328,6 +334,9 @@ let text {text; _} =
 
 let hocc {hocc; _} =
   hocc
+
+let yacc {yacc; _} =
+  yacc
 
 let algorithm {algorithm; _} =
   algorithm

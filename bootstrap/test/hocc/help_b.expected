@@ -8,8 +8,10 @@ Parameters:
               -w[arn] : Warn about unused grammar constructs.
          -txt | -text : Write a detailed automaton description in plain text
                         format to "<dstdir>/hocc/<module>.txt".
-         -hmh | -hocc : Write a complete grammar specification in hocc format to
+         -hmh | -hocc : Write a complete grammar specification in Hocc format to
                         "<dstdir>/hocc/<module>.hmh".
+              -y[acc] : Write a complete grammar specification in Yacc format to
+                        "<dstdir>/hocc/<module>.y".
    -a[lgorithm] <alg> : Use the specified <alg>orithm for generating an
                         automaton. Defaults to aplr.
                         - aplr: Adequacy Preservation LR(1)

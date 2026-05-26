@@ -10,6 +10,6 @@ hocc: Searching for remergeable states: 0/0
 hocc: 0 remergeable states
 hocc: 4 unresolvable conflicts in 4 states (4 ⊥, 0 shift-reduce, 0 reduce-reduce)
 hocc: Generating text report
-hocc: Generating hocc report
+hocc: Generating Hocc report
 hocc: Writing "./hocc/PSEUDO_END_conflict.txt"
 hocc: Writing "./hocc/PSEUDO_END_conflict.hmh"

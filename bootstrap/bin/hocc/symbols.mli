@@ -114,7 +114,7 @@ val nonterms_fold: init:'accum -> f:('accum -> Symbol.t -> 'accum) -> t -> 'accu
 (** [nonterms_fold ~init ~f t] iteratively applies [f] to the non-terminals in [t], in increasing
     index order. *)
 
-val src_fmt: Precs.t -> Symbol.t -> t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
+val hocc_fmt: Precs.t -> Symbol.t -> t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
 (** Formatter which outputs symbol in hocc syntax. *)
 
 val pp_prod_hr: Prod.t -> t -> (module Fmt.Formatter) -> (module Fmt.Formatter)

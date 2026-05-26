@@ -52,6 +52,10 @@ let _ =
     | false -> io
     | true -> Grammar.generate_hocc io spec
   in
+  let io = match Conf.yacc conf with
+    | false -> io
+    | true -> Grammar.generate_yacc io spec
+  in
   let nconflicts = Spec.conflicts spec in
   let conflicts = nconflicts <> 0L in
   let exit_code = 0 in

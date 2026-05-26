@@ -39,7 +39,10 @@ val text: t -> bool
 (** [text t] returns true if a plain-text automaton description is to be generated. *)
 
 val hocc: t -> bool
-(** [hocc t] returns true if a hocc-format grammar specification is to be generated. *)
+(** [hocc t] returns true if a Hocc-format grammar specification is to be generated. *)
+
+val yacc: t -> bool
+(** [yacc t] returns true if a Yacc-format grammar specification is to be generated. *)
 
 val algorithm: t -> algorithm
 (** [algorithm t] returns the algorithm to be used when generating the automaton. *)

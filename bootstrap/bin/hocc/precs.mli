@@ -37,8 +37,9 @@ val fold_prec_sets: init:'accum -> f:('accum -> PrecSet.t -> 'accum) -> t -> 'ac
 (** [fold ~init ~f t] iteratively applies [f] to the precedence sets in [t], in increasing index
     order. *)
 
-val src_fmt: Prec.t -> t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
-(** Formatter which outputs precedence in hocc syntax. *)
+val fold_prec_sets_right: init:'accum -> f:('accum -> PrecSet.t -> 'accum) -> t -> 'accum
+(** [fold ~init ~f t] iteratively applies [f] to the precedence sets in [t], in decreasing index
+    order. *)
 
 val pp_prec_hr: Prec.t -> t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
 (** Formatter which outputs precedence in human-readable form. *)

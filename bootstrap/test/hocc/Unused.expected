@@ -23,6 +23,6 @@ hocc:    NUnusedA ::= NUnusedB prec pUnusedA
 hocc:    NUnusedA ::= epsilon prec pUnusedA
 hocc:    NUnusedB ::= TUnusedA
 hocc: Generating text report
-hocc: Generating hocc report
+hocc: Generating Hocc report
 hocc: Writing "./hocc/Unused.txt"
 hocc: Writing "./hocc/Unused.hmh"

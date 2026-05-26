@@ -12,6 +12,8 @@ hocc: Remerging 648 LR(1) states
 hocc: Reindexing 263 LR(1) states
 hocc: 0 unresolvable conflicts
 hocc: Generating text report
-hocc: Generating hocc report
+hocc: Generating Hocc report
+hocc: Generating Yacc report
 hocc: Writing "./hocc/Hocc.txt"
 hocc: Writing "./hocc/Hocc.hmh"
+hocc: Writing "./hocc/Hocc.y"

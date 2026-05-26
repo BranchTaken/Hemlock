@@ -147,7 +147,7 @@ let nonterms_fold ~init ~f {symbols; ntokens; _} =
   Array.Slice.init ~range:(ntokens =:< Array.length symbols) symbols
   |> Array.Slice.fold ~init ~f
 
-let src_fmt precs (Symbol.{name; prec; alias; start; prods; _} as symbol) t formatter =
+let hocc_fmt precs (Symbol.{name; prec; alias; start; prods; _} as symbol) t formatter =
   match Symbol.is_token symbol with
   | true -> begin
       formatter

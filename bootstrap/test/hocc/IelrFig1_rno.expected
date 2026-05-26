@@ -20,6 +20,6 @@ hocc:    token Ta prec p
 hocc: 1 unused production precedence:
 hocc:    A ::= Ta prec p
 hocc: Generating text report
-hocc: Generating hocc report
+hocc: Generating Hocc report
 hocc: Writing "./hocc/IelrFig1_rno.txt"
 hocc: Writing "./hocc/IelrFig1_rno.hmh"

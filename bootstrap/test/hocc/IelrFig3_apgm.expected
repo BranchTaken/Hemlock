@@ -22,6 +22,6 @@ hocc:    S ::= Tb C Ta
 hocc:    B ::= Ta Ta prec p2
 hocc:    C ::= Ta Ta prec p3
 hocc: Generating text report
-hocc: Generating hocc report
+hocc: Generating Hocc report
 hocc: Writing "./hocc/IelrFig3_apgm.txt"
 hocc: Writing "./hocc/IelrFig3_apgm.hmh"

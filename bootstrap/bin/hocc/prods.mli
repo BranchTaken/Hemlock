@@ -32,5 +32,5 @@ val fold: init:'accum -> f:('accum -> Prod.t -> 'accum) -> t -> 'accum
 (** [fold ~init ~f t] iteratively applies [f] to the productions in [t], in increasing index order.
 *)
 
-val src_fmt: Precs.t -> Symbols.t -> Prod.t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
+val hocc_fmt: Precs.t -> Symbols.t -> Prod.t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
 (** Formatter which outputs production in hocc syntax. *)

@@ -9,6 +9,6 @@ hocc: 1 unreachable state
 hocc: Reindexing 26 LR(1) states
 hocc: 0 conflicts
 hocc: Generating text report
-hocc: Generating hocc report
+hocc: Generating Hocc report
 hocc: Writing "./hocc/PagerG2.txt"
 hocc: Writing "./hocc/PagerG2.hmh"

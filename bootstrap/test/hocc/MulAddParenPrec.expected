@@ -20,6 +20,6 @@ hocc:    E ::= E PLUS T prec p2
 hocc:    F ::= LPAREN E RPAREN prec p1
 hocc:    F ::= ID prec p1
 hocc: Generating text report
-hocc: Generating hocc report
+hocc: Generating Hocc report
 hocc: Writing "./hocc/MulAddParenPrec.txt"
 hocc: Writing "./hocc/MulAddParenPrec.hmh"

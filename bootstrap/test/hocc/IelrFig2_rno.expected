@@ -17,6 +17,6 @@ hocc: 2 unused production precedences:
 hocc:    B ::= Ta Ta prec p1
 hocc:    C ::= Ta Ta prec p2
 hocc: Generating text report
-hocc: Generating hocc report
+hocc: Generating Hocc report
 hocc: Writing "./hocc/IelrFig2_rno.txt"
 hocc: Writing "./hocc/IelrFig2_rno.hmh"

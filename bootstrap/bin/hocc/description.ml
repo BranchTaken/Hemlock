@@ -239,78 +239,70 @@ let generate_txt conf io Spec.{algorithm; precs; symbols; prods; states; _} =
   )
   |> Fmt.fmt "Tokens" |> Fmt.fmt "\n"
   |> (fun formatter ->
-    Symbols.symbols_fold ~init:formatter
-      ~f:(fun formatter (Symbol.{name; alias; stype; prec; first; follow; _} as symbol) ->
-        match Symbol.is_token symbol with
-        | false -> formatter
-        | true -> begin
-            formatter
-            |> Fmt.fmt "    " |> Fmt.fmt "token "
-            |> Fmt.fmt name
-            |> (fun formatter ->
-              match alias with
-              | None -> formatter
-              | Some alias -> formatter |> Fmt.fmt " " |> String.pp alias
-            )
-            |> (fun formatter ->
-              match SymbolType.is_explicit stype with
-              | false -> formatter
-              | true ->
-                formatter |> Fmt.fmt " of " |> Fmt.fmt (SymbolType.to_string stype)
-            )
-            |> (fun formatter ->
-              match prec with
-              | None -> formatter
-              | Some prec -> formatter |> Fmt.fmt " " |> pp_prec precs prec
-            )
-            |> Fmt.fmt "\n"
-            |> Fmt.fmt "        First: "
-            |> pp_symbol_set first
-            |> Fmt.fmt "\n"
-            |> Fmt.fmt "        Follow: "
-            |> pp_symbol_set follow
-            |> Fmt.fmt "\n"
-          end
+    Symbols.tokens_fold ~init:formatter
+      ~f:(fun formatter Symbol.{name; alias; stype; prec; first; follow; _} ->
+        formatter
+        |> Fmt.fmt "    " |> Fmt.fmt "token "
+        |> Fmt.fmt name
+        |> (fun formatter ->
+          match alias with
+          | None -> formatter
+          | Some alias -> formatter |> Fmt.fmt " " |> String.pp alias
+        )
+        |> (fun formatter ->
+          match SymbolType.is_explicit stype with
+          | false -> formatter
+          | true ->
+            formatter |> Fmt.fmt " of " |> Fmt.fmt (SymbolType.to_string stype)
+        )
+        |> (fun formatter ->
+          match prec with
+          | None -> formatter
+          | Some prec -> formatter |> Fmt.fmt " " |> pp_prec precs prec
+        )
+        |> Fmt.fmt "\n"
+        |> Fmt.fmt "        First: "
+        |> pp_symbol_set first
+        |> Fmt.fmt "\n"
+        |> Fmt.fmt "        Follow: "
+        |> pp_symbol_set follow
+        |> Fmt.fmt "\n"
       ) symbols
   )
   |> Fmt.fmt "Non-terminals" |> Fmt.fmt "\n"
   |> (fun formatter ->
-    Symbols.symbols_fold ~init:formatter
-      ~f:(fun formatter (Symbol.{name; start; stype; prods; first; follow; _} as symbol) ->
-        match Symbol.is_nonterm symbol with
-        | false -> formatter
-        | true -> begin
-            formatter
-            |> Fmt.fmt "    "
-            |> Fmt.fmt (match start with
-              | true -> "start "
-              | false -> "nonterm "
-            )
-            |> Fmt.fmt name
-            |> (fun formatter ->
-              match SymbolType.is_explicit stype with
-              | false -> formatter
-              | true ->
-                formatter |> Fmt.fmt " of " |> Fmt.fmt (SymbolType.to_string stype)
-            )
-            |> Fmt.fmt "\n"
-            |> Fmt.fmt "        First: "
-            |> pp_symbol_set first
-            |> Fmt.fmt "\n"
-            |> Fmt.fmt "        Follow: "
-            |> pp_symbol_set follow
-            |> Fmt.fmt "\n"
-            |> Fmt.fmt "        Productions\n"
-            |> (fun formatter ->
-              Array.fold ~init:formatter
-                ~f:(fun formatter prod ->
-                  formatter
-                  |> Fmt.fmt "            "
-                  |> pp_prod prod
-                  |> Fmt.fmt "\n"
-                ) prods
-            )
-          end
+    Symbols.nonterms_fold ~init:formatter
+      ~f:(fun formatter Symbol.{name; start; stype; prods; first; follow; _} ->
+        formatter
+        |> Fmt.fmt "    "
+        |> Fmt.fmt (match start with
+          | true -> "start "
+          | false -> "nonterm "
+        )
+        |> Fmt.fmt name
+        |> (fun formatter ->
+          match SymbolType.is_explicit stype with
+          | false -> formatter
+          | true ->
+            formatter |> Fmt.fmt " of " |> Fmt.fmt (SymbolType.to_string stype)
+        )
+        |> Fmt.fmt "\n"
+        |> Fmt.fmt "        First: "
+        |> pp_symbol_set first
+        |> Fmt.fmt "\n"
+        |> Fmt.fmt "        Follow: "
+        |> pp_symbol_set follow
+        |> Fmt.fmt "\n"
+        |> Fmt.fmt "        Productions\n"
+        |> (fun formatter ->
+          Array.fold ~init:formatter
+            ~f:(fun formatter prod ->
+              formatter
+              |> Fmt.fmt "            "
+              |> pp_prod prod
+              |> Fmt.fmt "\n"
+            ) prods
+        )
       ) symbols
   )
   |> Fmt.fmt states_algorithm |> Fmt.fmt " States"

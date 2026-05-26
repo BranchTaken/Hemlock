@@ -8,6 +8,6 @@ hocc: Tracing automaton (.+=actions[+gotos])+.++.+.+.+
 hocc: 0 unreachable states
 hocc: 0 conflicts
 hocc: Generating text report
-hocc: Generating hocc report
+hocc: Generating Hocc report
 hocc: Writing "./hocc/MulAddParen.txt"
 hocc: Writing "./hocc/MulAddParen.hmh"
