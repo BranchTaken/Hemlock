@@ -844,10 +844,9 @@ parser states can be used as persistent reusable snapshots.
           | ShiftPrefix of Token.t * State.t
           | ShiftAccept of Token.t * State.t
           | Reduce of Token.t * Stack.Reduction.t
-          # Common variants.
+          # Common variants produced by `feed`/`step`/`next`.
           | Prefix # Valid parse prefix; more input needed.
           | Accept of Nonterm.t # Successful parse result.
-          | Reject of Token.t # Syntax error due to unexpected token.
 
         include IdentifiableIntf.S with type t := t
       }
@@ -864,23 +863,24 @@ parser states can be used as persistent reusable snapshots.
           }
       }
 
-    feed: Token.t -> t -> t
-      [@@doc "`feed token t` returns a result with status in {`ShiftPrefix`, `ShiftAccept`,
-      `Reduce`, `Reject`}. `t.status` must be `Prefix`."]
+    feed: Token.t -> t -> result t (Token.t * t)
+      [@@doc "`feed token t` feeds `token` to `t` and returns an `Ok t'` result with status in
+      {`ShiftPrefix`, `ShiftAccept`, `Reduce`} or an `Error (token, t)` result rejecting unexpected
+      token. `t.status` must be `Prefix`."]
 
-    step: t -> t
-      [@@doc "`step t` returns the result of applying one state transition to `t`. `t.status` must
-      be in {`ShiftPrefix`, `ShiftAccept`, `Reduce`}."]
+    step: t -> result t (Token.t * t)
+      [@@doc "`step t` applies one state transition to `t` and returns an `Ok t'` result or an
+      `Error (token, t)` rejection result due to unexpected token. `t.status` must be in
+      {`ShiftPrefix`, `ShiftAccept`, `Reduce`}."]
 
-    next: Token.t -> t -> t
-      [@@doc "`next token t` calls `feed token t` and fast-forwards via `step` calls to return a
-      result with status in {`Prefix`, `Accept`, `Reject`}. `t.status` must be `Prefix`. If the
-      resulting status is `Reject`, the stack remains in its initial state even if one or more
-      reduction steps lead to the syntax error."]
+    next: Token.t -> t -> result t (Token.t * t)
+      [@@doc "`next token t` calls `feed token t` and fast-forwards via `step` calls to return an
+      `Ok t'` result with status in {`Prefix`, `Accept`} or an `Error (token, t)` rejection result
+      due to unexpected token. `t.status` must be `Prefix`."]
 
     expect: t -> Ordset.t Token.t Token.cmper_witness
       [@@doc "`expect t` returns the set of token (proto)types which `next token t` would not
-      reject, assuming status were `Prefix`. `t.status` must be in {`Prefix`, `Reject`}."]
+      reject. `t.status` must be `Prefix`."]
   }
 ```
 

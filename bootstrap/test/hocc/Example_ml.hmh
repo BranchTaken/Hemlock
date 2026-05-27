@@ -54,19 +54,18 @@ let tokenize s =
 (* Calculate the result of the arithmetic expression expressed in `s`, e.g. "2 + 3 * 4". *)
 let calculate s =
     let {status; _} = List.fold_until (tokenize s) ~init:Start.Answer.boi ~f:(fun parser tok ->
-        let {status; _} as parser' = next tok parser in
-        let is_done = match status with
-          | Prefix -> false
-          | Accept _
-          | Reject _ -> true
-          | _ -> not_reached ()
-          in
-        parser', is_done
+        match next tok parser with
+          | Ok ({status; _} as parser') -> begin
+            match status with
+              | Prefix -> parser', false
+              | Accept _ -> parser', true
+              | _ -> not_reached ()
+          end
+          | Error _ -> halt "Parse error"
       ) in
     match status with
       | Accept (Answer answer) -> answer
       | Prefix -> halt "Partial input"
-      | Reject _ -> halt "Parse error"
       | _ -> not_reached ()
 
 let main () =

@@ -324,10 +324,9 @@ let hmi_template = {|{
           | ShiftPrefix of Token.t * State.t
           | ShiftAccept of Token.t * State.t
           | Reduce of Token.t * Stack.Reduction.t
-          # Common variants.
+          # Common variants produced by `feed`/`step`/`next`.
           | Prefix # Valid parse prefix; more input needed.
           | Accept of Nonterm.t # Successful parse result.
-          | Reject of Token.t # Syntax error due to unexpected token.
 
         include IdentifiableIntf.S with type t := t
       }
@@ -341,21 +340,24 @@ let hmi_template = {|{
         «starts»
       }
 
-    feed: Token.t -> t -> t
-      [@@doc "`feed token t` returns a result with status in {`ShiftPrefix`, `ShiftAccept`,
-      `Reduce`, `Reject`}. `t.status` must be `Prefix`."]
+    feed: Token.t -> t -> result t (Token.t * t)
+      [@@doc "`feed token t` feeds `token` to `t` and returns an `Ok t'` result with status in
+      {`ShiftPrefix`, `ShiftAccept`, `Reduce`} or an `Error (token, t)` result rejecting unexpected
+      token. `t.status` must be `Prefix`."]
 
-    step: t -> t
-      [@@doc "`step t` returns the result of applying one state transition to `t`. `t.status` must
-      be in {`ShiftPrefix`, `ShiftAccept`, `Reduce`}."]
+    step: t -> result t (Token.t * t)
+      [@@doc "`step t` applies one state transition to `t` and returns an `Ok t'` result or an
+      `Error (token, t)` rejection result due to unexpected token. `t.status` must be in
+      {`ShiftPrefix`, `ShiftAccept`, `Reduce`}."]
 
-    next: Token.t -> t -> t
-      [@@doc "`next token t` calls `feed token t` and fast-forwards via `step` calls to return a
-      result with status in {`Prefix`, `Accept`, `Reject`}. `t.status` must be `Prefix`."]
+    next: Token.t -> t -> result t (Token.t * t)
+      [@@doc "`next token t` calls `feed token t` and fast-forwards via `step` calls to return an
+      `Ok t'` result with status in {`Prefix`, `Accept`} or an `Error (token, t)` rejection result
+      due to unexpected token. `t.status` must be `Prefix`."]
 
     expect: t -> Ordset.t Token.t Token.cmper_witness
       [@@doc "`expect t` returns the set of token (proto)types which `next token t` would not
-      reject, assuming status were `Prefix`. `t.status` must be in {`Prefix`, `Reject`}."]
+      reject. `t.status` must be `Prefix`."]
   }|}
 
 let expand_hmi_tokens symbols ~indentation formatter =
@@ -1150,7 +1152,6 @@ let hm_template = {|{
               | Reduce of Token.t * Stack.Reduction.t
               | Prefix
               | Accept of Nonterm.t
-              | Reject of Token.t
 
             let constructor_index t = match t with
               | ShiftPrefix _ -> 0
@@ -1158,7 +1159,6 @@ let hm_template = {|{
               | Reduce _ -> 2
               | Prefix -> 3
               | Accept _ -> 4
-              | Reject _ -> 5
 
             let hash_fold t state =
                 state
@@ -1172,7 +1172,6 @@ let hm_template = {|{
                         hash_state |> Stack.Reduction.hash_fold reduction |> Token.hash_fold token
                       | Prefix -> hash_state
                       | Accept nonterm -> hash_state |> Nonterm.hash_fold nonterm
-                      | Reject token -> hash_state |> Token.hash_fold token
 
             let cmp t0 t1 =
                 let open Cmp
@@ -1193,7 +1192,6 @@ let hm_template = {|{
                           | Gt -> Gt
                       | Prefix, Prefix -> Eq
                       | Accept nonterm0, Accept nonterm1 -> Nonterm.cmp nonterm0 nonterm1
-                      | Reject token0, Reject token1 -> Token.cmp token0 token1
                       | _, _ -> not_reached ()
                   | Gt -> Gt
 
@@ -1215,7 +1213,6 @@ let hm_template = {|{
                           ^)(^reduction^))"
                       | Prefix -> formatter |> Fmt.fmt "Prefix"
                       | Accept nonterm -> formatter |> Fmt.fmt "Accept %f(^Nonterm.pp^)(^nonterm^)"
-                      | Reject token -> formatter |> Fmt.fmt "Reject %f(^Token.pp^)(^token^)"
           }
         include T
         include Identifiable.Make(T)
@@ -1234,21 +1231,21 @@ let hm_template = {|{
       | {stack={state; _} :: _; status=Prefix} as t ->
         let token_index = Token.index token
         let Spec.State.{actions; _} = Array.get state Spec.states
-        let status = match Map.get token_index actions with
-          | Some (Spec.Action.ShiftPrefix state') -> Status.ShiftPrefix (token, state')
-          | Some (Spec.Action.ShiftAccept state') -> Status.ShiftAccept (token, state')
+        match Map.get token_index actions with
+          | Some (Spec.Action.ShiftPrefix state') -> Ok {t with Status.ShiftPrefix (token, state')}
+          | Some (Spec.Action.ShiftAccept state') -> Ok {t with Status.ShiftAccept (token, state')}
           | Some (Spec.Action.Reduce prod_index) ->
             let Spec.Prod.{callback=callback_index; _} = Array.get prod_index Spec.prods
             let reduction = Stack.Reduction.init callback_index
-            Status.Reduce (token, reduction)
-          | None -> Status.Reject token
-        {t with status}
+            Ok {t with Status.Reduce (token, reduction)}
+          | None -> Error (token, t)
       | _ -> not_reached ()
 
     step {stack; status} =
         let open Status
         match status with
-          | ShiftPrefix (token, state) -> {stack=shift token state stack; status=Prefix}
+          | ShiftPrefix (token, state) ->
+            Ok {stack=shift token state stack; status=Prefix}
           | ShiftAccept (token, state) ->
             # Shift, perform the ⊥ reduction, and extract the accepted symbol from the stack.
             let stack = shift token state stack
@@ -1262,42 +1259,42 @@ let hm_template = {|{
                 match stack with
                   | [] -> not_reached ()
                   | {symbol=Token _; _} :: _ -> not_reached ()
-                  | {symbol=Nonterm nonterm; _} :: _ -> {stack=[]; status=Accept nonterm}
+                  | {symbol=Nonterm nonterm; _} :: _ -> Ok {stack=[]; status=Accept nonterm}
               | _ -> not_reached ()
           | Reduce (token, reduction) ->
             feed token {stack=Stack.reduce ~reduction stack; status=Prefix}
           | _ -> not_reached ()
 
-    # walk: t -> t
+    # walk: t -> result t (Token.t * t)
     rec walk ({status; _} as t) =
         let open Status
         match status with
           | ShiftPrefix _
           | ShiftAccept _
-          | Reduce _ -> t |> step |> walk
+          | Reduce _ ->
+            match step t with
+              | (Error _) as error -> error
+              | Ok t' -> walk t'
           | Prefix
-          | Accept _
-          | Reject _ -> t
+          | Accept _ -> Ok t
 
     next token ({status; _} as t) =
         let open Status
         match status with
-          | Status.Prefix ->
-            match t |> feed token |> walk with
-              | {status=Reject _ as status; _} -> {t with status}
-              | t' -> t'
-          | _ -> halt "`token` only supports `Prefix` status"
+          | Prefix ->
+            match feed token t with
+              | (Error _) as error -> error
+              | Ok t' ->
+                match walk t' with
+                  | Error _ -> Error (token, t)
+                  | (Ok _) as ok -> ok
+          | _ -> halt "`next` only supports `Prefix` status"
 
-    expect ({status; _} as t) =
-        let open Status
-        let t = match status with
-          | Prefix -> t
-          | Reject _ -> {t with status=Prefix}
-          | _ -> halt "`expect` only supports `Prefix`/`Reject` status"
+    expect t =
         Array.fold ~init:(Ordset.empty Token) ~f:(fn expect token ->
             match next token t with
-              | {status=Reject _; _} -> expect
-              | _ -> Ordset.insert token expect
+              | Error _ -> expect
+              | Ok _ -> Ordset.insert token expect
         ) Token.protos
   }|}
 
@@ -2215,10 +2212,9 @@ let mli_template = {|sig
           | ShiftPrefix of Token.t * State.t
           | ShiftAccept of Token.t * State.t
           | Reduce of Token.t * Stack.Reduction.t
-          (* Common variants. *)
+          (* Common variants produced by `feed`/`step`/`next`. *)
           | Prefix (** Valid parse prefix; more input needed. *)
           | Accept of Nonterm.t (** Successful parse result. *)
-          | Reject of Token.t (** Syntax error due to unexpected token. *)
 
         include IdentifiableIntf.S with type t := t
       end
@@ -2232,21 +2228,24 @@ let mli_template = {|sig
         «starts»
       end
 
-    val feed: Token.t -> t -> t
-      (** `feed token t` returns a result with status in {`ShiftPrefix`, `ShiftAccept`, `Reduce`,
-          `Reject`}. `t.status` must be `Prefix`. *)
+    val feed: Token.t -> t -> (t, Token.t * t) result
+      (** `feed token t` feeds `token` to `t` and returns an `Ok t'` result with status in
+          {`ShiftPrefix`, `ShiftAccept`, `Reduce`} or an `Error (token, t)` result rejecting
+          unexpected token. `t.status` must be `Prefix`. *)
 
-    val step: t -> t
-      (** `step t` returns the result of applying one state transition to `t`. `t.status` must be in
+    val step: t -> (t, Token.t * t) result
+      (** `step t` applies one state transition to `t` and returns an `Ok t'` result or an `Error
+          (token, t)` rejection result due to unexpected token. `t.status` must be in
           {`ShiftPrefix`, `ShiftAccept`, `Reduce`}. *)
 
-    val next: Token.t -> t -> t
-      (** `next token t` calls `feed token t` and fast-forwards via `step` calls to return a result
-          with status in {`Prefix`, `Accept`, `Reject`}. `t.status` must be `Prefix`. *)
+    val next: Token.t -> t -> (t, Token.t * t) result
+      (** `next token t` calls `feed token t` and fast-forwards via `step` calls to return an `Ok
+          t'` result with status in {`Prefix`, `Accept`} or an `Error (token, t)` rejection result
+          due to unexpected token. `t.status` must be `Prefix`. *)
 
     val expect: t -> (Token.t, Token.cmper_witness) Ordset.t
-      (** `expect t` returns the set of token (proto)types which `next token t` would not reject,
-          assuming status were `Prefix`. `t.status` must be in {`Prefix`, `Reject`}. *)
+      (** `expect t` returns the set of token (proto)types which `next token t` would not reject.
+          `t.status` must be `Prefix`. *)
   end|}
 
 let expand_mli_tokens symbols ~indentation formatter =
@@ -3067,7 +3066,6 @@ let ml_template = {|struct
               | Reduce of Token.t * Stack.Reduction.t
               | Prefix
               | Accept of Nonterm.t
-              | Reject of Token.t
 
             let constructor_index = function
               | ShiftPrefix _ -> 0L
@@ -3075,7 +3073,6 @@ let ml_template = {|struct
               | Reduce _ -> 2L
               | Prefix -> 3L
               | Accept _ -> 4L
-              | Reject _ -> 5L
 
             let hash_fold t state =
                 state
@@ -3089,7 +3086,6 @@ let ml_template = {|struct
                         hash_state |> Stack.Reduction.hash_fold reduction |> Token.hash_fold token
                       | Prefix -> hash_state
                       | Accept nonterm -> hash_state |> Nonterm.hash_fold nonterm
-                      | Reject token -> hash_state |> Token.hash_fold token
                   )
 
             let cmp t0 t1 =
@@ -3114,7 +3110,6 @@ let ml_template = {|struct
                       end
                       | Prefix, Prefix -> Eq
                       | Accept nonterm0, Accept nonterm1 -> Nonterm.cmp nonterm0 nonterm1
-                      | Reject token0, Reject token1 -> Token.cmp token0 token1
                       | _, _ -> not_reached ()
                   end
                   | Gt -> Gt
@@ -3143,7 +3138,6 @@ let ml_template = {|struct
                       end
                       | Prefix -> formatter |> Fmt.fmt "Prefix"
                       | Accept nonterm -> formatter |> Fmt.fmt "Accept " |> Nonterm.pp nonterm
-                      | Reject token -> formatter |> Fmt.fmt "Reject " |> Token.pp token
                   )
           end
         include T
@@ -3159,21 +3153,21 @@ let ml_template = {|struct
         «starts»
       end
 
-    let feed token = function
+    let feed token t = match t with
       | {stack={state; _} :: _; status=Prefix} as t -> begin
         let token_index = Token.index token in
         let Spec.State.{actions; _} = Array.get state Spec.states in
-        let status = match Map.get token_index actions with
-          | Some (Spec.Action.ShiftPrefix state') -> Status.ShiftPrefix (token, state')
-          | Some (Spec.Action.ShiftAccept state') -> Status.ShiftAccept (token, state')
+        match Map.get token_index actions with
+          | Some (Spec.Action.ShiftPrefix state') ->
+            Ok {t with status=Status.ShiftPrefix (token, state')}
+          | Some (Spec.Action.ShiftAccept state') ->
+            Ok {t with status=Status.ShiftAccept (token, state')}
           | Some (Spec.Action.Reduce prod_index) -> begin
             let Spec.Prod.{callback=callback_index; _} = Array.get prod_index Spec.prods in
             let reduction = Stack.Reduction.init callback_index in
-            Status.Reduce (token, reduction)
+            Ok {t with status=Status.Reduce (token, reduction)}
           end
-          | None -> Status.Reject token
-        in
-        {t with status}
+          | None -> Error (token, t)
       end
       | _ -> not_reached ()
 
@@ -3181,7 +3175,7 @@ let ml_template = {|struct
         let open Status in
         match status with
           | ShiftPrefix (token, state) ->
-            {stack=Stack.shift ~symbol:(Token token) ~state stack; status=Prefix}
+            Ok {stack=Stack.shift ~symbol:(Token token) ~state stack; status=Prefix}
           | ShiftAccept (token, state) -> begin
             (* Shift, perform the ⊥ reduction, and extract the accepted symbol from the stack. *)
             let stack = Stack.shift ~symbol:(Token token) ~state stack in
@@ -3195,47 +3189,48 @@ let ml_template = {|struct
                 match stack with
                   | [] -> not_reached ()
                   | {symbol=Token _; _} :: _ -> not_reached ()
-                  | {symbol=Nonterm nonterm; _} :: _ -> {stack=[]; status=Accept nonterm}
+                  | {symbol=Nonterm nonterm; _} :: _ -> Ok {stack=[]; status=Accept nonterm}
               end
               | _ -> not_reached ()
           end
           | Reduce (token, reduction) -> begin
             feed token {stack=Stack.reduce ~reduction stack; status=Prefix}
           end
-          | _ -> not_reached ()
+          | _ -> halt "`step` only supports {`ShiftPrefix`, `ShiftAccept`, `Reduce`} status"
 
-    (* val walk: t -> t *)
+    (* val walk: t -> (t, Token.t * t) result *)
     let rec walk ({status; _} as t) =
         let open Status in
         match status with
           | ShiftPrefix _
           | ShiftAccept _
-          | Reduce _ -> t |> step |> walk
+          | Reduce _ -> begin
+            match step t with
+              | (Error _) as error -> error
+              | Ok t' -> walk t'
+          end
           | Prefix
-          | Accept _
-          | Reject _ -> t
+          | Accept _ -> Ok t
 
     let next token ({status; _} as t) =
         let open Status in
         match status with
           | Prefix -> begin
-            match t |> feed token |> walk with
-              | {status=Reject _ as status; _} -> {t with status}
-              | t' -> t'
+            match feed token t with
+              | (Error _) as error -> error
+              | Ok t' -> begin
+                match walk t' with
+                  | Error _ -> Error (token, t)
+                  | (Ok _) as ok -> ok
+              end
           end
-          | _ -> halt "`token` only supports `Prefix` status"
+          | _ -> halt "`next` only supports `Prefix` status"
 
-    let expect ({status; _} as t) =
-        let open Status in
-        let t = match status with
-          | Prefix -> t
-          | Reject _ -> {t with status=Prefix}
-          | _ -> halt "`expect` only supports `Prefix`/`Reject` status"
-          in
+    let expect t =
         Array.fold ~init:(Ordset.empty (module Token)) ~f:(fun expect token ->
             match next token t with
-              | {status=Reject _; _} -> expect
-              | _ -> Ordset.insert token expect
+              | Error _ -> expect
+              | Ok _ -> Ordset.insert token expect
         ) Token.protos
   end|}
 

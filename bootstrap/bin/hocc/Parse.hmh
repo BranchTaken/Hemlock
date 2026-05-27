@@ -756,12 +756,8 @@ let hmhi scanner =
           | [] -> errs
           | _ -> List.fold ~init:errs ~f:(fun errs mal -> Error.init_mal mal :: errs) mals
           in
-        let {status; _} as parser = next token parser in
-        match status, errs with
-          | Prefix, _ -> inner scanner errs parser
-          | Accept (Hmhi hmhi), [] -> scanner, Ok hmhi
-          | Accept (Hmhi _), _ -> scanner, Error errs
-          | Reject _, _ ->
+        match next token parser with
+          | Error _ -> begin
             let msg =
               String.Fmt.empty
               |> Fmt.fmt "Unexpected token not in "
@@ -770,7 +766,14 @@ let hmhi scanner =
               in
             let errs = Error.init_token scan_token msg :: errs in
             scanner, Error errs
-          | _ -> not_reached ()
+          end
+          | Ok ({status; _} as parser) -> begin
+            match status, errs with
+              | Prefix, _ -> inner scanner errs parser
+              | Accept (Hmhi hmhi), [] -> scanner, Ok hmhi
+              | Accept (Hmhi _), _ -> scanner, Error errs
+              | _ -> not_reached ()
+          end
       end in
     let parser = Start.Hmhi.boi in
     inner scanner [] parser
@@ -782,12 +785,8 @@ let hmh scanner =
           | [] -> errs
           | _ -> List.fold ~init:errs ~f:(fun errs mal -> Error.init_mal mal :: errs) mals
           in
-        let {status; _} as parser = next token parser in
-        match status, errs with
-          | Prefix, _ -> inner scanner errs parser
-          | Accept (Hmh hmh), [] -> scanner, Ok hmh
-          | Accept (Hmh _), _ -> scanner, Error errs
-          | Reject _, _ -> begin
+        match next token parser with
+          | Error _ -> begin
             let msg =
               String.Fmt.empty
               |> Fmt.fmt "Unexpected token not in "
@@ -797,7 +796,13 @@ let hmh scanner =
             let errs = Error.init_token scan_token msg :: errs in
             scanner, Error errs
           end
-          | _ -> not_reached ()
+          | Ok ({status; _} as parser) -> begin
+            match status, errs with
+              | Prefix, _ -> inner scanner errs parser
+              | Accept (Hmh hmh), [] -> scanner, Ok hmh
+              | Accept (Hmh _), _ -> scanner, Error errs
+              | _ -> not_reached ()
+          end
       end in
     let parser = Start.Hmh.boi in
     inner scanner [] parser
