@@ -240,10 +240,9 @@ include sig
           | ShiftPrefix of Token.t * State.t
           | ShiftAccept of Token.t * State.t
           | Reduce of Token.t * Stack.Reduction.t
-          (* Common variants. *)
+          (* Common variants produced by `feed`/`step`/`next`. *)
           | Prefix (** Valid parse prefix; more input needed. *)
           | Accept of Nonterm.t (** Successful parse result. *)
-          | Reject of Token.t (** Syntax error due to unexpected token. *)
 
         include IdentifiableIntf.S with type t := t
       end
@@ -259,21 +258,24 @@ include sig
           end
       end
 
-    val feed: Token.t -> t -> t
-      (** `feed token t` returns a result with status in {`ShiftPrefix`, `ShiftAccept`, `Reduce`,
-          `Reject`}. `t.status` must be `Prefix`. *)
+    val feed: Token.t -> t -> (t, Token.t * t) result
+      (** `feed token t` feeds `token` to `t` and returns an `Ok t'` result with status in
+          {`ShiftPrefix`, `ShiftAccept`, `Reduce`} or an `Error (token, t)` result rejecting
+          unexpected token. `t.status` must be `Prefix`. *)
 
-    val step: t -> t
-      (** `step t` returns the result of applying one state transition to `t`. `t.status` must be in
+    val step: t -> (t, Token.t * t) result
+      (** `step t` applies one state transition to `t` and returns an `Ok t'` result or an `Error
+          (token, t)` rejection result due to unexpected token. `t.status` must be in
           {`ShiftPrefix`, `ShiftAccept`, `Reduce`}. *)
 
-    val next: Token.t -> t -> t
-      (** `next token t` calls `feed token t` and fast-forwards via `step` calls to return a result
-          with status in {`Prefix`, `Accept`, `Reject`}. `t.status` must be `Prefix`. *)
+    val next: Token.t -> t -> (t, Token.t * t) result
+      (** `next token t` calls `feed token t` and fast-forwards via `step` calls to return an `Ok
+          t'` result with status in {`Prefix`, `Accept`} or an `Error (token, t)` rejection result
+          due to unexpected token. `t.status` must be `Prefix`. *)
 
     val expect: t -> (Token.t, Token.cmper_witness) Ordset.t
-      (** `expect t` returns the set of token (proto)types which `next token t` would not reject,
-          assuming status were `Prefix`. `t.status` must be in {`Prefix`, `Reject`}. *)
+      (** `expect t` returns the set of token (proto)types which `next token t` would not reject.
+          `t.status` must be `Prefix`. *)
   end
 #7 "./Example_ml.hmhi"
 

@@ -1349,7 +1349,6 @@ e
               | Reduce of Token.t * Stack.Reduction.t
               | Prefix
               | Accept of Nonterm.t
-              | Reject of Token.t
 
             let constructor_index = function
               | ShiftPrefix _ -> 0L
@@ -1357,7 +1356,6 @@ e
               | Reduce _ -> 2L
               | Prefix -> 3L
               | Accept _ -> 4L
-              | Reject _ -> 5L
 
             let hash_fold t state =
                 state
@@ -1371,7 +1369,6 @@ e
                         hash_state |> Stack.Reduction.hash_fold reduction |> Token.hash_fold token
                       | Prefix -> hash_state
                       | Accept nonterm -> hash_state |> Nonterm.hash_fold nonterm
-                      | Reject token -> hash_state |> Token.hash_fold token
                   )
 
             let cmp t0 t1 =
@@ -1396,7 +1393,6 @@ e
                       end
                       | Prefix, Prefix -> Eq
                       | Accept nonterm0, Accept nonterm1 -> Nonterm.cmp nonterm0 nonterm1
-                      | Reject token0, Reject token1 -> Token.cmp token0 token1
                       | _, _ -> not_reached ()
                   end
                   | Gt -> Gt
@@ -1425,7 +1421,6 @@ e
                       end
                       | Prefix -> formatter |> Fmt.fmt "Prefix"
                       | Accept nonterm -> formatter |> Fmt.fmt "Accept " |> Nonterm.pp nonterm
-                      | Reject token -> formatter |> Fmt.fmt "Reject " |> Token.pp token
                   )
           end
         include T
@@ -1449,21 +1444,21 @@ e
           end
       end
 
-    let feed token = function
+    let feed token t = match t with
       | {stack={state; _} :: _; status=Prefix} as t -> begin
         let token_index = Token.index token in
         let Spec.State.{actions; _} = Array.get state Spec.states in
-        let status = match Map.get token_index actions with
-          | Some (Spec.Action.ShiftPrefix state') -> Status.ShiftPrefix (token, state')
-          | Some (Spec.Action.ShiftAccept state') -> Status.ShiftAccept (token, state')
+        match Map.get token_index actions with
+          | Some (Spec.Action.ShiftPrefix state') ->
+            Ok {t with status=Status.ShiftPrefix (token, state')}
+          | Some (Spec.Action.ShiftAccept state') ->
+            Ok {t with status=Status.ShiftAccept (token, state')}
           | Some (Spec.Action.Reduce prod_index) -> begin
             let Spec.Prod.{callback=callback_index; _} = Array.get prod_index Spec.prods in
             let reduction = Stack.Reduction.init callback_index in
-            Status.Reduce (token, reduction)
+            Ok {t with status=Status.Reduce (token, reduction)}
           end
-          | None -> Status.Reject token
-        in
-        {t with status}
+          | None -> Error (token, t)
       end
       | _ -> not_reached ()
 
@@ -1471,7 +1466,7 @@ e
         let open Status in
         match status with
           | ShiftPrefix (token, state) ->
-            {stack=Stack.shift ~symbol:(Token token) ~state stack; status=Prefix}
+            Ok {stack=Stack.shift ~symbol:(Token token) ~state stack; status=Prefix}
           | ShiftAccept (token, state) -> begin
             (* Shift, perform the ⊥ reduction, and extract the accepted symbol from the stack. *)
             let stack = Stack.shift ~symbol:(Token token) ~state stack in
@@ -1485,47 +1480,48 @@ e
                 match stack with
                   | [] -> not_reached ()
                   | {symbol=Token _; _} :: _ -> not_reached ()
-                  | {symbol=Nonterm nonterm; _} :: _ -> {stack=[]; status=Accept nonterm}
+                  | {symbol=Nonterm nonterm; _} :: _ -> Ok {stack=[]; status=Accept nonterm}
               end
               | _ -> not_reached ()
           end
           | Reduce (token, reduction) -> begin
             feed token {stack=Stack.reduce ~reduction stack; status=Prefix}
           end
-          | _ -> not_reached ()
+          | _ -> halt "`step` only supports {`ShiftPrefix`, `ShiftAccept`, `Reduce`} status"
 
-    (* val walk: t -> t *)
+    (* val walk: t -> (t, Token.t * t) result *)
     let rec walk ({status; _} as t) =
         let open Status in
         match status with
           | ShiftPrefix _
           | ShiftAccept _
-          | Reduce _ -> t |> step |> walk
+          | Reduce _ -> begin
+            match step t with
+              | (Error _) as error -> error
+              | Ok t' -> walk t'
+          end
           | Prefix
-          | Accept _
-          | Reject _ -> t
+          | Accept _ -> Ok t
 
     let next token ({status; _} as t) =
         let open Status in
         match status with
           | Prefix -> begin
-            match t |> feed token |> walk with
-              | {status=Reject _ as status; _} -> {t with status}
-              | t' -> t'
+            match feed token t with
+              | (Error _) as error -> error
+              | Ok t' -> begin
+                match walk t' with
+                  | Error _ -> Error (token, t)
+                  | (Ok _) as ok -> ok
+              end
           end
-          | _ -> halt "`token` only supports `Prefix` status"
+          | _ -> halt "`next` only supports `Prefix` status"
 
-    let expect ({status; _} as t) =
-        let open Status in
-        let t = match status with
-          | Prefix -> t
-          | Reject _ -> {t with status=Prefix}
-          | _ -> halt "`expect` only supports `Prefix`/`Reject` status"
-          in
+    let expect t =
         Array.fold ~init:(Ordset.empty (module Token)) ~f:(fun expect token ->
             match next token t with
-              | {status=Reject _; _} -> expect
-              | _ -> Ordset.insert token expect
+              | Error _ -> expect
+              | Ok _ -> Ordset.insert token expect
         ) Token.protos
   end
 #36 "./Example_introspect.hmh"
