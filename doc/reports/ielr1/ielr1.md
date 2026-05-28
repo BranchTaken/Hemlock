@@ -680,7 +680,7 @@ grammars with it.
     Jason Evans,
     “IELR(1) as Implemented by Hocc”,
     BranchTaken LLC,
-    [https://branchtaken.com/reports/ielr1.html](https://branchtaken.com/reports/ielr1.html),
+    [https://branchtaken.com/reports/ielr1/ielr1.html](https://branchtaken.com/reports/ielr1/ielr1.html),
     July 2024.
 
 [^knuth1965]:
