@@ -5,7 +5,7 @@
 The Hocc parser generator, which is part of the [Hemlock](https://github.com/BranchTaken/Hemlock)
 programming language project, implements several LR(1)-family parser generation algorithms, namely
 [LALR(1)](https://en.wikipedia.org/wiki/LALR_parser) [^deremer1969], [canonical
-LR(1)](https://en.wikipedia.org/wiki/LR_parser) [^knuth1965], PGM(1) [^pager1977][^fpottier], and
+LR(1)](https://en.wikipedia.org/wiki/LR_parser) [^knuth1965], PGM(1) [^pager1977][^pottier], and
 IELR(1) [^denny2010]. These algorithms are amply documented and (re-)implemented, with the notable
 exception of IELR(1), which is documented only in the original paper and implemented only by the
 original authors in [Bison](https://www.gnu.org/software/bison/). This posed extreme
@@ -663,12 +663,11 @@ grammars with it.
 
 ## Citations
 
-[^evans2024]:
-    Jason Evans,
-    “IELR(1) as Implemented by Hocc”,
-    BranchTaken LLC,
-    [https://branchtaken.com/reports/ielr1.html](https://branchtaken.com/reports/ielr1.html),
-    July 2024.
+[^denny2010]:
+    Joel E. Denny and Brian A. Malloy,
+    “The IELR(1) algorithm for generating minimal LR(1) parser tables for non-LR(1) grammars with
+    conflict resolution”,
+    Science of Computer Programming, 75(11):943-979, 2010.
 
 [^deremer1969]:
     Frank DeRemer,
@@ -676,6 +675,13 @@ grammars with it.
     Ph.D Dissertation,
     Department of Electrical Engineering,
     Massachusetts Institute of Technology, Cambridge, 1969.
+
+[^evans2024]:
+    Jason Evans,
+    “IELR(1) as Implemented by Hocc”,
+    BranchTaken LLC,
+    [https://branchtaken.com/reports/ielr1.html](https://branchtaken.com/reports/ielr1.html),
+    July 2024.
 
 [^knuth1965]:
     Donald Knuth,
@@ -687,20 +693,7 @@ grammars with it.
     “A Practical General Method for Constructing LR(k) Parsers”,
     Acta Informatica 7:249-268, 1977.
 
-[^fpottier]:
+[^pottier]:
     François Pottier and Yann Régis-Gianas,
     “Menhir LR(1) Parser Generator,”
     [http://gallium.inria.fr/~fpottier/menhir/](http://gallium.inria.fr/~fpottier/menhir/)
-
-[^deremer1969]:
-    Frank DeRemer,
-    “Practical Translators for LR(k) languages”,
-    Ph.D Dissertation,
-    Department of Electrical Engineering,
-    Massachusetts Institute of Technology, Cambridge, 1969.
-
-[^denny2010]:
-    Joel E. Denny and Brian A. Malloy,
-    “The IELR(1) algorithm for generating minimal LR(1) parser tables for non-LR(1) grammars with
-    conflict resolution”,
-    Science of Computer Programming, 75(11):943-979, 2010.
