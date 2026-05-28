@@ -1,0 +1,599 @@
+PagerG2 grammar
+
+Tokens
+    token EPSILON "ε"
+        First: {"ε"}
+        Follow: {}
+    token PSEUDO_END "⊥"
+        First: {"⊥"}
+        Follow: {"ε"}
+    token At
+        First: {At}
+        Follow: {At, Dt, Et, Tt, Ut, EOI}
+    token Bt
+        First: {Bt}
+        Follow: {Tt, Ut}
+    token Ct
+        First: {Ct}
+        Follow: {At, Dt, Et, EOI}
+    token Dt
+        First: {Dt}
+        Follow: {At, Dt, Et, EOI}
+    token Et
+        First: {Et}
+        Follow: {At, Dt, Et, EOI}
+    token Tt
+        First: {Tt}
+        Follow: {Ut}
+    token Ut
+        First: {Ut}
+        Follow: {At, Bt, Ct, Dt, Et}
+    token EOI
+        First: {EOI}
+        Follow: {"⊥"}
+Non-terminals
+    start Sn
+        First: {At, Bt}
+        Follow: {"⊥"}
+        Productions
+            Sn ::= Xn EOI
+    start Sn'
+        First: {At, Bt}
+        Follow: {"ε"}
+        Productions
+            Sn' ::= Sn "⊥"
+    nonterm Xn
+        First: {At, Bt}
+        Follow: {At, Dt, Et, EOI}
+        Productions
+            Xn ::= At Yn Dt
+            Xn ::= At Zn Ct
+            Xn ::= At Tn
+            Xn ::= Bt Yn Et
+            Xn ::= Bt Zn Dt
+            Xn ::= Bt Tn
+    nonterm Yn
+        First: {Tt, Ut}
+        Follow: {Dt, Et}
+        Productions
+            Yn ::= Tt Wn
+            Yn ::= Ut Xn
+    nonterm Zn
+        First: {Tt}
+        Follow: {Ct, Dt}
+        Productions
+            Zn ::= Tt Ut
+    nonterm Tn
+        First: {Ut}
+        Follow: {At, Dt, Et, EOI}
+        Productions
+            Tn ::= Ut Xn At
+    nonterm Wn
+        First: {Ut}
+        Follow: {Dt, Et}
+        Productions
+            Wn ::= Ut Vn
+    nonterm Vn
+        First: {"ε"}
+        Follow: {Dt, Et}
+        Productions
+            Vn ::= epsilon
+LR(1) States
+    State 0 [0.0]
+        Kernel
+            [Sn' ::= · Sn "⊥", {"ε"}]
+        Added
+            [Sn ::= · Xn EOI, {"⊥"}]
+            [Xn ::= · At Yn Dt, {EOI}]
+            [Xn ::= · At Zn Ct, {EOI}]
+            [Xn ::= · At Tn, {EOI}]
+            [Xn ::= · Bt Yn Et, {EOI}]
+            [Xn ::= · Bt Zn Dt, {EOI}]
+            [Xn ::= · Bt Tn, {EOI}]
+        Actions
+            At : ShiftPrefix 1
+            Bt : ShiftPrefix 2
+        Gotos
+            Sn : 3
+            Xn : 4
+    State 1 [1.0]
+        Kernel
+            [Xn ::= At · Yn Dt, {EOI}]
+            [Xn ::= At · Zn Ct, {EOI}]
+            [Xn ::= At · Tn, {EOI}]
+        Added
+            [Yn ::= · Tt Wn, {Dt}]
+            [Yn ::= · Ut Xn, {Dt}]
+            [Zn ::= · Tt Ut, {Ct}]
+            [Tn ::= · Ut Xn At, {EOI}]
+        Actions
+            Tt : ShiftPrefix 5
+            Ut : ShiftPrefix 6
+        Gotos
+            Yn : 7
+            Zn : 8
+            Tn : 9
+    State 2 [2.0]
+        Kernel
+            [Xn ::= Bt · Yn Et, {EOI}]
+            [Xn ::= Bt · Zn Dt, {EOI}]
+            [Xn ::= Bt · Tn, {EOI}]
+        Added
+            [Yn ::= · Tt Wn, {Et}]
+            [Yn ::= · Ut Xn, {Et}]
+            [Zn ::= · Tt Ut, {Dt}]
+            [Tn ::= · Ut Xn At, {EOI}]
+        Actions
+            Tt : ShiftPrefix 10
+            Ut : ShiftPrefix 11
+        Gotos
+            Yn : 12
+            Zn : 13
+            Tn : 14
+    State 3 [3.0]
+        Kernel
+            [Sn' ::= Sn · "⊥", {"ε"}]
+        Actions
+            "⊥" : ShiftPrefix 15
+    State 4 [4.0]
+        Kernel
+            [Sn ::= Xn · EOI, {"⊥"}]
+        Actions
+            EOI : ShiftAccept 16
+    State 5 [5.0]
+        Kernel
+            [Yn ::= Tt · Wn, {Dt}]
+            [Zn ::= Tt · Ut, {Ct}]
+        Added
+            [Wn ::= · Ut Vn, {Dt}]
+        Actions
+            Ut : ShiftPrefix 17
+        Gotos
+            Wn : 18
+    State 6 [6.0]
+        Kernel
+            [Yn ::= Ut · Xn, {Dt}]
+            [Tn ::= Ut · Xn At, {EOI}]
+        Added
+            [Xn ::= · At Yn Dt, {At, Dt}]
+            [Xn ::= · At Zn Ct, {At, Dt}]
+            [Xn ::= · At Tn, {At, Dt}]
+            [Xn ::= · Bt Yn Et, {At, Dt}]
+            [Xn ::= · Bt Zn Dt, {At, Dt}]
+            [Xn ::= · Bt Tn, {At, Dt}]
+        Actions
+            At : ShiftPrefix 19
+            Bt : ShiftPrefix 20
+        Gotos
+            Xn : 21
+    State 7 [7.0]
+        Kernel
+            [Xn ::= At Yn · Dt, {EOI}]
+        Actions
+            Dt : ShiftPrefix 22
+    State 8 [8.0]
+        Kernel
+            [Xn ::= At Zn · Ct, {EOI}]
+        Actions
+            Ct : ShiftPrefix 23
+    State 9 [9.0]
+        Kernel
+            [Xn ::= At Tn ·, {EOI}]
+        Actions
+            EOI : Reduce Xn ::= At Tn
+    State 10 [5.1]
+        Kernel
+            [Yn ::= Tt · Wn, {Et}]
+            [Zn ::= Tt · Ut, {Dt}]
+        Added
+            [Wn ::= · Ut Vn, {Et}]
+        Actions
+            Ut : ShiftPrefix 24
+        Gotos
+            Wn : 25
+    State 11 [6.1]
+        Kernel
+            [Yn ::= Ut · Xn, {Et}]
+            [Tn ::= Ut · Xn At, {EOI}]
+        Added
+            [Xn ::= · At Yn Dt, {At, Et}]
+            [Xn ::= · At Zn Ct, {At, Et}]
+            [Xn ::= · At Tn, {At, Et}]
+            [Xn ::= · Bt Yn Et, {At, Et}]
+            [Xn ::= · Bt Zn Dt, {At, Et}]
+            [Xn ::= · Bt Tn, {At, Et}]
+        Actions
+            At : ShiftPrefix 26
+            Bt : ShiftPrefix 27
+        Gotos
+            Xn : 28
+    State 12 [10.0]
+        Kernel
+            [Xn ::= Bt Yn · Et, {EOI}]
+        Actions
+            Et : ShiftPrefix 29
+    State 13 [11.0]
+        Kernel
+            [Xn ::= Bt Zn · Dt, {EOI}]
+        Actions
+            Dt : ShiftPrefix 30
+    State 14 [12.0]
+        Kernel
+            [Xn ::= Bt Tn ·, {EOI}]
+        Actions
+            EOI : Reduce Xn ::= Bt Tn
+    State 15 [13.0]
+        Kernel
+            [Sn' ::= Sn "⊥" ·, {"ε"}]
+        Actions
+            "ε" : Reduce Sn' ::= Sn "⊥"
+    State 16 [14.0]
+        Kernel
+            [Sn ::= Xn EOI ·, {"⊥"}]
+        Actions
+            "⊥" : Reduce Sn ::= Xn EOI
+    State 17 [15.0]
+        Kernel
+            [Zn ::= Tt Ut ·, {Ct}]
+            [Wn ::= Ut · Vn, {Dt}]
+        Added
+            [Vn ::= ·, {Dt}]
+        Actions
+            Ct : Reduce Zn ::= Tt Ut
+            Dt : Reduce Vn ::= epsilon
+        Gotos
+            Vn : 31
+    State 18 [16.0]
+        Kernel
+            [Yn ::= Tt Wn ·, {Dt}]
+        Actions
+            Dt : Reduce Yn ::= Tt Wn
+    State 19 [1.1]
+        Kernel
+            [Xn ::= At · Yn Dt, {At, Dt}]
+            [Xn ::= At · Zn Ct, {At, Dt}]
+            [Xn ::= At · Tn, {At, Dt}]
+        Added
+            [Yn ::= · Tt Wn, {Dt}]
+            [Yn ::= · Ut Xn, {Dt}]
+            [Zn ::= · Tt Ut, {Ct}]
+            [Tn ::= · Ut Xn At, {At, Dt}]
+        Actions
+            Tt : ShiftPrefix 5
+            Ut : ShiftPrefix 32
+        Gotos
+            Yn : 33
+            Zn : 34
+            Tn : 35
+    State 20 [2.1]
+        Kernel
+            [Xn ::= Bt · Yn Et, {At, Dt}]
+            [Xn ::= Bt · Zn Dt, {At, Dt}]
+            [Xn ::= Bt · Tn, {At, Dt}]
+        Added
+            [Yn ::= · Tt Wn, {Et}]
+            [Yn ::= · Ut Xn, {Et}]
+            [Zn ::= · Tt Ut, {Dt}]
+            [Tn ::= · Ut Xn At, {At, Dt}]
+        Actions
+            Tt : ShiftPrefix 10
+            Ut : ShiftPrefix 36
+        Gotos
+            Yn : 37
+            Zn : 38
+            Tn : 39
+    State 21 [17.0]
+        Kernel
+            [Yn ::= Ut Xn ·, {Dt}]
+            [Tn ::= Ut Xn · At, {EOI}]
+        Actions
+            At : ShiftPrefix 40
+            Dt : Reduce Yn ::= Ut Xn
+    State 22 [18.0]
+        Kernel
+            [Xn ::= At Yn Dt ·, {EOI}]
+        Actions
+            EOI : Reduce Xn ::= At Yn Dt
+    State 23 [19.0]
+        Kernel
+            [Xn ::= At Zn Ct ·, {EOI}]
+        Actions
+            EOI : Reduce Xn ::= At Zn Ct
+    State 24 [15.1]
+        Kernel
+            [Zn ::= Tt Ut ·, {Dt}]
+            [Wn ::= Ut · Vn, {Et}]
+        Added
+            [Vn ::= ·, {Et}]
+        Actions
+            Dt : Reduce Zn ::= Tt Ut
+            Et : Reduce Vn ::= epsilon
+        Gotos
+            Vn : 41
+    State 25 [16.1]
+        Kernel
+            [Yn ::= Tt Wn ·, {Et}]
+        Actions
+            Et : Reduce Yn ::= Tt Wn
+    State 26 [1.2]
+        Kernel
+            [Xn ::= At · Yn Dt, {At, Et}]
+            [Xn ::= At · Zn Ct, {At, Et}]
+            [Xn ::= At · Tn, {At, Et}]
+        Added
+            [Yn ::= · Tt Wn, {Dt}]
+            [Yn ::= · Ut Xn, {Dt}]
+            [Zn ::= · Tt Ut, {Ct}]
+            [Tn ::= · Ut Xn At, {At, Et}]
+        Actions
+            Tt : ShiftPrefix 5
+            Ut : ShiftPrefix 42
+        Gotos
+            Yn : 43
+            Zn : 44
+            Tn : 45
+    State 27 [2.2]
+        Kernel
+            [Xn ::= Bt · Yn Et, {At, Et}]
+            [Xn ::= Bt · Zn Dt, {At, Et}]
+            [Xn ::= Bt · Tn, {At, Et}]
+        Added
+            [Yn ::= · Tt Wn, {Et}]
+            [Yn ::= · Ut Xn, {Et}]
+            [Zn ::= · Tt Ut, {Dt}]
+            [Tn ::= · Ut Xn At, {At, Et}]
+        Actions
+            Tt : ShiftPrefix 10
+            Ut : ShiftPrefix 46
+        Gotos
+            Yn : 47
+            Zn : 48
+            Tn : 49
+    State 28 [17.1]
+        Kernel
+            [Yn ::= Ut Xn ·, {Et}]
+            [Tn ::= Ut Xn · At, {EOI}]
+        Actions
+            At : ShiftPrefix 40
+            Et : Reduce Yn ::= Ut Xn
+    State 29 [20.0]
+        Kernel
+            [Xn ::= Bt Yn Et ·, {EOI}]
+        Actions
+            EOI : Reduce Xn ::= Bt Yn Et
+    State 30 [21.0]
+        Kernel
+            [Xn ::= Bt Zn Dt ·, {EOI}]
+        Actions
+            EOI : Reduce Xn ::= Bt Zn Dt
+    State 31 [22.0]
+        Kernel
+            [Wn ::= Ut Vn ·, {Dt}]
+        Actions
+            Dt : Reduce Wn ::= Ut Vn
+    State 32 [6.2]
+        Kernel
+            [Yn ::= Ut · Xn, {Dt}]
+            [Tn ::= Ut · Xn At, {At, Dt}]
+        Added
+            [Xn ::= · At Yn Dt, {At, Dt}]
+            [Xn ::= · At Zn Ct, {At, Dt}]
+            [Xn ::= · At Tn, {At, Dt}]
+            [Xn ::= · Bt Yn Et, {At, Dt}]
+            [Xn ::= · Bt Zn Dt, {At, Dt}]
+            [Xn ::= · Bt Tn, {At, Dt}]
+        Actions
+            At : ShiftPrefix 19
+            Bt : ShiftPrefix 20
+        Gotos
+            Xn : 50
+    State 33 [7.1]
+        Kernel
+            [Xn ::= At Yn · Dt, {At, Dt}]
+        Actions
+            Dt : ShiftPrefix 51
+    State 34 [8.1]
+        Kernel
+            [Xn ::= At Zn · Ct, {At, Dt}]
+        Actions
+            Ct : ShiftPrefix 52
+    State 35 [9.1]
+        Kernel
+            [Xn ::= At Tn ·, {At, Dt}]
+        Actions
+            At : Reduce Xn ::= At Tn
+            Dt : Reduce Xn ::= At Tn
+    State 36 [6.3]
+        Kernel
+            [Yn ::= Ut · Xn, {Et}]
+            [Tn ::= Ut · Xn At, {At, Dt}]
+        Added
+            [Xn ::= · At Yn Dt, {At, Et}]
+            [Xn ::= · At Zn Ct, {At, Et}]
+            [Xn ::= · At Tn, {At, Et}]
+            [Xn ::= · Bt Yn Et, {At, Et}]
+            [Xn ::= · Bt Zn Dt, {At, Et}]
+            [Xn ::= · Bt Tn, {At, Et}]
+        Actions
+            At : ShiftPrefix 26
+            Bt : ShiftPrefix 27
+        Gotos
+            Xn : 53
+    State 37 [10.1]
+        Kernel
+            [Xn ::= Bt Yn · Et, {At, Dt}]
+        Actions
+            Et : ShiftPrefix 54
+    State 38 [11.1]
+        Kernel
+            [Xn ::= Bt Zn · Dt, {At, Dt}]
+        Actions
+            Dt : ShiftPrefix 55
+    State 39 [12.1]
+        Kernel
+            [Xn ::= Bt Tn ·, {At, Dt}]
+        Actions
+            At : Reduce Xn ::= Bt Tn
+            Dt : Reduce Xn ::= Bt Tn
+    State 40 [23.0]
+        Kernel
+            [Tn ::= Ut Xn At ·, {EOI}]
+        Actions
+            EOI : Reduce Tn ::= Ut Xn At
+    State 41 [22.1]
+        Kernel
+            [Wn ::= Ut Vn ·, {Et}]
+        Actions
+            Et : Reduce Wn ::= Ut Vn
+    State 42 [6.4]
+        Kernel
+            [Yn ::= Ut · Xn, {Dt}]
+            [Tn ::= Ut · Xn At, {At, Et}]
+        Added
+            [Xn ::= · At Yn Dt, {At, Dt}]
+            [Xn ::= · At Zn Ct, {At, Dt}]
+            [Xn ::= · At Tn, {At, Dt}]
+            [Xn ::= · Bt Yn Et, {At, Dt}]
+            [Xn ::= · Bt Zn Dt, {At, Dt}]
+            [Xn ::= · Bt Tn, {At, Dt}]
+        Actions
+            At : ShiftPrefix 19
+            Bt : ShiftPrefix 20
+        Gotos
+            Xn : 56
+    State 43 [7.2]
+        Kernel
+            [Xn ::= At Yn · Dt, {At, Et}]
+        Actions
+            Dt : ShiftPrefix 57
+    State 44 [8.2]
+        Kernel
+            [Xn ::= At Zn · Ct, {At, Et}]
+        Actions
+            Ct : ShiftPrefix 58
+    State 45 [9.2]
+        Kernel
+            [Xn ::= At Tn ·, {At, Et}]
+        Actions
+            At : Reduce Xn ::= At Tn
+            Et : Reduce Xn ::= At Tn
+    State 46 [6.5]
+        Kernel
+            [Yn ::= Ut · Xn, {Et}]
+            [Tn ::= Ut · Xn At, {At, Et}]
+        Added
+            [Xn ::= · At Yn Dt, {At, Et}]
+            [Xn ::= · At Zn Ct, {At, Et}]
+            [Xn ::= · At Tn, {At, Et}]
+            [Xn ::= · Bt Yn Et, {At, Et}]
+            [Xn ::= · Bt Zn Dt, {At, Et}]
+            [Xn ::= · Bt Tn, {At, Et}]
+        Actions
+            At : ShiftPrefix 26
+            Bt : ShiftPrefix 27
+        Gotos
+            Xn : 59
+    State 47 [10.2]
+        Kernel
+            [Xn ::= Bt Yn · Et, {At, Et}]
+        Actions
+            Et : ShiftPrefix 60
+    State 48 [11.2]
+        Kernel
+            [Xn ::= Bt Zn · Dt, {At, Et}]
+        Actions
+            Dt : ShiftPrefix 61
+    State 49 [12.2]
+        Kernel
+            [Xn ::= Bt Tn ·, {At, Et}]
+        Actions
+            At : Reduce Xn ::= Bt Tn
+            Et : Reduce Xn ::= Bt Tn
+    State 50 [17.2]
+        Kernel
+            [Yn ::= Ut Xn ·, {Dt}]
+            [Tn ::= Ut Xn · At, {At, Dt}]
+        Actions
+            At : ShiftPrefix 62
+            Dt : Reduce Yn ::= Ut Xn
+    State 51 [18.1]
+        Kernel
+            [Xn ::= At Yn Dt ·, {At, Dt}]
+        Actions
+            At : Reduce Xn ::= At Yn Dt
+            Dt : Reduce Xn ::= At Yn Dt
+    State 52 [19.1]
+        Kernel
+            [Xn ::= At Zn Ct ·, {At, Dt}]
+        Actions
+            At : Reduce Xn ::= At Zn Ct
+            Dt : Reduce Xn ::= At Zn Ct
+    State 53 [17.3]
+        Kernel
+            [Yn ::= Ut Xn ·, {Et}]
+            [Tn ::= Ut Xn · At, {At, Dt}]
+        Actions
+            At : ShiftPrefix 62
+            Et : Reduce Yn ::= Ut Xn
+    State 54 [20.1]
+        Kernel
+            [Xn ::= Bt Yn Et ·, {At, Dt}]
+        Actions
+            At : Reduce Xn ::= Bt Yn Et
+            Dt : Reduce Xn ::= Bt Yn Et
+    State 55 [21.1]
+        Kernel
+            [Xn ::= Bt Zn Dt ·, {At, Dt}]
+        Actions
+            At : Reduce Xn ::= Bt Zn Dt
+            Dt : Reduce Xn ::= Bt Zn Dt
+    State 56 [17.4]
+        Kernel
+            [Yn ::= Ut Xn ·, {Dt}]
+            [Tn ::= Ut Xn · At, {At, Et}]
+        Actions
+            At : ShiftPrefix 63
+            Dt : Reduce Yn ::= Ut Xn
+    State 57 [18.2]
+        Kernel
+            [Xn ::= At Yn Dt ·, {At, Et}]
+        Actions
+            At : Reduce Xn ::= At Yn Dt
+            Et : Reduce Xn ::= At Yn Dt
+    State 58 [19.2]
+        Kernel
+            [Xn ::= At Zn Ct ·, {At, Et}]
+        Actions
+            At : Reduce Xn ::= At Zn Ct
+            Et : Reduce Xn ::= At Zn Ct
+    State 59 [17.5]
+        Kernel
+            [Yn ::= Ut Xn ·, {Et}]
+            [Tn ::= Ut Xn · At, {At, Et}]
+        Actions
+            At : ShiftPrefix 63
+            Et : Reduce Yn ::= Ut Xn
+    State 60 [20.2]
+        Kernel
+            [Xn ::= Bt Yn Et ·, {At, Et}]
+        Actions
+            At : Reduce Xn ::= Bt Yn Et
+            Et : Reduce Xn ::= Bt Yn Et
+    State 61 [21.2]
+        Kernel
+            [Xn ::= Bt Zn Dt ·, {At, Et}]
+        Actions
+            At : Reduce Xn ::= Bt Zn Dt
+            Et : Reduce Xn ::= Bt Zn Dt
+    State 62 [23.1]
+        Kernel
+            [Tn ::= Ut Xn At ·, {At, Dt}]
+        Actions
+            At : Reduce Tn ::= Ut Xn At
+            Dt : Reduce Tn ::= Ut Xn At
+    State 63 [23.2]
+        Kernel
+            [Tn ::= Ut Xn At ·, {At, Et}]
+        Actions
+            At : Reduce Tn ::= Ut Xn At
+            Et : Reduce Tn ::= Ut Xn At
