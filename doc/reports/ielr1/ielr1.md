@@ -5,14 +5,14 @@
 The Hocc parser generator, which is part of the [Hemlock](https://github.com/BranchTaken/Hemlock)
 programming language project, implements several LR(1)-family parser generation algorithms, namely
 [LALR(1)](https://en.wikipedia.org/wiki/LALR_parser) [^deremer1969], [canonical
-LR(1)](https://en.wikipedia.org/wiki/LR_parser) [^knuth1965], PGM(1) [^pager1977][^pottier], and
+LR(1)](https://en.wikipedia.org/wiki/LR_parser) [^knuth1965], PGM LR(1) [^pager1977][^pottier], and
 IELR(1) [^denny2010]. These algorithms are amply documented and (re-)implemented, with the notable
 exception of IELR(1), which is documented only in the original paper and implemented only by the
 original authors in [Bison](https://www.gnu.org/software/bison/). This posed extreme
 implementation challenges in the context of Hocc. The IELR(1) paper is closely tied to the
 particulars of the Bison implementation, and perhaps for that reason the terminology and structure
 are closely based on the idiosyncrasies of DeRemer's presentation of LALR(1). This terminology
-diverges substantially from that of Pager's presentation of PGM(1), whence Hocc took original
+diverges substantially from that of Pager's presentation of PGM LR(1), whence Hocc took original
 inspiration. This report recasts the IELR(1) algorithm as distilled during Hocc implementation,
 giving a pragmatic high-level perspective more conducive to straightforward (if less efficient)
 implementation than that provided by the original paper.
@@ -29,12 +29,12 @@ In 1965, canonical LR(1) in all its elegance posed serious implementation challe
 state redundancy in the generated state machines. **L**ook**a**head LR(1) (LALR(1)) came along in
 1969 as a practical compromise that collapses isocore sets (described later), even if doing so
 introduces parser inadequacies relative to the grammar specification. The **P**ractical **G**eneral
-**M**ethod (PGM(1)) was presented in its full form in 1977, and it dramatically improves on LALR(1)
-by avoiding parser inadequacies, with the important caveat that the algorithm can only provide those
-guarantees in the absence of disambiguation via precedence/associativity rules. PGM(1) never saw
-wide adoption, perhaps because LALR(1) was already widely implemented; nonetheless PGM(1) is
-strictly superior. IELR(1) stemmed from a research need for non-redundant parsers with no
-LR(1)-relative inadequacies. Although there are edge cases that can in practice cause redundant
+**M**ethod (PGM LR(1)) was presented in its full form in 1977, and it dramatically improves on
+LALR(1) by avoiding parser inadequacies, with the important caveat that the algorithm can only
+provide those guarantees in the absence of disambiguation via precedence/associativity rules. PGM
+LR(1) never saw wide adoption, perhaps because LALR(1) was already widely implemented; nonetheless
+PGM LR(1) is strictly superior. IELR(1) stemmed from a research need for non-redundant parsers with
+no LR(1)-relative inadequacies. Although there are edge cases that can in practice cause redundant
 states during parser generation, the parsers are much smaller than their LR(1) counterparts, and
 IELR(1) does definitively deliver on inadequacy elimination, thus assuring that LR(1) and IELR(1)
 parsers recognize the same grammars.
@@ -117,10 +117,10 @@ iterative work queue process by which a grammar specification is converted to a 
 2) how isocores play into the state generation process.
 
 The work queue manages incremental state set creation. Compatible states which are merged can in
-turn affect later compatibility test results for IELR(1) (and PGM(1)). No effort is made to puzzle
-together isocores via optimal merging order, but since merging order can dramatically impact the
-total number of work queue insertions, care is taken to insert at the front versus back of the work
-queue in such a way as to process states in an approximately breadth-first order rather than
+turn affect later compatibility test results for IELR(1) (and PGM LR(1)). No effort is made to
+puzzle together isocores via optimal merging order, but since merging order can dramatically impact
+the total number of work queue insertions, care is taken to insert at the front versus back of the
+work queue in such a way as to process states in an approximately breadth-first order rather than
 depth-first.
 
 Once the work queue is seeded with start states, states are consumed from the head of the work queue
@@ -209,10 +209,10 @@ invasive conflicts_** that are caused by merging **_shift-reduce conflicts_** in
 would otherwise have performed a reduce action. Furthermore, it is possible to create **_mysterious
 mutated conflicts_** by merging multiple reduce-reduce conflicts that have distinct resolutions.
 
-The PGM(1) algorithm suffices to avoid mysterious new conflicts. However, input grammars commonly
-rely on precedence/associativity to resolve LR(1) ambiguities. Both LALR(1) and PGM(1) can introduce
-invasive/mutated conflicts, i.e. they can generate parsers that behave differently than the resolved
-LR(1) parser. Such parsers are **_LR(1)-inadequate_**.
+The PGM LR(1) algorithm suffices to avoid mysterious new conflicts. However, input grammars commonly
+rely on precedence/associativity to resolve LR(1) ambiguities. Both LALR(1) and PGM LR(1) can
+introduce invasive/mutated conflicts, i.e. they can generate parsers that behave differently than
+the resolved LR(1) parser. Such parsers are **_LR(1)-inadequate_**.
 
 ## IELR(1)
 
@@ -514,7 +514,7 @@ when traces intertwine as mentioned *vis a vis* ε productions.
 ### State machine fixpoint computation
 
 Each step of the state machine fixpoint computation for IELR(1) is structurally very similar to the
-approach taken for LALR(1), PGM(1), and canonical LR(1). All of the algorithms rely on isocore
+approach taken for LALR(1), PGM LR(1), and canonical LR(1). All of the algorithms rely on isocore
 compatibility testing and merging, but IELR(1) is more complicated than the other algorithms in two
 ways. First, compatibility testing must reference lane tracing metadata that are attached to the
 isocores, and second, merging isocores requires merging the attached lane tracing metadata. Thus
@@ -546,21 +546,21 @@ lookaheads one of the following holds:
 Iterative application of state remerging in practice works backward through the state graph, because
 remerging isocoric states' successors may enable subsequent remerging.
 
-Although remerging was initially motivated by IELR(1) in Hocc, it also minorly benefits PGM(1),
+Although remerging was initially motivated by IELR(1) in Hocc, it also minorly benefits PGM LR(1),
 and majorly benefits canonical LR(1). Given the same grammar, canonical LR(1) tends to generate
-roughly ten times more states than does LALR(1)/PGM(1)/IELR(1). Initial results indicate that
+roughly ten times more states than does LALR(1)/PGM LR(1)/IELR(1). Initial results indicate that
 remerging reduces that from a factor of ~10 to a factor of ~4. For example, consider Hocc results
 for the `Gpic` grammar originally analyzed in the IELR(1) paper [^denny2010].
 
-| Algoritm  | # of states | Ratio |
-|:----------|------------:|------:|
-| LALR(1)   |         423 |  1___ |
-| PGM(1)    |         423 |  1___ |
-| PGM(1)\*  |         426 |  1.01 |
-| IELR(1)   |         428 |  1.01 |
-| IELR(1)\* |         437 |  1.03 |
-| LR(1)     |        1506 |  3.56 |
-| LR(1)\*   |        4834 | 11.43 |
+| Algoritm    | # of states | Ratio |
+|:------------|------------:|------:|
+| LALR(1)     |         423 |  1___ |
+| PGM LR(1)   |         423 |  1___ |
+| PGM LR(1)\* |         426 |  1.01 |
+| IELR(1)     |         428 |  1.01 |
+| IELR(1)\*   |         437 |  1.03 |
+| LR(1)       |        1506 |  3.56 |
+| LR(1)\*     |        4834 | 11.43 |
 
 \* &mdash; no remerging
 
@@ -580,7 +580,7 @@ main-0-g1cade600f4cfa931a9b481739a9a641ff3583637 versus the vendor-supplied Biso
 | Algorithm | Hocc  | Bison   |
 |:----------|------:|--------:|
 | LALR(1)   | 0.964 |   0.017 |
-| PGM(1)    | 1.052 | &mdash; |
+| PGM LR(1) | 1.052 | &mdash; |
 | IELR(1)   | 5.576 |   0.029 |
 | LR(1)     | 3.843 |   1.527 |
 
@@ -603,7 +603,7 @@ A basic IELR(1) implementation can get away without two of the refinements descr
 namely useless annotation filtering and leftmost transitive closure memoization. That said,
 anecdotal evidence based on processing the `Lyken` grammar (an abandoned research language) suggests
 that these refinements matter a lot for antagonistic inputs. The `Lyken` grammar was developed using
-an [implementation of the PGM(1) algorithm](https://github.com/MagicStack/parsing), and it relied
+an [implementation of the PGM LR(1) algorithm](https://github.com/MagicStack/parsing), and it relied
 heavily on per conflict precedence relationships. The IELR(1) annotations are copious, and the lanes
 are heavily intertwined. Absent either refinement, IELR(1) processing requires 44 GiB of RAM and
 approximately 29 hours of wall time. Useless annotation filtering reduces this to 6 GiB of RAM.
@@ -615,7 +615,7 @@ to substantial speedup, e.g. ~2.7X for `Gpic`.
 
 This report is intended to help others bypass the morass that IELR(1) implementation turned out to
 be in the context of Hocc. My initial intention regarding IELR(1) was to demonstrate that it has
-no practical utility relative to PGM(1), but careful rereading of the IELR(1) paper convinced me
+no practical utility relative to PGM LR(1), but careful rereading of the IELR(1) paper convinced me
 otherwise. Full understanding was elusive, and the Hocc implementation is in large part a
 re-invention given the benefits of an imperfectly understood paper and an existence proof in the
 form of Bison.
@@ -656,7 +656,7 @@ not &mdash; myriad false starts imposed an extreme opportunity cost. But IELR(1)
 with practical application, and I hope to see it broadly implemented over the coming years. In the
 meanwhile Hemlock's grammar specification development will leverage IELR(1), first as a safety tool
 during prototyping, and later to assure that no LR(1)-relative inadequacies survive in the grammar's
-stable form even when generated by the LALR(1) algorithm. PGM(1) is capable of this role only if
+stable form even when generated by the LALR(1) algorithm. PGM LR(1) is capable of this role only if
 precedence/associativity are completely avoided, and such an austere grammar development environment
 is unacceptable to me. I look forward to routinely pulling IELR(1) out of my toolbox and crafting
 grammars with it.
