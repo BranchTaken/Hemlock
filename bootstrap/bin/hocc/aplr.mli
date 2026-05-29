@@ -28,6 +28,8 @@ val remerge_states: Io.t -> Symbols.t -> Isocores.t -> State.t array
     - State [X₀] takes no action for a symbol [s], and state [X₁] performs only reduction(s) for
       symbol [s]. Furthermore, for more than two states to be remergeable, all additional states
       must contain either no actions on symbol [s], or actions identical to those of state [X₁].
+      (This formulation assumes operation on post-conflict-resolution states; the corresponding
+      pre-conflict-resolution algorithm requires identical conflict resolution results.)
     - State [X₀] contains no goto for a symbol [s], and state [X₁] does contain a goto for symbol
       [s]. Furthermore, for more than two states to be remergeable, all additional states must
       contain either no goto for symbol [s], or a goto successor that is remergeable with that of
