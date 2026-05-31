@@ -1059,8 +1059,8 @@ a state that contains no action for the lookahead symbol (a syntax error). This 
 reporting because the parsing configuration of interest was that which existed prior to the first
 such reduce action. Fortunately there is a straightforward solution, which is to capture the parser
 state prior to reducing and restore the state if an error is encountered. Hocc supports only pure
-semantic actions (i.e. no side effects are allowed), so the mitigation for this problem is simple
-and inexpensive.
+semantic actions (i.e. no side effects are allowed), so the mitigation for this problem is simple,
+inexpensive, and universal.
 
 ### LALR(1)
 
@@ -1077,7 +1077,7 @@ diagnostic purposes. Do not use LALR(1) to generate parsers.
 The Adequacy Preservation LR(1) algorithm originated in Hocc and is suitable for all practical uses.
 The basic idea is to generate an LR(1) automaton, then discover all state subgraphs which can be
 remerged without introducing LR(1)-relative inadequacies. Subgraph remergeability testing involves
-some implementation subtleties (transitive graph properties, combinatorial logic, oh my), but the
+some implementation subtleties (combinatorial logic, transitive graph properties), but the
 underlying principle is just as simple as it sounds.
 
 APLR(1) is computationally challenged by large LR(1) automata, both because the LR(1) automaton is
@@ -1089,33 +1089,33 @@ use LR(1) or IELR(1) while diagnosing and resolving conflicts.
 
 The Inadequacy Elimination LR(1) algorithm was first implemented in
 [Bison](https://en.wikipedia.org/wiki/GNU_Bison), and Hocc implements a more general form of IELR(1)
-[^evans2024]. The basic idea is to generate an LALR(1) automaton, perform “lane tracing” analyses to
-determine what merged states may cause LR(1)-relative inadequacies, and then generate an IELR(1)
-automaton with just enough state splitting to eliminate all LR(1)-relative inadequacies. The
-original algorithm and Bison implementation assume that the corresponding canonical LR(1) automaton
-is fully resolved (i.e. no unresolvable conflicts); if this assumption does not hold then the
-algorithm effectively reverts to LALR(1) for the conflicted actions.
+[^evans2024], referred to hereafter in this description as IELR⁺(1). The basic idea is to generate
+an LALR(1) automaton, perform “lane tracing” analyses to determine what merged states may cause
+LR(1)-relative inadequacies, and then generate an IELR⁺(1) automaton with just enough state
+splitting to eliminate all LR(1)-relative inadequacies. The original algorithm and Bison
+implementation assume that the corresponding LR(1) automaton is fully resolved (i.e. no unresolvable
+conflicts); if this assumption does not hold then the algorithm effectively reverts to LALR(1) for
+the conflicted actions.
 
-Hocc's algorithm makes no assumptions about whether the corresponding canonical LR(1) automaton is
-fully resolved, which means that generated automata actually eliminate
-[GLR(1)](https://en.wikipedia.org/wiki/GLR_parser)-relative (Generalized LR(1)) inadequacies, thus
-making the generated automata suitable for nondeterministic parsing. That said, Hocc intentionally
-omits a GLR parsing API, so the main practical benefit of Hocc's algorithm is that there is no
-confusion about whether unresolved conflicts exist in the corresponding LR(1) automaton versus being
-mysterious conflicts. There are two disadvantages of Hocc's algorithm relative to Bison's. First,
-lane tracing is much more computationally intensive because the fixpoint conditions are less
-constrained. Second, due to the potential for cyclic interactions between state subgraphs it is
-sometimes necessary to proactively split states “just in case”, only to later discover that there
-were no interactions making the splits necessary. Fortunately the APLR(1) state remerging algorithm
-works just as well on IELR(1) automata as it does on canonical LR(1) automata, and remerging
-overhead is typically insignificant for IELR(1) automata because the IELR(1) automaton is typically
-much smaller.
+IELR⁺(1) makes no assumptions about whether the corresponding LR(1) automaton is fully resolved,
+which means that generated automata actually eliminate
+[GLR](https://en.wikipedia.org/wiki/GLR_parser)-relative (Generalized LR) inadequacies, thus making
+the generated automata suitable for nondeterministic parsing. That said, Hocc intentionally omits a
+GLR parsing API, so the main practical benefit of Hocc's algorithm is that there is no confusion
+about whether unresolved conflicts exist in the corresponding LR(1) automaton versus being
+mysterious conflicts. There are two disadvantages of IELR⁺(1) relative to IELR(1). First, lane
+tracing is much more computationally intensive because the fixpoint conditions are less constrained.
+Second, the potential for cyclic interactions between state subgraphs can drive precautionary state
+splits that may turn out to have been unnecessary. Fortunately the APLR(1) state remerging algorithm
+works just as well on IELR⁺(1) automata as it does on LR(1) automata, and remerging overhead is
+inconsequential for IELR⁺(1) automata because they are typically much smaller than the corresponding
+LR(1) automata.
 
-Hocc's IELR(1) algorithm is computationally challenged by complicated conflict resolutions, because
-the conflicts can cause a combinatorial explosion during lane tracing. That said, APLR(1) and
-IELR(1) tend not to bog down on the same grammars, and the algorithms generate interchangeable
-parsers (in practice usually identical), so choose the faster of IELR(1) and APLR(1) if parser
-generation performance is an issue.
+IELR⁺(1) is computationally challenged by complicated conflict resolutions, because the conflicts
+can cause a combinatorial explosion during lane tracing. That said, APLR(1) and IELR⁺(1) tend not to
+bog down on the same grammars, and the algorithms generate interchangeable parsers (in practice
+usually identical), so choose the faster of IELR⁺(1) and APLR(1) if parser generation performance is
+an issue.
 
 ### PGM LR(1)
 
