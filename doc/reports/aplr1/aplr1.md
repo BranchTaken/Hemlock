@@ -283,19 +283,19 @@ For the example grammar, the pseudo-start symbol results in the following state;
 state nub is inserted into both the work queue and the state nub set:
 
 ```
-    State 0
-        Kernel
-            [Answer' ::= · Answer "⊥", {"ε"}]
-        Added
-            [Expr ::= · Expr MulOp Expr, {"*", "/", "+", "-", EOI}] prec mul
-            [Expr ::= · Expr AddOp Expr, {"*", "/", "+", "-", EOI}] prec add
-            [Expr ::= · INT, {"*", "/", "+", "-", EOI}]
-            [Answer ::= · Expr EOI, {"⊥"}]
-        Actions
-            INT : ShiftPrefix 1
-        Gotos
-            Expr : 2
-            Answer : 3
+State 0
+    Kernel
+        [Answer' ::= · Answer "⊥", {"ε"}]
+    Added
+        [Expr ::= · Expr MulOp Expr, {"*", "/", "+", "-", EOI}] prec mul
+        [Expr ::= · Expr AddOp Expr, {"*", "/", "+", "-", EOI}] prec add
+        [Expr ::= · INT, {"*", "/", "+", "-", EOI}]
+        [Answer ::= · Expr EOI, {"⊥"}]
+    Actions
+        INT : ShiftPrefix 1
+    Gotos
+        Expr : 2
+        Answer : 3
 ```
 
 Note that every symbol immediately to the right of a dot is represented in the **_actions_** or
@@ -304,9 +304,9 @@ multiple dots. Each item in the goto set for `Expr` is created by advancing the 
 anywhere it appears before a dot in this state. The following kernel results:
 
 ```
-    [Expr ::= Expr · MulOp Expr, {"*", "/", "+", "-", EOI}] prec mul
-    [Expr ::= Expr · AddOp Expr, {"*", "/", "+", "-", EOI}] prec add
-    [Answer ::= Expr · EOI, {"⊥"}]
+[Expr ::= Expr · MulOp Expr, {"*", "/", "+", "-", EOI}] prec mul
+[Expr ::= Expr · AddOp Expr, {"*", "/", "+", "-", EOI}] prec add
+[Answer ::= Expr · EOI, {"⊥"}]
 ```
 
 A work queue state nub is processed by 1) popping it from the front of the work queue, and 2)
@@ -459,23 +459,23 @@ graphical depiction.
 #### Transitively remergeable
 
 ```
-    State 1 [1.0]                      | State 19 [1.1]
-        Kernel                         |     Kernel
-            [Xn ::= At · Yn Dt, {EOI}] |         [Xn ::= At · Yn Dt, {At, Dt}]
-            [Xn ::= At · Zn Ct, {EOI}] |         [Xn ::= At · Zn Ct, {At, Dt}]
-            [Xn ::= At · Tn, {EOI}]    |         [Xn ::= At · Tn, {At, Dt}]
-        Added                          |     Added
-            [Yn ::= · Tt Wn, {Dt}]     |         [Yn ::= · Tt Wn, {Dt}]
-            [Yn ::= · Ut Xn, {Dt}]     |         [Yn ::= · Ut Xn, {Dt}]
-            [Zn ::= · Tt Ut, {Ct}]     |         [Zn ::= · Tt Ut, {Ct}]
-            [Tn ::= · Ut Xn At, {EOI}] |         [Tn ::= · Ut Xn At, {At, Dt}]
-        Actions                        |     Actions
-            Tt : ShiftPrefix 5         |         Tt : ShiftPrefix 5
-            Ut : ShiftPrefix 6         |         Ut : ShiftPrefix 32
-        Gotos                          |     Gotos
-            Yn : 7                     |         Yn : 33
-            Zn : 8                     |         Zn : 34
-            Tn : 9                     |         Tn : 35
+State 1 [1.0]                      | State 19 [1.1]
+    Kernel                         |     Kernel
+        [Xn ::= At · Yn Dt, {EOI}] |         [Xn ::= At · Yn Dt, {At, Dt}]
+        [Xn ::= At · Zn Ct, {EOI}] |         [Xn ::= At · Zn Ct, {At, Dt}]
+        [Xn ::= At · Tn, {EOI}]    |         [Xn ::= At · Tn, {At, Dt}]
+    Added                          |     Added
+        [Yn ::= · Tt Wn, {Dt}]     |         [Yn ::= · Tt Wn, {Dt}]
+        [Yn ::= · Ut Xn, {Dt}]     |         [Yn ::= · Ut Xn, {Dt}]
+        [Zn ::= · Tt Ut, {Ct}]     |         [Zn ::= · Tt Ut, {Ct}]
+        [Tn ::= · Ut Xn At, {EOI}] |         [Tn ::= · Ut Xn At, {At, Dt}]
+    Actions                        |     Actions
+        Tt : ShiftPrefix 5         |         Tt : ShiftPrefix 5
+        Ut : ShiftPrefix 6         |         Ut : ShiftPrefix 32
+    Gotos                          |     Gotos
+        Yn : 7                     |         Yn : 33
+        Zn : 8                     |         Zn : 34
+        Tn : 9                     |         Tn : 35
 ```
 
 The differences between isocoric state set 1 members 1 and 19 correspond to those shown in the
@@ -484,13 +484,13 @@ graph, namely differing successor states in isocoric state sets 6, 7, 8, and 9. 
 35}) are transitively remergeable.
 
 ```
-    State 21 [17.0]                    | State 50 [17.2]
-        Kernel                         |     Kernel
-            [Yn ::= Ut Xn ·, {Dt}]     |         [Yn ::= Ut Xn ·, {Dt}]
-            [Tn ::= Ut Xn · At, {EOI}] |         [Tn ::= Ut Xn · At, {At, Dt}]
-        Actions                        |     Actions
-            At : ShiftPrefix 40        |         At : ShiftPrefix 62
-            Dt : Reduce Yn ::= Ut Xn   |         Dt : Reduce Yn ::= Ut Xn
+State 21 [17.0]                    | State 50 [17.2]
+    Kernel                         |     Kernel
+        [Yn ::= Ut Xn ·, {Dt}]     |         [Yn ::= Ut Xn ·, {Dt}]
+        [Tn ::= Ut Xn · At, {EOI}] |         [Tn ::= Ut Xn · At, {At, Dt}]
+    Actions                        |     Actions
+        At : ShiftPrefix 40        |         At : ShiftPrefix 62
+        Dt : Reduce Yn ::= Ut Xn   |         Dt : Reduce Yn ::= Ut Xn
 ```
 
 Isocoric state set 17 members 21 and 50 transition to differing successor states in isocoric state
@@ -498,12 +498,12 @@ set 23 on `At`, and perform the same reduction on `Dt`. States 21 and 50 are rem
 differing successor states (23{40, 62}) are transitively remergeable.
 
 ```
-    State 40 [23.0]                      | State 62 [23.1]
-        Kernel                           |     Kernel
-            [Tn ::= Ut Xn At ·, {EOI}]   |         [Tn ::= Ut Xn At ·, {At, Dt}]
-        Actions                          |     Actions
-            EOI : Reduce Tn ::= Ut Xn At |         At : Reduce Tn ::= Ut Xn At
-                                         |         Dt : Reduce Tn ::= Ut Xn At
+State 40 [23.0]                      | State 62 [23.1]
+    Kernel                           |     Kernel
+        [Tn ::= Ut Xn At ·, {EOI}]   |         [Tn ::= Ut Xn At ·, {At, Dt}]
+    Actions                          |     Actions
+        EOI : Reduce Tn ::= Ut Xn At |         At : Reduce Tn ::= Ut Xn At
+                                     |         Dt : Reduce Tn ::= Ut Xn At
 ```
 
 Isocoric state set 23 members 40 and 62 contain only disjoint actions, which makes them remergeable
@@ -512,16 +512,16 @@ Isocoric state set 23 members 40 and 62 contain only disjoint actions, which mak
 #### Transitively non-remergeable
 
 ```
-    State 5 [5.0]                  | State 10 [5.1]
-        Kernel                     |     Kernel
-            [Yn ::= Tt · Wn, {Dt}] |         [Yn ::= Tt · Wn, {Et}]
-            [Zn ::= Tt · Ut, {Ct}] |         [Zn ::= Tt · Ut, {Dt}]
-        Added                      |     Added
-            [Wn ::= · Ut Vn, {Dt}] |         [Wn ::= · Ut Vn, {Et}]
-        Actions                    |     Actions
-            Ut : ShiftPrefix 17    |         Ut : ShiftPrefix 24
-        Gotos                      |     Gotos
-            Wn : 18                |         Wn : 25
+State 5 [5.0]                  | State 10 [5.1]
+    Kernel                     |     Kernel
+        [Yn ::= Tt · Wn, {Dt}] |         [Yn ::= Tt · Wn, {Et}]
+        [Zn ::= Tt · Ut, {Ct}] |         [Zn ::= Tt · Ut, {Dt}]
+    Added                      |     Added
+        [Wn ::= · Ut Vn, {Dt}] |         [Wn ::= · Ut Vn, {Et}]
+    Actions                    |     Actions
+        Ut : ShiftPrefix 17    |         Ut : ShiftPrefix 24
+    Gotos                      |     Gotos
+        Wn : 18                |         Wn : 25
 ```
 
 Isocoric state set 5 members 5 and 10 transition to differing successor states in isocoric state set
@@ -529,18 +529,18 @@ Isocoric state set 5 members 5 and 10 transition to differing successor states i
 remergeable if the differing successor states (15{17, 24}, 16{18, 25}) are transitively remergeable.
 
 ```
-    State 17 [15.0]                    | State 24 [15.1]
-        Kernel                         |     Kernel
-            [Zn ::= Tt Ut ·, {Ct}]     |         [Zn ::= Tt Ut ·, {Dt}]
-            [Wn ::= Ut · Vn, {Dt}]     |         [Wn ::= Ut · Vn, {Et}]
-        Added                          |     Added
-            [Vn ::= ·, {Dt}]           |         [Vn ::= ·, {Et}]
-        Actions                        |     Actions
-            Ct : Reduce Zn ::= Tt Ut   |
-            Dt : Reduce Vn ::= epsilon |         Dt : Reduce Zn ::= Tt Ut
-                                       |         Et : Reduce Vn ::= epsilon
-        Gotos                          |     Gotos
-            Vn : 31                    |         Vn : 41
+State 17 [15.0]                    | State 24 [15.1]
+    Kernel                         |     Kernel
+        [Zn ::= Tt Ut ·, {Ct}]     |         [Zn ::= Tt Ut ·, {Dt}]
+        [Wn ::= Ut · Vn, {Dt}]     |         [Wn ::= Ut · Vn, {Et}]
+    Added                          |     Added
+        [Vn ::= ·, {Dt}]           |         [Vn ::= ·, {Et}]
+    Actions                        |     Actions
+        Ct : Reduce Zn ::= Tt Ut   |
+        Dt : Reduce Vn ::= epsilon |         Dt : Reduce Zn ::= Tt Ut
+                                   |         Et : Reduce Vn ::= epsilon
+    Gotos                          |     Gotos
+        Vn : 31                    |         Vn : 41
 ```
 
 Isocoric state set 15 members 17 and 24 contain remergeable disjoint actions on `Ct` and `Et`, but
@@ -563,7 +563,7 @@ All experiments run Hocc main-0-g207645c72297ae6e3406f427382f6de14766c80d. Time 
 statistics are collected with garbage collection (GC) disabled, e.g.
 
 ```sh
-    time -v hocc -gc no -resolve yes -src Gawk -algorithm lalr
+time -v hocc -gc no -resolve yes -src Gawk -algorithm lalr
 ```
 
 GC overhead would dominate run time and memory usage for the smallest and largest automata, but it
@@ -571,62 +571,62 @@ also makes the state counts easier to interpret, so the state counts are generat
 post-remerging GC enabled, e.g.
 
 ```sh
-    hocc -gc post -resolve yes -src Gawk -algorithm lalr -verbose
+hocc -gc post -resolve yes -src Gawk -algorithm lalr -verbose
 ```
 
 The reported time/memory statistics are the best of three runs on an Apple MacBook M5 Pro, running
 [Ubuntu](https://en.wikipedia.org/wiki/Ubuntu) Linux 24.04.03 as a virtual machine hosted by
 [Parallels](https://en.wikipedia.org/wiki/Parallels_Desktop_for_Mac).
 
-| Grammar | Algorithm | Resolve | Time (h:m:s) | Max RSS (kB) | States |
-|---------|:----------|---------|-------------:|-------------:|-------:|
-| Gawk    | LALR(1)   |     yes |         0.08 |        36864 |    320 |
-|         | PGM LR(1) |         |         0.08 |        36736 |    320 |
-|         | IELR⁺(1)  |         |         2.37 |       254464 |    367 |
-|         | APLR(1)   |         |         1.04 |        79616 |    367 |
-|         | LR(1)     |         |         0.23 |        52096 |   2359 |
-|         |           |         |              |              |        |
-|         | LALR(1)   |      no |         0.08 |        36864 |    320 |
-|         | PGM LR(1) |         |         0.08 |        36864 |    320 |
-|         | IELR⁺(1)  |         |         5.25 |       642176 |    367 |
-|         | APLR(1)   |         |         1.01 |        80640 |    367 |
-|         | LR(1)     |         |         0.23 |        52224 |   2467 |
-|         |           |         |              |              |        |
-| Gpic    | LALR(1)   |     yes |         0.32 |        45056 |    423 |
-|         | PGM LR(1) |         |         0.35 |        46488 |    423 |
-|         | IELR⁺(1)  |         |         1.91 |       116992 |    428 |
-|         | APLR(1)   |         |         1.50 |       132096 |    428 |
-|         | LR(1)     |         |         1.11 |        98304 |   4834 |
-|         |           |         |              |              |        |
-|         | LALR(1)   |      no |         0.31 |        45184 |    426 |
-|         | PGM LR(1) |         |         0.35 |        46848 |    426 |
-|         | IELR⁺(1)  |         |         2.61 |       139392 |    448 |
-|         | APLR(1)   |         |         1.47 |       133376 |    448 |
-|         | LR(1)     |         |         1.08 |        97792 |   4871 |
-|         |           |         |              |              |        |
-| Lyken   | LALR(1)   |     yes |         0.84 |        89600 |   1340 |
-|         | PGM LR(1) |         |         1.82 |        96640 |   1340 |
-|         | IELR⁺(1)  |         |      5:59.97 |      6200832 |   1352 |
-|         | APLR(1)   |         |        11.97 |       868480 |   1352 |
-|         | LR(1)     |         |        10.47 |       755584 |  18755 |
-|         |           |         |              |              |        |
-|         | LALR(1)   |      no |         0.84 |        90240 |   1375 |
-|         | PGM LR(1) |         |         1.83 |        97280 |   1375 |
-|         | IELR⁺(1)  |         |     12:39.39 |     30538880 |   1857 |
-|         | APLR(1)   |         |      1:15.34 |      1480576 |   1742 |
-|         | LR(1)     |         |        10.51 |       761472 |  19590 |
-|         |           |         |              |              |        |
-| OCaml   | LALR(1)   |     yes |         2.94 |        82048 |   1878 |
-|         | PGM LR(1) |         |         3.48 |        82304 |   1878 |
-|         | IELR⁺(1)  |         |        35.43 |      1158784 |   1878 |
-|         | APLR(1)   |         |      2:16.48 |      3483648 |   1878 |
-|         | LR(1)     |         |      1:45.42 |      2349312 | 106607 |
-|         |           |         |              |              |        |
-|         | LALR(1)   |      no |         2.95 |        82304 |   1878 |
-|         | PGM LR(1) |         |         3.50 |        83200 |   1878 |
-|         | IELR⁺(1)  |         |      3:21.70 |      5528192 |   4585 |
-|         | APLR(1)   |         |   9:26:25___ |      4801664 |   4586 |
-|         | LR(1)     |         |      1:45.44 |      2345344 | 106607 |
+| Grammar / Resolve | Algorithm | Time (h:m:s) | Max RSS (kB) | States |
+|------------------:|:----------|-------------:|-------------:|-------:|
+| Gawk    /     yes | LALR(1)   |         0.08 |        36864 |    320 |
+|                   | PGM LR(1) |         0.08 |        36736 |    320 |
+|                   | IELR⁺(1)  |         2.37 |       254464 |    367 |
+|                   | APLR(1)   |         1.04 |        79616 |    367 |
+|                   | LR(1)     |         0.23 |        52096 |   2359 |
+|                   |           |              |              |        |
+|         /      no | LALR(1)   |         0.08 |        36864 |    320 |
+|                   | PGM LR(1) |         0.08 |        36864 |    320 |
+|                   | IELR⁺(1)  |         5.25 |       642176 |    367 |
+|                   | APLR(1)   |         1.01 |        80640 |    367 |
+|                   | LR(1)     |         0.23 |        52224 |   2467 |
+|                   |           |              |              |        |
+| Gpic    /     yes | LALR(1)   |         0.32 |        45056 |    423 |
+|                   | PGM LR(1) |         0.35 |        46488 |    423 |
+|                   | IELR⁺(1)  |         1.91 |       116992 |    428 |
+|                   | APLR(1)   |         1.50 |       132096 |    428 |
+|                   | LR(1)     |         1.11 |        98304 |   4834 |
+|                   |           |              |              |        |
+|         /      no | LALR(1)   |         0.31 |        45184 |    426 |
+|                   | PGM LR(1) |         0.35 |        46848 |    426 |
+|                   | IELR⁺(1)  |         2.61 |       139392 |    448 |
+|                   | APLR(1)   |         1.47 |       133376 |    448 |
+|                   | LR(1)     |         1.08 |        97792 |   4871 |
+|                   |           |              |              |        |
+| Lyken   /     yes | LALR(1)   |         0.84 |        89600 |   1340 |
+|                   | PGM LR(1) |         1.82 |        96640 |   1340 |
+|                   | IELR⁺(1)  |      5:59.97 |      6200832 |   1352 |
+|                   | APLR(1)   |        11.97 |       868480 |   1352 |
+|                   | LR(1)     |        10.47 |       755584 |  18755 |
+|                   |           |              |              |        |
+|         /      no | LALR(1)   |         0.84 |        90240 |   1375 |
+|                   | PGM LR(1) |         1.83 |        97280 |   1375 |
+|                   | IELR⁺(1)  |     12:39.39 |     30538880 |   1857 |
+|                   | APLR(1)   |      1:15.34 |      1480576 |   1742 |
+|                   | LR(1)     |        10.51 |       761472 |  19590 |
+|                   |           |              |              |        |
+| OCaml   /     yes | LALR(1)   |         2.94 |        82048 |   1878 |
+|                   | PGM LR(1) |         3.48 |        82304 |   1878 |
+|                   | IELR⁺(1)  |        35.43 |      1158784 |   1878 |
+|                   | APLR(1)   |      2:16.48 |      3483648 |   1878 |
+|                   | LR(1)     |      1:45.42 |      2349312 | 106607 |
+|                   |           |              |              |        |
+|         /      no | LALR(1)   |         2.95 |        82304 |   1878 |
+|                   | PGM LR(1) |         3.50 |        83200 |   1878 |
+|                   | IELR⁺(1)  |      3:21.70 |      5528192 |   4585 |
+|                   | APLR(1)   |   9:26:25___ |      4801664 |   4586 |
+|                   | LR(1)     |      1:45.44 |      2345344 | 106607 |
 
 The performance numbers are best interpreted relative to each other, rather than in absolute terms.
 Hocc is written in OCaml, using purely functional code and data structures. So far, so good, but
