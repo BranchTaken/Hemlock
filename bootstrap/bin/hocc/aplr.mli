@@ -22,15 +22,18 @@ val remerge_states: Io.t -> Symbols.t -> Isocores.t -> State.t array
     to be remergeable, every state pair's pairwise out-transitions must meet at least one of the
     following criteria:
 
-    - The successor state indexes are equal, i.e. no successor state splitting is present.
-    - The successor states are transitively remergeable. Note that cycles of arbitrary length may
-      occur.
-    - State [X₀] takes no action for a symbol [s], and state [X₁] performs only reduction(s) for
-      symbol [s]. Furthermore, for more than two states to be remergeable, all additional states
-      must contain either no actions on symbol [s], or actions identical to those of state [X₁].
-      (This formulation assumes operation on post-conflict-resolution states; the corresponding
-      pre-conflict-resolution algorithm requires identical conflict resolution results.)
-    - State [X₀] contains no goto for a symbol [s], and state [X₁] does contain a goto for symbol
-      [s]. Furthermore, for more than two states to be remergeable, all additional states must
-      contain either no goto for symbol [s], or a goto successor that is remergeable with that of
-      state [X₁]. *)
+    - Shifts:
+      + The successor state indexes are equal.
+      + The successor states are transitively remergeable.
+    - Reductions:
+      + The states perform identical reductions.
+      + State `X₀` takes no action for a symbol `s`, and state `X₁` performs only reduction(s) for
+        symbol `s`. Furthermore, for more than two states to be remergeable, all additional states
+        must contain either no actions on symbol `s`, or actions identical to those of state `X₁`.
+    - Gotos:
+      + The successor state indexes are equal.
+      + The successor states are transitively remergeable.
+      + State `X₀` contains no goto for a symbol `s`, and state `X₁` does contain a goto for symbol
+        `s`. Furthermore, for more than two states to be remergeable, all additional states must
+        contain either no goto for symbol `s`, or a goto successor that is remergeable with that of
+        state `X₁`. *)

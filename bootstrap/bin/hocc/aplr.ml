@@ -76,9 +76,9 @@ let remergeable_actions states remergeables frontiers spines =
           -> begin
               (* All states in the mergeable set must either have an empty action set or identical
                * nonempty action set. Note that these are post-conflict-resolution action sets; were
-               * they pre-conflict-resolution action sets, the equivalent remergeability test would
-               * require identical dominant actions (or identical [possibly unresolvable] action
-               * sets). *)
+               * they pre-conflict-resolution action sets (i.e. conflict resolution to be performed
+               * after remerging), the equivalent remergeability test would require identical
+               * dominant actions (or identical [possibly unresolvable] action sets). *)
               match reduces_only action_set with
               | false -> remergeables, frontiers, NotRemergeable spines
               | true -> begin
