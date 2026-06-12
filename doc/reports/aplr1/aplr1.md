@@ -644,11 +644,11 @@ for all the grammars, so long as conflict resolution is enabled. There is no pra
 disable conflict resolution for APLR(1) nor IELR⁺(1); these benchmarks are included only to provide
 additional insight into how the algorithms operate and what their weaknesses are. APLR(1)
 performance is susceptible to highly interconnected subgraphs; the more branching in a subgraph, the
-more repeated graph searching must occur. Similarly for IELR⁺(1), the more interconnected a conflict
-contribution graph is, the more traversal must occur to reach contribution closure. The main
-difference is that APLR(1) is impervious to conflicts that are resolved in the corresponding LR(1)
-automaton, whereas IELR⁺(1) must trace all reduce-dominant conflicts, regardless of whether those
-conflicts are resolved in the corresponding LR(1) automaton.
+more repeated graph exploration must occur. Similarly for IELR⁺(1), the more interconnected a
+conflict contribution graph is, the more graph traversal must occur to reach contribution closure.
+The main qualitative difference is that APLR(1) is impervious to conflicts that are resolved in the
+corresponding LR(1) automaton, whereas IELR⁺(1) must trace all reduce-dominant conflicts, regardless
+of whether those conflicts are resolved in the corresponding LR(1) automaton.
 
 The OCaml grammar transcription started as an educational tool to understand why the nascent Hemlock
 grammar was causing generation performance problems for IELR⁺(1), and perhaps to learn how my
@@ -689,15 +689,15 @@ automaton closure from within the subgraph remergeability search (though this wo
 non-monotonic automaton construction algorithm), and for most grammars this would avoid the need to
 ever manifest the full canonical LR(1) automaton. However, cyclically complex automata such as that
 for the unresolved OCaml grammar would see little benefit. Nonetheless, this could be advantageous
-in the common case, but this remains open research because Hocc would require significant
-refactoring to close on states rather than state nubs.
+in the common case, but remains open research because Hocc would require significant refactoring to
+close on states rather than state nubs.
 
-The impetus for APLR(1) stemmed from IELR⁺(1), first as a mitigation for unnecessary state splits,
-later out of desperation for a simpler algorithm. The pair-at-a-time remerging algorithm
+The motivation for APLR(1) stemmed from IELR⁺(1), as a mitigation for unnecessary state splits, as
+well as from despair over implementation complexity. The pair-at-a-time remerging algorithm
 [^evans2024][^lenka2006] was trivially derived from analysis of Hocc's precautionary splits for the
 Gpic grammar, versus the Bison-generated automaton which lacked the splits. Having implemented that
 limited remerging algorithm, the possibility of a more general algorithm immediately came to mind,
-and others have independently reached this same epiphany. François Pottier added a `TODO` note (in
+and others have independently made this observation. François Pottier added a `TODO` note (in
 French) to the [Menhir source repository](https://gitlab.inria.fr/fpottier/menhir/) in 2015; quoted
 below is a later version of the note as it was translated to English and demoted to a `TODO-NOT!`,
 with a cautionary performance addendum:
@@ -710,13 +710,13 @@ So the concept of of APLR(1) was independently formulated long before Hocc came 
 unfortunate coincidence that the OCaml grammar may be the most extreme uncontrived adversarial test
 case for APLR(1) in existence.
 
-As obvious as APLR(1) is in concept, the algorithmic details only seem obvious in retrospect.
+As obvious as APLR(1) is in concept, the algorithmic details only seem obvious to me in retrospect.
 Remergeability was clearly a [boolean satisfiability
 problem](https://en.wikipedia.org/wiki/Boolean_satisfiability_problem), but it took years to make
-the key observation that efficient implementation is possible via transitive subgraph equivalence
-testing. Incidentally, this insight came while working on precise automaton tracing garbage
-collection, which is related only in that it also requires a thorough understanding of automaton
-graph structure. LR(1)-family automata are fundamentally [deterministic finite automata
+the key observation that efficient implementation is possible via composable transitive subgraph
+equivalence testing. Incidentally, this insight came while working on precise automaton tracing
+garbage collection, which is related only in that it also requires a thorough understanding of
+automaton graph structure. LR(1)-family automata are fundamentally [deterministic finite automata
 (DFAs)](https://en.wikipedia.org/wiki/Deterministic_finite_automaton), but PDA-related nuances
 complicate practical algorithms.
 
