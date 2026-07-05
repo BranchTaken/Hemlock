@@ -13,9 +13,6 @@ type ('a, 'cmp) t
 
 type ('a, 'cmp) cmper = (module Cmper.SMono with type t = 'a and type cmper_witness = 'cmp)
 
-val pp: ('a, 'cmp) t -> (module Fmt.Formatter) -> (module Fmt.Formatter)
-(** [pp t formatter] applies a formatted representation of [t] to the [formatter]. *)
-
 val empty: ('a, 'cmp) cmper -> ('a, 'cmp) t
 (** [empty cmper] returns an empty work queue. *)
 
@@ -37,6 +34,3 @@ val pop: ('a, 'cmp) t -> 'a * ('a, 'cmp) t
 
 val mem: 'a -> ('a, 'cmp) t -> bool
 (** [mem a t] returns true iff [a] is present in [t]. *)
-
-val set: ('a, 'cmp) t -> ('a, 'cmp) Set.t
-(** [set t] returns the set of elements in [t]. *)
