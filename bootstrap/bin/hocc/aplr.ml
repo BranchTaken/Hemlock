@@ -216,6 +216,46 @@ let remergeable_statenubs states remergeables statenub0 statenub1 =
   let frontiers_current = [spines] in
   inner states remergeables ~frontiers_next:[] ~frontiers_current
 
+(* Test all potentially distinct pairings of state nubs in `isocore_set` for remergeability. In the
+ * worst case this requires (n choose 2) tests, i.e. O(n²), but whenever two state nubs are
+ * discovered to be remergeable, they can be immediately logically merged by removing one from the
+ * set. This reduces algorithmic complexity from n² to n+m², where m is the number of actually
+ * distinct state nub subsets. In practice most state nubs are remergeable, so performance is
+ * typically much better than O(n²) would suggest. *)
+let test_pairs states remergeables isocore_set =
+  let rec inner states nmergeable remergeables isocore_set = begin
+    match Ordset.choose isocore_set with
+    | None -> nmergeable, remergeables
+    | Some statenub0 -> begin
+        let isocore_set = Ordset.remove statenub0 isocore_set in
+        let nmergeable, remergeables, isocore_set =
+          Ordset.fold ~init:(nmergeable, remergeables, isocore_set)
+            ~f:(fun (nmergeable, remergeables, isocore_set) statenub1 ->
+              (* `Distinct`/`Mergeable` indicates that an earlier search starting at predecessors
+               * transitively determined this pair's relationship. *)
+              match Remergeables.rel statenub0 statenub1 remergeables with
+              | Distinct -> nmergeable, remergeables, isocore_set
+              | Mergeable -> nmergeable, remergeables, Ordset.remove statenub1 isocore_set
+              | Unknown -> begin
+                  let remergeables, remergeable =
+                    remergeable_statenubs states remergeables statenub0 statenub1 in
+                  match remergeable with
+                  | NotRemergeable spines ->
+                    nmergeable, Remergeables.distinct spines remergeables, isocore_set
+                  | Remergeable -> begin
+                      let subgraph_size = Remergeables.subgraph_size remergeables in
+                      let nmergeable = nmergeable + subgraph_size in
+                      let remergeables = Remergeables.mergeable remergeables in
+                      let isocore_set = Ordset.remove statenub1 isocore_set in
+                      nmergeable, remergeables, isocore_set
+                    end
+                end
+            ) isocore_set in
+        inner states nmergeable remergeables isocore_set
+      end
+  end in
+  inner states 0L remergeables isocore_set
+
 let remergeable_search io isocores states =
   let io =
     io.log
@@ -237,38 +277,8 @@ let remergeable_search io isocores states =
         | 1L -> nmergeable, max_mergeable, remergeables
         | _ -> begin
             let max_mergeable = max_mergeable + (pred isocore_set_length) in
-            (* Test all n-choose-2 pairings for remergeability. *)
-            let nmergeable, remergeables, _isocore_set1 =
-              Ordset.fold ~init:(nmergeable, remergeables, isocore_set0)
-                ~f:(fun (nmergeable, remergeables, isocore_set1) statenub0 ->
-                  let isocore_set1 = Ordset.remove statenub0 isocore_set1 in
-                  let nmergeable, remergeables =
-                    Ordset.fold ~init:(nmergeable, remergeables)
-                      ~f:(fun (nmergeable, remergeables) statenub1 ->
-                        let nmergeable, remergeables =
-                          (* `Distinct`/`Mergeable` indicates that an earlier search starting at
-                           * predecessors transitively determined this pair's relationship. *)
-                          match Remergeables.rel statenub0 statenub1 remergeables with
-                          | Distinct
-                          | Mergeable -> nmergeable, remergeables
-                          | Unknown -> begin
-                              let remergeables, remergeable =
-                                remergeable_statenubs states remergeables statenub0 statenub1 in
-                              match remergeable with
-                              | NotRemergeable spines ->
-                                nmergeable, Remergeables.distinct spines remergeables
-                              | Remergeable -> begin
-                                  let subgraph_size = Remergeables.subgraph_size remergeables in
-                                  nmergeable + subgraph_size, Remergeables.mergeable remergeables
-                                end
-                            end
-                        in
-                        nmergeable, remergeables
-                      ) isocore_set1
-                  in
-                  nmergeable, remergeables, isocore_set1
-                ) isocore_set0
-            in
+            let nmergeable_add, remergeables = test_pairs states remergeables isocore_set0 in
+            let nmergeable = nmergeable + nmergeable_add in
             nmergeable, max_mergeable, remergeables
           end
       ) isocores in
