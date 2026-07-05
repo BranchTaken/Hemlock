@@ -1,5 +1,7 @@
 # The APLR(1) Algorithm for Generating Compact LR(1) Parsers is Simpler and More Capable than IELR(1)
 
+[This is a living version of an originally web-published technical report. [^evans2026]]
+
 The [Hocc](https://github.com/BranchTaken/Hemlock/blob/main/doc/tools/hocc.md) parser generator,
 which is part of the [Hemlock](https://github.com/BranchTaken/Hemlock) programming language project,
 implements a novel LR(1)-family parser generation algorithm called Adequacy Preservation LR(1).
@@ -358,25 +360,32 @@ at least one of the following criteria:
     Furthermore, for more than two states to be remergeable, all additional states must contain
     either no goto for symbol `s`, or a goto successor that is remergeable with that of state `X₁`.
 
-Although all isocoric state pairs must be considered for remergeability (n choose 2 combinations for
-each n-element isocoric state set), transitive remergeability testing results compose and typically
-have substantial overlap. If a state pair is noted as **_mergeable_**, any subsequent subgraph
-remergeability test which reaches the mergeable pair need not repeat the work that was done to
-discover that the pair is mergeable. Similarly if a state pair is noted as **_distinct_**, any
-subsequent subgraph remergeability test which reaches the distinct pair fails. Furthermore, every
-state pair from the starting point of the search along the **_spine_** to the distinct pair can be
-transitively noted as distinct.
+In the worst case all isocoric state pairs must be considered for remergeability — n choose 2
+combinations for each n-element isocoric state set, i.e. O(n²). However, observed algorithmic
+complexity is closer to linear than quadratic, for two reasons.
+
+1. Transitive remergeability testing results compose and typically have substantial overlap. If a
+   state pair is noted as **_mergeable_**, any subsequent subgraph remergeability test which reaches
+   the mergeable pair need not repeat the work that was done to discover that the pair is mergeable.
+   Similarly if a state pair is noted as **_distinct_**, any subsequent subgraph remergeability test
+   which reaches the distinct pair fails. Furthermore, every state pair from the starting point of
+   the search along the **_spine_** to the distinct pair can be transitively noted as distinct.
+2. State pairs that are determined to be remergeable can be immediately clustered for purposes of
+   subsequent pairwise testing, which Hocc trivially implements by removing one of the remergeable
+   states from the set being tested. Each time two states are clustered, complexity reduces from n
+   choose 2 to n-1 choose 2. In the extreme (yet common) case that all states in an isocoric state
+   set are remergeable, the incremental complexity reductions converge on Ω(n).
 
 The remergeability testing algorithm is greedy; the order in which isocoric state pairs are tested
 can impact later tests, and a slightly different automaton can result. Thus APLR(1) greedily
 generates compact automata rather than generating globally minimal automata, the latter of which is
 NP-hard [^yang2021].
 
-The Hocc implementation performs n choose 2 pairwise remergeability tests as described, but an
-alternate implementation could perform an n-way test and iteratively refine partitions of the
-subgraph sets upon discovering distinctions [^valmari2012]. However, this approach would require
-more sophisticated bookkeeping, without offering any algorithmic complexity advantage, and it would
-still be necessary to make arbitrary partitioning choices for non-hierarchical subgraph mergeability
+The Hocc implementation performs pairwise remergeability tests as described, but an alternate
+implementation could perform an n-way test and iteratively refine partitions of the subgraph sets
+upon discovering distinctions [^valmari2012]. However, this approach would require more
+sophisticated bookkeeping, without offering any algorithmic complexity advantage, and it would still
+be necessary to make arbitrary partitioning choices for non-hierarchical subgraph mergeability
 relations among the n subgraphs.
 
 Reindexing is only strictly necessary if the parser implementation requires contiguous indexes.
@@ -558,7 +567,7 @@ The following experiments use Hocc-compatible transcriptions of four grammars:
   LR(1)](https://github.com/MagicStack/parsing) algorithm
 - OCaml: [OCaml](https://ocaml.org/) 4.14
 
-All experiments run Hocc main-0-g207645c72297ae6e3406f427382f6de14766c80d. Time and memory usage
+All experiments run Hocc main-0-gecd3e21ed55bcb30a418de526c7ecb425ecbb3db. Time and memory usage
 statistics are collected with garbage collection (GC) disabled, e.g.
 
 ```sh
@@ -579,53 +588,53 @@ The reported time/memory statistics are the best of three runs on an Apple MacBo
 
 | Grammar / Resolve | Algorithm | Time (h:m:s) | Max RSS (kB) | States |
 |------------------:|:----------|-------------:|-------------:|-------:|
-| Gawk    /     yes | LALR(1)   |         0.08 |        36864 |    320 |
-|                   | PGM LR(1) |         0.08 |        36736 |    320 |
-|                   | IELR⁺(1)  |         2.37 |       254464 |    367 |
-|                   | APLR(1)   |         1.04 |        79616 |    367 |
-|                   | LR(1)     |         0.23 |        52096 |   2359 |
+| Gawk    /     yes | LALR(1)   |         0.08 |        36736 |    320 |
+|                   | PGM LR(1) |         0.09 |        36608 |    320 |
+|                   | IELR⁺(1)  |         2.35 |       256640 |    367 |
+|                   | APLR(1)   |         0.34 |        62336 |    367 |
+|                   | LR(1)     |         0.25 |        52224 |   2359 |
 |                   |           |              |              |        |
-|         /      no | LALR(1)   |         0.08 |        36864 |    320 |
-|                   | PGM LR(1) |         0.08 |        36864 |    320 |
-|                   | IELR⁺(1)  |         5.25 |       642176 |    367 |
-|                   | APLR(1)   |         1.01 |        80640 |    367 |
-|                   | LR(1)     |         0.23 |        52224 |   2467 |
+|         /      no | LALR(1)   |         0.07 |        36608 |    320 |
+|                   | PGM LR(1) |         0.07 |        36608 |    320 |
+|                   | IELR⁺(1)  |         5.24 |       639232 |    367 |
+|                   | APLR(1)   |         0.34 |        62336 |    367 |
+|                   | LR(1)     |         0.24 |        52096 |   2467 |
 |                   |           |              |              |        |
-| Gpic    /     yes | LALR(1)   |         0.32 |        45056 |    423 |
-|                   | PGM LR(1) |         0.35 |        46488 |    423 |
-|                   | IELR⁺(1)  |         1.91 |       116992 |    428 |
-|                   | APLR(1)   |         1.50 |       132096 |    428 |
-|                   | LR(1)     |         1.11 |        98304 |   4834 |
+| Gpic    /     yes | LALR(1)   |         0.31 |        44928 |    423 |
+|                   | PGM LR(1) |         0.32 |        46464 |    423 |
+|                   | IELR⁺(1)  |         1.88 |       112256 |    428 |
+|                   | APLR(1)   |         1.40 |       127872 |    428 |
+|                   | LR(1)     |         1.09 |        97792 |   4834 |
 |                   |           |              |              |        |
-|         /      no | LALR(1)   |         0.31 |        45184 |    426 |
-|                   | PGM LR(1) |         0.35 |        46848 |    426 |
-|                   | IELR⁺(1)  |         2.61 |       139392 |    448 |
-|                   | APLR(1)   |         1.47 |       133376 |    448 |
-|                   | LR(1)     |         1.08 |        97792 |   4871 |
+|         /      no | LALR(1)   |         0.29 |        45184 |    426 |
+|                   | PGM LR(1) |         0.32 |        46464 |    426 |
+|                   | IELR⁺(1)  |         2.61 |       141056 |    448 |
+|                   | APLR(1)   |         1.38 |       128384 |    448 |
+|                   | LR(1)     |         1.07 |        97920 |   4871 |
 |                   |           |              |              |        |
 | Lyken   /     yes | LALR(1)   |         0.84 |        89600 |   1340 |
-|                   | PGM LR(1) |         1.82 |        96640 |   1340 |
-|                   | IELR⁺(1)  |      5:59.97 |      6200832 |   1352 |
-|                   | APLR(1)   |        11.97 |       868480 |   1352 |
-|                   | LR(1)     |        10.47 |       755584 |  18755 |
+|                   | PGM LR(1) |         1.83 |        97152 |   1340 |
+|                   | IELR⁺(1)  |      5:54.02 |      6257152 |   1352 |
+|                   | APLR(1)   |        11.44 |       847360 |   1352 |
+|                   | LR(1)     |        10.45 |       761856 |  18755 |
 |                   |           |              |              |        |
-|         /      no | LALR(1)   |         0.84 |        90240 |   1375 |
-|                   | PGM LR(1) |         1.83 |        97280 |   1375 |
-|                   | IELR⁺(1)  |     12:39.39 |     30538880 |   1857 |
-|                   | APLR(1)   |      1:15.34 |      1480576 |   1742 |
-|                   | LR(1)     |        10.51 |       761472 |  19590 |
+|         /      no | LALR(1)   |         0.84 |        89344 |   1375 |
+|                   | PGM LR(1) |         1.81 |        96384 |   1375 |
+|                   | IELR⁺(1)  |     12:36.04 |     30431360 |   1857 |
+|                   | APLR(1)   |        12.41 |       890752 |   1740 |
+|                   | LR(1)     |        10.38 |       774784 |  19590 |
 |                   |           |              |              |        |
-| OCaml   /     yes | LALR(1)   |         2.94 |        82048 |   1878 |
-|                   | PGM LR(1) |         3.48 |        82304 |   1878 |
-|                   | IELR⁺(1)  |        35.43 |      1158784 |   1878 |
-|                   | APLR(1)   |      2:16.48 |      3483648 |   1878 |
-|                   | LR(1)     |      1:45.42 |      2349312 | 106607 |
+| OCaml   /     yes | LALR(1)   |         2.91 |        82304 |   1878 |
+|                   | PGM LR(1) |         3.45 |        82304 |   1878 |
+|                   | IELR⁺(1)  |        35.28 |      1150848 |   1878 |
+|                   | APLR(1)   |      2:04.53 |      3490944 |   1878 |
+|                   | LR(1)     |      1:43.00 |      2314112 | 106607 |
 |                   |           |              |              |        |
-|         /      no | LALR(1)   |         2.95 |        82304 |   1878 |
-|                   | PGM LR(1) |         3.50 |        83200 |   1878 |
-|                   | IELR⁺(1)  |      3:21.70 |      5528192 |   4585 |
-|                   | APLR(1)   |   9:26:25___ |      4801664 |   4586 |
-|                   | LR(1)     |      1:45.44 |      2345344 | 106607 |
+|         /      no | LALR(1)   |         2.91 |        82048 |   1878 |
+|                   | PGM LR(1) |         3.45 |        82688 |   1878 |
+|                   | IELR⁺(1)  |      2:45.58 |      5401472 |   4585 |
+|                   | APLR(1)   |     46:25.68 |      4737408 |   4586 |
+|                   | LR(1)     |      1:42.17 |      2318976 | 106607 |
 
 The performance numbers are best interpreted relative to each other, rather than in absolute terms.
 Hocc is written in OCaml, using purely functional code and data structures. So far, so good, but
@@ -642,13 +651,16 @@ automaton algorithms have been extensively worked and reworked.
 What conclusions can be drawn from the experiments? First and foremost, APLR(1) is a viable option
 for all the grammars, so long as conflict resolution is enabled. There is no practical reason to
 disable conflict resolution for APLR(1) nor IELR⁺(1); these benchmarks are included only to provide
-additional insight into how the algorithms operate and what their weaknesses are. APLR(1)
-performance is susceptible to highly interconnected subgraphs; the more branching in a subgraph, the
-more repeated graph exploration must occur. Similarly for IELR⁺(1), the more interconnected a
-conflict contribution graph is, the more graph traversal must occur to reach contribution closure.
-The main qualitative difference is that APLR(1) is impervious to conflicts that are resolved in the
-corresponding LR(1) automaton, whereas IELR⁺(1) must trace all reduce-dominant conflicts, regardless
-of whether those conflicts are resolved in the corresponding LR(1) automaton.
+additional insight into how the algorithms operate and what their weaknesses are. First and
+foremost, APLR(1) performance is limited by the number of states in the corresponding LR(1)
+automaton, because the LR(1) automaton must be generated as the input to APLR(1). APLR(1)
+performance is also negatively impacted by highly interconnected non-remergeable subgraphs; the more
+branching in a non-remergeable subgraph, the more repeated graph exploration must occur. Similarly
+for IELR⁺(1), the more interconnected a conflict contribution graph is, the more graph traversal
+must occur to reach contribution closure. The main qualitative difference is that APLR(1) is
+impervious to conflicts that are resolved in the corresponding LR(1) automaton, whereas IELR⁺(1)
+must trace all reduce-dominant conflicts, regardless of whether those conflicts are resolved in the
+corresponding LR(1) automaton.
 
 The OCaml grammar transcription started as an educational tool to understand why the nascent Hemlock
 grammar was causing generation performance problems for IELR⁺(1), and perhaps to learn how my
@@ -658,14 +670,14 @@ style is adversarial for APLR(1), due to >50X more LR(1) states than LALR(1) sta
 
 APLR(1) and IELR⁺(1) generate different automata for Lyken and OCaml with conflict resolution
 disabled. This is due to greedy remerging and merging, respectively, i.e. these are similar compact
-automata rather than identical globally minimal automata. APLR(1) remerging is driven by
-exhaustively searching for remergeable subgraphs starting at every combination of isocoric state
-pairs; the pairing enumeration is easy to modify, and therefore it is easy to test alternative
-orders. Unpublished experiments found no differing automaton outcomes for any grammar in Hocc's test
-suite (conflict resolution enabled), but ordering impacted remerging speed by a range of ~2.5X. The
-current implementation prefers to search starting with pairs belonging to low-cardinality isocoric
-state sets. IELR⁺(1) merging order is more difficult to characterize and manipulate, but its current
-implementation is certainly nothing alike.
+automata rather than identical globally minimal automata. APLR(1) remerging is driven by searching
+for remergeable subgraphs starting at combinations of isocoric state pairs; the pairing enumeration
+is easy to modify, and therefore it is easy to test alternative orders. Unpublished experiments
+found no differing automaton outcomes for any grammar in Hocc's test suite (conflict resolution
+enabled), but ordering impacted remerging speed by a range of ~2.5X. The current implementation
+prefers to search starting with pairs belonging to low-cardinality isocoric state sets. IELR⁺(1)
+merging order is more difficult to characterize and manipulate, but its current implementation is
+certainly nothing alike.
 
 ## Discussion
 
@@ -784,6 +796,13 @@ Opinions may differ, but the correct answer is APLR(1).
     BranchTaken LLC,
     [https://branchtaken.com/reports/ielr1/ielr1.html](https://branchtaken.com/reports/ielr1/ielr1.html),
     July 2024.
+
+[^evans2026]:
+    Jason Evans,
+    “The APLR(1) Algorithm for Generating Compact LR(1) Parsers is Simpler and More Capable than IELR(1)”,
+    BranchTaken LLC,
+    [https://branchtaken.com/reports/aplr1/aplr1.html](https://branchtaken.com/reports/aplr1/aplr1.html),
+    June 2026.
 
 [^knuth1965]:
     Donald Knuth,
