@@ -29,7 +29,7 @@ val push: 'a -> ('a, 'cmp) t -> ('a, 'cmp) t
 (** [push a t] prepends [a]. [a] must not be present in [t] prior to [push]. *)
 
 val push_back: 'a -> ('a, 'cmp) t -> ('a, 'cmp) t
-(** [push a t] appends [a]. [a] must not be present in [t] prior to [push_back]. *)
+(** [push_back a t] appends [a]. [a] must not be present in [t] prior to [push_back]. *)
 
 val pop: ('a, 'cmp) t -> 'a * ('a, 'cmp) t
 (** [pop t] removes the front element from [t] and returns the element along with the depleted [t].
