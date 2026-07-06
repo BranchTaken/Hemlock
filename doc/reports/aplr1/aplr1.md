@@ -794,14 +794,14 @@ Opinions may differ, but the correct answer is APLR(1).
     Jason Evans,
     “IELR(1) as Implemented by Hocc”,
     BranchTaken LLC,
-    [https://branchtaken.com/reports/ielr1/ielr1.html](https://branchtaken.com/reports/ielr1/ielr1.html),
+    [https://branchtaken.com/reports/ielr1/ielr1.html](https://branchtaken.com/reports/ielr1/ielr1),
     July 2024.
 
 [^evans2026]:
     Jason Evans,
     “The APLR(1) Algorithm for Generating Compact LR(1) Parsers is Simpler and More Capable than IELR(1)”,
     BranchTaken LLC,
-    [https://branchtaken.com/reports/aplr1/aplr1.html](https://branchtaken.com/reports/aplr1/aplr1.html),
+    [https://branchtaken.com/reports/aplr1/aplr1.html](https://branchtaken.com/reports/aplr1/aplr1),
     June 2026.
 
 [^knuth1965]:
