@@ -1,6 +1,6 @@
 # The APLR(1) Algorithm for Generating Compact LR(1) Parsers is Simpler and More Capable than IELR(1)
 
-[This is a living version of an originally web-published technical report. [^evans2026]]
+[This is an evergreen version of an originally web-published technical report. [^evans2026]]
 
 The [Hocc](https://github.com/BranchTaken/Hemlock/blob/main/doc/tools/hocc.md) parser generator,
 which is part of the [Hemlock](https://github.com/BranchTaken/Hemlock) programming language project,
