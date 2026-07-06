@@ -1,6 +1,6 @@
 # IELR(1) as Implemented by Hocc
 
-[This is a living version of an originally web-published technical report. [^evans2024]]
+[This is an evergreen version of an originally web-published technical report. [^evans2024]]
 
 The Hocc parser generator, which is part of the [Hemlock](https://github.com/BranchTaken/Hemlock)
 programming language project, implements several LR(1)-family parser generation algorithms, namely
