@@ -153,15 +153,24 @@ let insert (StateNub.{isocores_sn=isn0; isocore_set_sn=issn0; _} as statenub0)
         } in
         Map.insert_hlt ~k:core ~v:core_rels cores_map
       end
-    | Some ({mergeable_sets; issn2statenub; _} as core_rels) -> begin
+    | Some {mergeable_sets; distinct; issn2statenub; _} -> begin
         (* Create the transitive mergeability closure of sets containing one or both of the
-         * mergeable pair, preserving all unrelated sets. *)
-        let mergeable_set, unrelated_sets = List.fold ~init:(mergeable_pair, [])
-          ~f:(fun (mergeable_set, unrelated_sets) candidate_set ->
-            match Bitset.(inter mergeable_pair candidate_set |> is_empty) with
-            | true -> mergeable_set, candidate_set :: unrelated_sets
-            | false -> Bitset.union candidate_set mergeable_set, unrelated_sets
-          ) mergeable_sets in
+         * mergeable pair, preserving all unrelated sets. Also compute the union of all issns that
+         * are distinct from the transitive mergeability closure. *)
+        let mergeable_set, unrelated_sets, distinct_set =
+          List.fold ~init:(mergeable_pair, [], Bitset.empty)
+            ~f:(fun (mergeable_set, unrelated_sets, distinct_set) candidate_set ->
+              match Bitset.(inter mergeable_pair candidate_set |> is_empty) with
+              | true -> mergeable_set, candidate_set :: unrelated_sets, distinct_set
+              | false -> begin
+                  let mergeable_set = Bitset.union candidate_set mergeable_set in
+                  let distinct_set = match Map.get (Bitset.choose_hlt candidate_set) distinct with
+                    | None -> distinct_set
+                    | Some candidate_distinct_set -> Bitset.union candidate_distinct_set distinct_set
+                  in
+                  mergeable_set, unrelated_sets, distinct_set
+                end
+            ) mergeable_sets in
         let mergeable_sets = mergeable_set :: unrelated_sets in
         (* (Re)build issn2set from scratch. *)
         let issn2set = List.fold ~init:(Map.empty (module Uns))
@@ -170,12 +179,22 @@ let insert (StateNub.{isocores_sn=isn0; isocore_set_sn=issn0; _} as statenub0)
               Map.insert_hlt ~k:issn ~v:mergeable_set issn2set
             ) mergeable_set
           ) mergeable_sets in
+        (* Note that all members of the mergeability closure are distinct from all previously noted
+         * member distinctions. *)
+        let distinct = match Bitset.is_empty distinct_set with
+          | true -> distinct
+          | false -> begin
+              Bitset.fold ~init:distinct ~f:(fun distinct issn ->
+                Map.upsert ~k:issn ~v:distinct_set distinct
+              ) mergeable_set
+            end
+        in
         let issn2statenub =
           issn2statenub
           |> Map.insert ~k:issn0 ~v:statenub0
           |> Map.insert ~k:issn1 ~v:statenub1
         in
-        let core_rels = {core_rels with mergeable_sets; issn2set; issn2statenub} in
+        let core_rels = {mergeable_sets; issn2set; distinct; issn2statenub} in
         Map.update_hlt ~k:core ~v:core_rels cores_map
       end
   in
