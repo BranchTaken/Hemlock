@@ -567,7 +567,7 @@ The following experiments use Hocc-compatible transcriptions of four grammars:
   LR(1)](https://github.com/MagicStack/parsing) algorithm
 - OCaml: [OCaml](https://ocaml.org/) 4.14
 
-All experiments run Hocc main-0-gecd3e21ed55bcb30a418de526c7ecb425ecbb3db. Time and memory usage
+All experiments run Hocc main-0-g56e332cc8bda211a3e7aa1c65aefd67b7aead44a. Time and memory usage
 statistics are collected with garbage collection (GC) disabled, e.g.
 
 ```sh
@@ -588,53 +588,53 @@ The reported time/memory statistics are the best of three runs on an Apple MacBo
 
 | Grammar / Resolve | Algorithm | Time (h:m:s) | Max RSS (kB) | States |
 |------------------:|:----------|-------------:|-------------:|-------:|
-| Gawk    /     yes | LALR(1)   |         0.08 |        36736 |    320 |
-|                   | PGM LR(1) |         0.09 |        36608 |    320 |
-|                   | IELR⁺(1)  |         2.35 |       256640 |    367 |
-|                   | APLR(1)   |         0.34 |        62336 |    367 |
-|                   | LR(1)     |         0.25 |        52224 |   2359 |
+| Gawk    /     yes | LALR(1)   |         0.07 |        36736 |    320 |
+|                   | PGM LR(1) |         0.07 |        36736 |    320 |
+|                   | IELR⁺(1)  |         2.39 |       255104 |    367 |
+|                   | APLR(1)   |         0.29 |        60800 |    367 |
+|                   | LR(1)     |         0.24 |        52352 |   2359 |
 |                   |           |              |              |        |
-|         /      no | LALR(1)   |         0.07 |        36608 |    320 |
-|                   | PGM LR(1) |         0.07 |        36608 |    320 |
-|                   | IELR⁺(1)  |         5.24 |       639232 |    367 |
-|                   | APLR(1)   |         0.34 |        62336 |    367 |
-|                   | LR(1)     |         0.24 |        52096 |   2467 |
+|         /      no | LALR(1)   |         0.07 |        36864 |    320 |
+|                   | PGM LR(1) |         0.07 |        36736 |    320 |
+|                   | IELR⁺(1)  |         5.31 |       641280 |    367 |
+|                   | APLR(1)   |         0.28 |        61056 |    367 |
+|                   | LR(1)     |         0.22 |        52096 |   2467 |
 |                   |           |              |              |        |
-| Gpic    /     yes | LALR(1)   |         0.31 |        44928 |    423 |
+| Gpic    /     yes | LALR(1)   |         0.29 |        45056 |    423 |
 |                   | PGM LR(1) |         0.32 |        46464 |    423 |
-|                   | IELR⁺(1)  |         1.88 |       112256 |    428 |
-|                   | APLR(1)   |         1.40 |       127872 |    428 |
-|                   | LR(1)     |         1.09 |        97792 |   4834 |
+|                   | IELR⁺(1)  |         1.88 |       113024 |    428 |
+|                   | APLR(1)   |         1.38 |       129280 |    428 |
+|                   | LR(1)     |         1.09 |        98432 |   4834 |
 |                   |           |              |              |        |
 |         /      no | LALR(1)   |         0.29 |        45184 |    426 |
 |                   | PGM LR(1) |         0.32 |        46464 |    426 |
-|                   | IELR⁺(1)  |         2.61 |       141056 |    448 |
-|                   | APLR(1)   |         1.38 |       128384 |    448 |
-|                   | LR(1)     |         1.07 |        97920 |   4871 |
+|                   | IELR⁺(1)  |         2.61 |       136704 |    448 |
+|                   | APLR(1)   |         1.35 |       129024 |    448 |
+|                   | LR(1)     |         1.08 |        97792 |   4871 |
 |                   |           |              |              |        |
-| Lyken   /     yes | LALR(1)   |         0.84 |        89600 |   1340 |
-|                   | PGM LR(1) |         1.83 |        97152 |   1340 |
-|                   | IELR⁺(1)  |      5:54.02 |      6257152 |   1352 |
-|                   | APLR(1)   |        11.44 |       847360 |   1352 |
-|                   | LR(1)     |        10.45 |       761856 |  18755 |
+| Lyken   /     yes | LALR(1)   |         0.85 |        90112 |   1340 |
+|                   | PGM LR(1) |         1.84 |        96384 |   1340 |
+|                   | IELR⁺(1)  |      5:56.67 |      6228736 |   1352 |
+|                   | APLR(1)   |        11.43 |       853888 |   1352 |
+|                   | LR(1)     |        10.48 |       776064 |  18755 |
 |                   |           |              |              |        |
-|         /      no | LALR(1)   |         0.84 |        89344 |   1375 |
-|                   | PGM LR(1) |         1.81 |        96384 |   1375 |
-|                   | IELR⁺(1)  |     12:36.04 |     30431360 |   1857 |
-|                   | APLR(1)   |        12.41 |       890752 |   1740 |
-|                   | LR(1)     |        10.38 |       774784 |  19590 |
+|         /      no | LALR(1)   |         0.82 |        88960 |   1375 |
+|                   | PGM LR(1) |         1.82 |        97024 |   1375 |
+|                   | IELR⁺(1)  |     12:42.89 |     30487808 |   1857 |
+|                   | APLR(1)   |        11.59 |       861696 |   1760 |
+|                   | LR(1)     |        10.47 |       766592 |  19590 |
 |                   |           |              |              |        |
-| OCaml   /     yes | LALR(1)   |         2.91 |        82304 |   1878 |
-|                   | PGM LR(1) |         3.45 |        82304 |   1878 |
-|                   | IELR⁺(1)  |        35.28 |      1150848 |   1878 |
-|                   | APLR(1)   |      2:04.53 |      3490944 |   1878 |
-|                   | LR(1)     |      1:43.00 |      2314112 | 106607 |
+| OCaml   /     yes | LALR(1)   |         2.93 |        81920 |   1878 |
+|                   | PGM LR(1) |         3.49 |        82432 |   1878 |
+|                   | IELR⁺(1)  |        35.30 |      1158144 |   1878 |
+|                   | APLR(1)   |      2:06.47 |      3479680 |   1878 |
+|                   | LR(1)     |      1:44.94 |      2338560 | 106607 |
 |                   |           |              |              |        |
-|         /      no | LALR(1)   |         2.91 |        82048 |   1878 |
-|                   | PGM LR(1) |         3.45 |        82688 |   1878 |
-|                   | IELR⁺(1)  |      2:45.58 |      5401472 |   4585 |
-|                   | APLR(1)   |     46:25.68 |      4737408 |   4586 |
-|                   | LR(1)     |      1:42.17 |      2318976 | 106607 |
+|         /      no | LALR(1)   |         2.93 |        82176 |   1878 |
+|                   | PGM LR(1) |         3.50 |        82176 |   1878 |
+|                   | IELR⁺(1)  |      2:38.74 |      5465472 |   4585 |
+|                   | APLR(1)   |     25:09.36 |      4744192 |   4586 |
+|                   | LR(1)     |      1:45.35 |      2321280 | 106607 |
 
 The performance numbers are best interpreted relative to each other, rather than in absolute terms.
 Hocc is written in OCaml, using purely functional code and data structures. So far, so good, but
