@@ -187,7 +187,6 @@ let distinct spines ({snapshot; _} as t) =
   let cores_map = List.fold ~init:snapshot
       ~f:(fun cores_map ((StateNub.{isocore_set_sn=issn0; _} as statenub0),
         StateNub.{isocore_set_sn=issn1; _}) ->
-        let distinct_pair = Bitset.of_array [|issn0; issn1|] in
         let core = Lr1Itemset.core StateNub.(statenub0.lr1itemsetclosure).kernel in
         match Map.get core cores_map with
         | None -> begin
@@ -195,23 +194,38 @@ let distinct spines ({snapshot; _} as t) =
               mergeable_sets=[];
               issn2set=Map.empty (module Uns);
               distinct=Map.of_alist (module Uns) [
-                (issn0, distinct_pair);
-                (issn1, distinct_pair);
+                (issn0, Bitset.singleton issn1);
+                (issn1, Bitset.singleton issn0);
               ];
               issn2statenub=Map.empty (module Uns);
             } in
             Map.insert_hlt ~k:core ~v:core_rels cores_map
           end
-        | Some ({distinct; _} as core_rels) -> begin
-            let amend_distinct distinct_set_opt = begin
-              match distinct_set_opt with
-              | None -> Some distinct_pair
-              | Some distinct_set -> Some (Bitset.union distinct_pair distinct_set)
+        | Some ({issn2set; distinct; _} as core_rels) -> begin
+            let mergeable_of_issn issn = begin
+              match Map.get issn issn2set with
+              | None -> Bitset.singleton issn
+              | Some mergeable -> mergeable
             end in
+            let amend_distinct distinct distinct_set_opt = begin
+              match distinct_set_opt with
+              | None -> Some distinct
+              | Some distinct_set -> Some (Bitset.union distinct distinct_set)
+            end in
+            let mergeable_of_issn0 = mergeable_of_issn issn0 in
+            let mergeable_of_issn1 = mergeable_of_issn issn1 in
             let distinct =
               distinct
-              |> Map.amend issn0 ~f:amend_distinct
-              |> Map.amend issn1 ~f:amend_distinct
+              |> (fun distinct ->
+                Bitset.fold ~init:distinct ~f:(fun distinct issn0 ->
+                  Map.amend issn0 ~f:(amend_distinct mergeable_of_issn1) distinct
+                ) mergeable_of_issn0
+              )
+              |> (fun distinct ->
+                Bitset.fold ~init:distinct ~f:(fun distinct issn1 ->
+                  Map.amend issn1 ~f:(amend_distinct mergeable_of_issn0) distinct
+                ) mergeable_of_issn1
+              )
             in
             let core_rels = {core_rels with distinct} in
             Map.update_hlt ~k:core ~v:core_rels cores_map
